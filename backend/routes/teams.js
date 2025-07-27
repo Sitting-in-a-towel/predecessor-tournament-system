@@ -10,24 +10,41 @@ const router = express.Router();
 router.get('/my-teams', requireAuth, async (req, res) => {
   try {
     const userID = req.user.userID;
+    logger.info(`Getting teams for user: ${userID}`);
     
     // Get all teams and filter by user involvement
     const teams = await airtableService.getTeams();
+    logger.info(`Total teams found: ${teams.length}`);
+    
+    // Get user's Airtable record ID for proper filtering
+    const userRecord = await airtableService.getUserByID(userID);
+    if (!userRecord) {
+      logger.warn(`User record not found for userID: ${userID}`);
+      return res.json([]);
+    }
+    
+    const userRecordId = userRecord.recordId;
+    logger.info(`User record ID: ${userRecordId}`);
     
     // Filter teams where user is captain or player
     const userTeams = teams.filter(team => {
-      // Check if user is captain
-      const isCaptain = team.Captain && team.Captain.includes(userID);
+      // Check if user is captain (by record ID)
+      const isCaptain = team.Captain && team.Captain.includes(userRecordId);
       
-      // Check if user is in players list
-      const isPlayer = team.Players && team.Players.includes(userID);
+      // Check if user is in players list (by record ID)
+      const isPlayer = team.Players && team.Players.includes(userRecordId);
       
-      // Check if user is in substitutes list
-      const isSubstitute = team.Substitutes && team.Substitutes.includes(userID);
+      // Check if user is in substitutes list (by record ID)
+      const isSubstitute = team.Substitutes && team.Substitutes.includes(userRecordId);
+      
+      if (isCaptain || isPlayer || isSubstitute) {
+        logger.info(`User is member of team: ${team.TeamName} (Captain: ${isCaptain}, Player: ${isPlayer}, Sub: ${isSubstitute})`);
+      }
       
       return isCaptain || isPlayer || isSubstitute;
     });
 
+    logger.info(`User teams found: ${userTeams.length}`);
     res.json(userTeams);
   } catch (error) {
     logger.error('Error getting user teams:', error);
@@ -71,7 +88,7 @@ router.post('/',
         Tournament: [tournament.recordId], // Use tournament's record ID
         Confirmed: false,
         CreatedAt: new Date().toISOString(),
-        TeamLogo: req.body.teamLogo || null
+        TeamLogo: req.body.teamLogo || '/assets/images/predecessor-default-icon.jpg'
       };
 
       logger.info('Creating team with data:', teamData);

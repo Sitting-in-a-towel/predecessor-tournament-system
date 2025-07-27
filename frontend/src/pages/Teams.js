@@ -129,9 +129,11 @@ const Teams = () => {
                   return (
                     <div key={team.TeamID} className="team-card">
                       <div className="team-header">
-                        {team.TeamLogo && (
-                          <img src={team.TeamLogo} alt="Team logo" className="team-logo-small" />
-                        )}
+                        <img 
+                          src={team.TeamLogo || '/assets/images/predecessor-default-icon.jpg'} 
+                          alt="Team logo" 
+                          className="team-logo-small" 
+                        />
                         <div className="team-info">
                           <h3>{team.TeamName}</h3>
                           <div className="team-meta">

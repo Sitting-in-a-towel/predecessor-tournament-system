@@ -105,9 +105,13 @@ const TeamSignup = ({ onClose }) => {
     try {
       const teamData = {
         teamName: formData.teamName.trim(),
-        tournamentID: formData.selectedTournament,
-        teamLogo: formData.teamLogo || null
+        tournamentID: formData.selectedTournament
       };
+      
+      // Only add teamLogo if it has a value
+      if (formData.teamLogo) {
+        teamData.teamLogo = formData.teamLogo;
+      }
 
       const newTeam = await airtableService.createTeam(teamData);
       
