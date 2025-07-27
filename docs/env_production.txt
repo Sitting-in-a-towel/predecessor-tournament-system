@@ -1,0 +1,40 @@
+# Production Environment Variables
+# Copy this file to .env for production deployment
+
+# Environment
+NODE_ENV=production
+PORT=3001
+
+# Frontend URL (your Vercel deployment)
+FRONTEND_URL=https://your-site-name.vercel.app
+
+# Session Configuration
+SESSION_SECRET=CHANGE-THIS-TO-CRYPTOGRAPHICALLY-SECURE-KEY-MINIMUM-32-CHARACTERS
+SESSION_STORE=postgres
+
+# Database (Railway PostgreSQL - automatically provided)
+DATABASE_URL=postgresql://postgres:password@host:port/database
+
+# Airtable Configuration
+AIRTABLE_PERSONAL_TOKEN=your_airtable_token_here
+AIRTABLE_BASE_ID=your_base_id_here
+
+# Discord OAuth (update these with your production URLs)
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+DISCORD_REDIRECT_URI=https://your-backend-url.railway.app/api/auth/discord/callback
+
+# Error Tracking (Optional - Sentry)
+SENTRY_DSN=your_sentry_dsn_here
+
+# Analytics (Optional)
+GA_MEASUREMENT_ID=your_google_analytics_id
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# Security
+CORS_ORIGIN=https://your-site-name.vercel.app
+COOKIE_SECURE=true
+COOKIE_SAME_SITE=strict

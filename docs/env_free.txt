@@ -1,0 +1,37 @@
+# Free Tier Environment Variables
+# Copy this file to .env for free hosting deployment
+
+# Environment
+NODE_ENV=production
+
+# Frontend URL (your Netlify deployment)
+FRONTEND_URL=https://your-site-name.netlify.app
+
+# Session Configuration
+SESSION_SECRET=CHANGE-THIS-TO-CRYPTOGRAPHICALLY-SECURE-KEY-MINIMUM-32-CHARACTERS
+SESSION_STORE=postgres
+
+# Database (Supabase PostgreSQL)
+DATABASE_URL=postgresql://postgres:[password]@[host]:5432/postgres
+
+# Airtable Configuration
+AIRTABLE_PERSONAL_TOKEN=your_airtable_token_here
+AIRTABLE_BASE_ID=your_base_id_here
+
+# Discord OAuth (update these with your production URLs)
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+DISCORD_REDIRECT_URI=https://your-backend-url.onrender.com/api/auth/discord/callback
+
+# Rate Limiting (conservative for free tier)
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=50
+
+# Security
+CORS_ORIGIN=https://your-site-name.netlify.app
+COOKIE_SECURE=true
+COOKIE_SAME_SITE=strict
+
+# Free Tier Optimizations
+LOG_LEVEL=warn
+ENABLE_COMPRESSION=true

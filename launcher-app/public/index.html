@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predecessor Tournament System - Development Console</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="title">
+            <span class="logo">🏆</span>
+            <span>Predecessor Tournament System</span>
+        </div>
+        <div class="status">
+            <div class="status-item">
+                <div class="status-dot" id="backend-status"></div>
+                <span>Backend</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot" id="frontend-status"></div>
+                <span>Frontend</span>
+            </div>
+        </div>
+        <div class="controls">
+            <button class="btn btn-success" onclick="sendCommand('start')">
+                <span class="btn-icon">▶</span> Start
+            </button>
+            <button class="btn btn-danger" onclick="sendCommand('stop')">
+                <span class="btn-icon">■</span> Stop
+            </button>
+            <button class="btn btn-warning" onclick="sendCommand('restart')">
+                <span class="btn-icon">↻</span> Restart
+            </button>
+            <button class="btn btn-secondary" onclick="clearLogs()">
+                <span class="btn-icon">🗑</span> Clear
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="nav-section">
+                <h3>Log Filters</h3>
+                <div class="nav-item active" onclick="setFilter('all')">
+                    <span class="nav-icon">📋</span> All Logs
+                </div>
+                <div class="nav-item" onclick="setFilter('backend')">
+                    <span class="nav-icon">⚙️</span> Backend
+                </div>
+                <div class="nav-item" onclick="setFilter('frontend')">
+                    <span class="nav-icon">🎨</span> Frontend
+                </div>
+                <div class="nav-item" onclick="setFilter('errors')">
+                    <span class="nav-icon">❌</span> Errors
+                </div>
+                <div class="nav-item" onclick="setFilter('events')">
+                    <span class="nav-icon">📢</span> User Events
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <h3>Quick Actions</h3>
+                <a href="http://localhost:3000" target="_blank" class="link-item">
+                    <span class="link-icon">🌐</span> Open Frontend
+                </a>
+                <a href="http://localhost:3001" target="_blank" class="link-item">
+                    <span class="link-icon">🔌</span> Test API
+                </a>
+                <a href="http://localhost:3000/admin/dashboard" target="_blank" class="link-item">
+                    <span class="link-icon">👤</span> Admin Panel
+                </a>
+                <a href="https://airtable.com/app03G7acKXxJfAvx" target="_blank" class="link-item">
+                    <span class="link-icon">📊</span> Airtable Base
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <h3>Recent Events</h3>
+                <div id="event-list" class="event-list">
+                    <div class="event-empty">No events yet...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="log-header">
+                <span id="log-title">All Logs</span>
+                <div class="log-stats">
+                    <span id="log-count">0 logs</span>
+                    <span id="event-count">0 events</span>
+                </div>
+            </div>
+            <div class="log-container" id="log-container">
+                <div class="welcome-message">
+                    <h2>Welcome to Predecessor Tournament System</h2>
+                    <p>Click "Start" to launch the development servers</p>
+                    <div class="features">
+                        <div class="feature">
+                            <span class="feature-icon">📊</span>
+                            <span>Real-time log monitoring</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">🔔</span>
+                            <span>User action tracking</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">🎯</span>
+                            <span>Error highlighting</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

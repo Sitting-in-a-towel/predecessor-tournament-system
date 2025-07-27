@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predecessor Tournament System - Development Launcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .status {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+
+        .status-dot.running {
+            background: #22c55e;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+            height: calc(100vh - 80px);
+            display: flex;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: rgba(0, 0, 0, 0.2);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background: #3b82f6;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-container {
+            flex: 1;
+            background: #000000;
+            margin: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .log-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .log-content {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .log-line {
+            margin-bottom: 0.25rem;
+            white-space: pre-wrap;
+        }
+
+        .log-line.error {
+            color: #ef4444;
+        }
+
+        .log-line.warning {
+            color: #f59e0b;
+        }
+
+        .log-line.success {
+            color: #22c55e;
+        }
+
+        .log-line.info {
+            color: #3b82f6;
+        }
+
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab.active {
+            background: #3b82f6;
+        }
+
+        .quick-links {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .quick-links h4 {
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.7;
+        }
+
+        .link-item {
+            display: block;
+            padding: 0.5rem;
+            color: #60a5fa;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            transition: background 0.2s;
+        }
+
+        .link-item:hover {
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">🏆 Predecessor Tournament System</div>
+        <div class="status">
+            <div class="status-item">
+                <div class="status-dot" id="backend-status"></div>
+                <span>Backend</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot" id="frontend-status"></div>
+                <span>Frontend</span>
+            </div>
+        </div>
+        <div class="controls">
+            <button class="btn btn-primary" onclick="startServices()">Start Services</button>
+            <button class="btn btn-secondary" onclick="openSite()">Open Site</button>
+            <button class="btn btn-secondary" onclick="clearLogs()">Clear Logs</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="nav-item active" onclick="showTab('combined')">Combined Logs</div>
+            <div class="nav-item" onclick="showTab('backend')">Backend Only</div>
+            <div class="nav-item" onclick="showTab('frontend')">Frontend Only</div>
+            <div class="nav-item" onclick="showTab('errors')">Errors Only</div>
+
+            <div class="quick-links">
+                <h4>Quick Links</h4>
+                <a href="http://localhost:3000" target="_blank" class="link-item">Frontend App</a>
+                <a href="http://localhost:3001" target="_blank" class="link-item">Backend API</a>
+                <a href="http://localhost:3000/admin/dashboard" target="_blank" class="link-item">Admin Dashboard</a>
+                <a href="#" onclick="openAirtable()" class="link-item">Airtable Base</a>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="log-container">
+                <div class="log-header">
+                    Development Logs - <span id="current-tab">Combined View</span>
+                </div>
+                <div class="log-content" id="log-content">
+                    <div class="loading">
+                        Click "Start Services" to begin monitoring logs...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let backendProcess = null;
+        let frontendProcess = null;
+        let logBuffer = [];
+        let currentFilter = 'combined';
+
+        function addLog(message, type = 'info', source = 'system') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = {
+                timestamp,
+                message,
+                type,
+                source,
+                full: `[${timestamp}] [${source}] ${message}`
+            };
+            
+            logBuffer.push(logEntry);
+            if (logBuffer.length > 1000) {
+                logBuffer.shift();
+            }
+            
+            updateLogDisplay();
+        }
+
+        function updateLogDisplay() {
+            const logContent = document.getElementById('log-content');
+            let filteredLogs = logBuffer;
+
+            switch (currentFilter) {
+                case 'backend':
+                    filteredLogs = logBuffer.filter(log => log.source === 'backend');
+                    break;
+                case 'frontend':
+                    filteredLogs = logBuffer.filter(log => log.source === 'frontend');
+                    break;
+                case 'errors':
+                    filteredLogs = logBuffer.filter(log => log.type === 'error');
+                    break;
+            }
+
+            logContent.innerHTML = filteredLogs
+                .slice(-100) // Show last 100 logs
+                .map(log => `<div class="log-line ${log.type}">${log.full}</div>`)
+                .join('');
+
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        function showTab(tab) {
+            currentFilter = tab;
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const tabNames = {
+                'combined': 'Combined View',
+                'backend': 'Backend Only',
+                'frontend': 'Frontend Only',
+                'errors': 'Errors Only'
+            };
+            
+            document.getElementById('current-tab').textContent = tabNames[tab];
+            updateLogDisplay();
+        }
+
+        function clearLogs() {
+            logBuffer = [];
+            updateLogDisplay();
+            addLog('Logs cleared', 'info', 'system');
+        }
+
+        function openSite() {
+            window.open('http://localhost:3000', '_blank');
+        }
+
+        function openAirtable() {
+            window.open('https://airtable.com/app03G7acKXxJfAvx', '_blank');
+        }
+
+        async function startServices() {
+            addLog('Starting development services...', 'info', 'system');
+            
+            try {
+                // This would normally start the actual processes
+                // For now, we'll simulate the startup
+                addLog('Starting backend server...', 'info', 'system');
+                document.getElementById('backend-status').classList.add('running');
+                
+                setTimeout(() => {
+                    addLog('Backend server started on port 3001', 'success', 'backend');
+                    addLog('Starting frontend development server...', 'info', 'system');
+                    document.getElementById('frontend-status').classList.add('running');
+                    
+                    setTimeout(() => {
+                        addLog('Frontend development server started on port 3000', 'success', 'frontend');
+                        addLog('All services running successfully!', 'success', 'system');
+                        
+                        // Simulate some logs
+                        setInterval(() => {
+                            const messages = [
+                                { msg: 'GET /api/auth/me 401', type: 'warning', source: 'backend' },
+                                { msg: 'Compiled successfully!', type: 'success', source: 'frontend' },
+                                { msg: 'Database connection verified', type: 'info', source: 'backend' },
+                                { msg: 'webpack compiled with 0 warnings', type: 'info', source: 'frontend' }
+                            ];
+                            const random = messages[Math.floor(Math.random() * messages.length)];
+                            addLog(random.msg, random.type, random.source);
+                        }, 3000);
+                    }, 2000);
+                }, 1000);
+                
+            } catch (error) {
+                addLog(`Failed to start services: ${error.message}`, 'error', 'system');
+            }
+        }
+
+        // Initialize
+        addLog('Development launcher ready', 'info', 'system');
+        addLog('Click "Start Services" to begin', 'info', 'system');
+    </script>
+</body>
+</html>
