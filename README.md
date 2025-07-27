@@ -40,55 +40,35 @@ A comprehensive web-based tournament management system for Predecessor esports t
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### 1. Initial Setup
 ```bash
-git clone https://github.com/Sitting-in-a-towel/predecessor-tournament-system.git
-cd predecessor-tournament-system
+# Run complete project setup
+launchers\setup_project.bat
 ```
 
-### 2. Install Dependencies
-```bash
-# Install all dependencies
-npm run install:all
+### 2. Configure Environment
+Edit the created environment files:
+- `backend\.env` - Add your Discord OAuth and Airtable credentials
+- `frontend\.env` - Usually defaults are fine
 
-# Or install manually
-npm install
-cd backend && npm install
-cd ../frontend && npm install
+### 3. Create Database
+```bash
+# Set up Airtable tables and sample data
+launchers\setup_airtable_database.bat
 ```
 
-### 3. Environment Setup
-```bash
-# Copy environment template
-cp docs/env_example.txt .env
-
-# Edit .env with your credentials
-# - Airtable API key and base ID
-# - Discord OAuth credentials
-# - Session secret
-```
-
-### 4. Database Setup
-```bash
-# Set up Airtable tables
-npm run setup:database
-
-# Or use the launcher
-./launchers/Setup_Database.bat
-```
-
-### 5. Start Development
+### 4. Start Development
 ```bash
 # Option 1: Use the UI launcher (recommended)
-./launchers/Install_Launcher_UI.bat
-./launchers/Start_UI_Launcher_Real.bat
+launchers\Install_Launcher_UI.bat
+launchers\Start_UI_Launcher_Real.bat
 
-# Option 2: Manual start
-npm run dev
+# Option 2: Standard development start
+launchers\start_development.bat
 
-# Option 3: Separate terminals
-npm run dev:backend
-npm run dev:frontend
+# Option 3: Manual start (separate terminals)
+cd backend && npm run dev
+cd frontend && npm start
 ```
 
 ## 🌐 URLs
@@ -100,9 +80,9 @@ npm run dev:frontend
 
 ## 📚 Documentation
 
-- [Setup Guide](docs/Professional_Setup_Guide.md)
-- [External Access](docs/External_Access_Setup.md)
-- [API Documentation](docs/API.md)
+- [Quick Start Guide](documentation/QUICK_START_GUIDE.md)
+- [Professional Setup](docs/Professional_Setup_Guide.md)
+- [External Access Setup](docs/External_Access_Setup.md)
 - [Deployment Guide](docs/DEPLOYMENT.md)
 
 ## 🧪 Testing
@@ -200,8 +180,9 @@ git push origin main
 
 ### Getting Help
 
-- Check [Issues](https://github.com/Sitting-in-a-towel/predecessor-tournament-system/issues)
-- Create an issue on GitHub for support
+- Check the documentation files in the `docs/` and `documentation/` folders
+- Review logs in `backend/logs/` for error details
+- Use the troubleshooting guides provided
 
 ## 📄 License
 
