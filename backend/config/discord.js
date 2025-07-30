@@ -1,5 +1,5 @@
 const DiscordStrategy = require('passport-discord').Strategy;
-const postgresService = require('../services/postgresql');
+// const postgresService = require('../services/postgresql'); // Disabled for production
 const logger = require('../utils/logger');
 
 module.exports = function(passport) {
