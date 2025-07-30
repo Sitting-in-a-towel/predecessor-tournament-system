@@ -10,6 +10,8 @@ module.exports = function(passport) {
     scope: ['identify', 'email'],
   }, async (accessToken, refreshToken, profile, done) => {
     try {
+      console.log(`[DEBUG] Discord OAuth callback for user: ${profile.username}#${profile.discriminator}`);
+      console.log('[DEBUG] Discord profile data:', JSON.stringify(profile, null, 2));
       logger.info(`Discord OAuth callback for user: ${profile.username}#${profile.discriminator}`);
       logger.info('Discord profile data:', JSON.stringify(profile, null, 2));
       
@@ -54,6 +56,7 @@ module.exports = function(passport) {
       });
       
     } catch (error) {
+      console.error('[DEBUG] Discord OAuth error:', error);
       logger.error('Discord OAuth error:', error);
       return done(error, null);
     }
