@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
-const { airtableService } = require('../services/airtable');
+const postgresService = require('../services/postgresql');
 const logger = require('../utils/logger');
 
 const router = express.Router();
