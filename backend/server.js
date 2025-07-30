@@ -172,8 +172,12 @@ process.on('SIGTERM', () => {
 // Start server
 async function startServer() {
   try {
-    // Connect to database
-    await connectDatabase();
+    // Connect to database - skip in production for now
+    if (process.env.NODE_ENV !== 'production') {
+      await connectDatabase();
+    } else {
+      logger.info('Skipping database verification in production');
+    }
     
     server.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
