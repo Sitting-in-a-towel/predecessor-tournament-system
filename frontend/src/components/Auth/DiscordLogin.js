@@ -6,6 +6,7 @@ const DiscordLogin = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [rememberMe, setRememberMe] = React.useState(true);
 
   const from = location.state?.from?.pathname || '/';
 
@@ -16,7 +17,7 @@ const DiscordLogin = () => {
   }, [isAuthenticated, navigate, from]);
 
   const handleDiscordLogin = () => {
-    login();
+    login(rememberMe);
   };
 
   return (
@@ -24,6 +25,18 @@ const DiscordLogin = () => {
       <div className="login-card">
         <h1>Predecessor Tournament Management</h1>
         <p>Sign in with Discord to access tournaments and team management.</p>
+        
+        <div className="remember-me-container" style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input 
+              type="checkbox" 
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            <span>Remember me for 30 days</span>
+          </label>
+        </div>
         
         <button 
           className="discord-login-btn"

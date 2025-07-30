@@ -38,10 +38,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async () => {
+  const login = async (rememberMe = false) => {
     try {
-      // Redirect to Discord OAuth on backend
-      window.location.href = `${process.env.REACT_APP_API_URL.replace('/api', '')}/api/auth/discord`;
+      // Store remember preference in sessionStorage to pass to backend
+      sessionStorage.setItem('rememberMe', rememberMe);
+      // Redirect to Discord OAuth on backend with remember parameter
+      window.location.href = `${process.env.REACT_APP_API_URL.replace('/api', '')}/api/auth/discord?remember=${rememberMe}`;
     } catch (error) {
       console.error('Login failed:', error);
       throw error;

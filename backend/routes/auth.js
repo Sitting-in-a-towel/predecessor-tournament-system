@@ -6,7 +6,11 @@ const logger = require('../utils/logger');
 const router = express.Router();
 
 // Discord OAuth login
-router.get('/discord', passport.authenticate('discord'));
+router.get('/discord', (req, res, next) => {
+  // Store remember preference in session
+  req.session.rememberMe = req.query.remember === 'true';
+  passport.authenticate('discord')(req, res, next);
+});
 
 // Discord OAuth callback
 router.get('/discord/callback', (req, res, next) => {
@@ -36,6 +40,15 @@ router.get('/discord/callback', (req, res, next) => {
       }
       
       logger.info(`User ${user.userID} successfully authenticated`);
+      
+      // Set session duration based on remember preference
+      if (req.session.rememberMe) {
+        // 30 days if remember me is checked
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
+      } else {
+        // 1 day if not checked
+        req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
+      }
       
       // Ensure session is saved before redirecting
       req.session.save((saveErr) => {
