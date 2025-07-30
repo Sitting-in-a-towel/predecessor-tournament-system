@@ -11,26 +11,32 @@ module.exports = function(passport) {
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       logger.info(`Discord OAuth callback for user: ${profile.username}#${profile.discriminator}`);
+      logger.info('Discord profile data:', JSON.stringify(profile, null, 2));
       
       // Check if user exists in PostgreSQL
+      logger.info('Checking for existing user with Discord ID:', profile.id);
       let user = await postgresService.getUserByDiscordId(profile.id);
       
       if (user) {
         // Update existing user's last active time
+        logger.info('Found existing user:', user.user_id);
         await postgresService.updateUserLastActive(user.user_id);
         
         logger.info(`Existing user logged in: ${user.user_id}`);
       } else {
         // Create new user
+        logger.info('Creating new user for Discord ID:', profile.id);
         const newUser = {
           user_id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           discord_id: profile.id,
           discord_username: profile.username,
           discord_discriminator: profile.discriminator,
           email: profile.email,
+          avatar_url: profile.avatar ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png` : null,
           is_admin: false
         };
         
+        logger.info('New user data:', JSON.stringify(newUser, null, 2));
         user = await postgresService.createUser(newUser);
         logger.info(`New user created: ${user.user_id}`);
       }

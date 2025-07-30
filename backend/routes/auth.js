@@ -9,16 +9,37 @@ const router = express.Router();
 router.get('/discord', passport.authenticate('discord'));
 
 // Discord OAuth callback
-router.get('/discord/callback', 
-  passport.authenticate('discord', { 
-    failureRedirect: process.env.FRONTEND_URL + '/login?error=auth_failed' 
-  }),
-  (req, res) => {
-    // Successful authentication, redirect to frontend
-    logger.info(`User ${req.user.userID} successfully authenticated`);
-    res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
-  }
-);
+router.get('/discord/callback', (req, res, next) => {
+  passport.authenticate('discord', (err, user, info) => {
+    if (err) {
+      logger.error('Discord OAuth callback error:', err);
+      return res.status(500).json({ 
+        error: 'Internal server error', 
+        message: 'Discord authentication failed',
+        details: err.message 
+      });
+    }
+    
+    if (!user) {
+      logger.error('Discord OAuth callback: No user returned', info);
+      return res.redirect(process.env.FRONTEND_URL + '/login?error=auth_failed');
+    }
+    
+    req.logIn(user, (loginErr) => {
+      if (loginErr) {
+        logger.error('Login session error:', loginErr);
+        return res.status(500).json({ 
+          error: 'Internal server error', 
+          message: 'Login session failed',
+          details: loginErr.message 
+        });
+      }
+      
+      logger.info(`User ${user.userID} successfully authenticated`);
+      res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+    });
+  })(req, res, next);
+});
 
 // Get current user
 router.get('/me', (req, res) => {
