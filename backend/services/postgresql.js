@@ -6,17 +6,25 @@ require('dotenv').config({ path: require('path').join(__dirname, '../../.env') }
 
 class PostgreSQLService {
     constructor() {
-        this.pool = new Pool({
+        // Use DATABASE_URL if available (production), otherwise use individual variables (local)
+        const config = process.env.DATABASE_URL ? {
+            connectionString: process.env.DATABASE_URL,
+            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+            max: 20,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 2000,
+        } : {
             host: process.env.POSTGRES_HOST || 'localhost',
             port: parseInt(process.env.POSTGRES_PORT) || 5432,
             database: process.env.POSTGRES_DATABASE || 'predecessor_tournaments',
             user: process.env.POSTGRES_USER || 'postgres',
             password: String(process.env.POSTGRES_PASSWORD || ''),
-            // Connection pool settings
             max: 20,
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 2000,
-        });
+        };
+        
+        this.pool = new Pool(config);
 
         // Test connection on startup
         this.testConnection();
