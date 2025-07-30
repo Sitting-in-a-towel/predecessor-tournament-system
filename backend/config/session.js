@@ -13,12 +13,17 @@ function createSessionConfig() {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       maxAge: 20 * 24 * 60 * 60 * 1000, // 20 days
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     }
   };
 
   // Configure session store based on environment
   const storeType = process.env.SESSION_STORE || 'memory';
+  
+  // Trust proxy in production (required for secure cookies behind Render proxy)
+  if (process.env.NODE_ENV === 'production') {
+    config.proxy = true;
+  }
 
   switch (storeType) {
     case 'file':

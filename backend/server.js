@@ -62,7 +62,8 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposedHeaders: ['Set-Cookie']
 }));
 
 // Body parsing middleware
@@ -74,10 +75,20 @@ app.use(cookieParser());
 // Logging
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 
+// Trust proxy (required for secure cookies behind Render)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Session configuration
 const { createSessionConfig, handleSessionErrors } = require('./config/session');
 app.use(session(createSessionConfig()));
 app.use(handleSessionErrors);
+
+// Session debugging (production only)
+if (process.env.NODE_ENV === 'production') {
+  app.use(require('./middleware/session-debug'));
+}
 
 // Passport middleware
 app.use(passport.initialize());

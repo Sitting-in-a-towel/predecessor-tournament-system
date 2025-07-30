@@ -36,7 +36,20 @@ router.get('/discord/callback', (req, res, next) => {
       }
       
       logger.info(`User ${user.userID} successfully authenticated`);
-      res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+      
+      // Ensure session is saved before redirecting
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          logger.error('Session save error:', saveErr);
+          return res.status(500).json({ 
+            error: 'Internal server error', 
+            message: 'Session save failed'
+          });
+        }
+        
+        logger.info(`Session saved for user ${user.userID}`);
+        res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+      });
     });
   })(req, res, next);
 });
