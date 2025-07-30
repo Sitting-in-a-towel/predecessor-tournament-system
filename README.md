@@ -40,50 +40,37 @@ A comprehensive web-based tournament management system for Predecessor esports t
 
 ## 🚀 Quick Start
 
-### 1. Initial Setup
+### 1. Start Development
 ```bash
-# Run complete project setup
-launchers\setup_project.bat
-```
-
-### 2. Configure Environment
-Edit the created environment files:
-- `backend\.env` - Add your Discord OAuth and Airtable credentials
-- `frontend\.env` - Usually defaults are fine
-
-### 3. Create Database
-```bash
-# Set up Airtable tables and sample data
-launchers\setup_airtable_database.bat
-```
-
-### 4. Start Development
-```bash
-# Option 1: Use the UI launcher (recommended)
-launchers\Install_Launcher_UI.bat
+# Use the UI launcher (recommended)
 launchers\Start_UI_Launcher_Real.bat
 
-# Option 2: Standard development start
-launchers\start_development.bat
-
-# Option 3: Manual start (separate terminals)
-cd backend && npm run dev
-cd frontend && npm start
+# Or start both services
+launchers\Start_Development_Environment.bat
 ```
+
+### 2. Access the Application
+- **Local**: http://localhost:3000
+- **Live**: https://ocl-predecessor.netlify.app
 
 ## 🌐 URLs
 
+### Local Development
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:3001
 - **UI Launcher**: http://localhost:4000
 - **Admin Dashboard**: http://localhost:3000/admin/dashboard
 
+### Production
+- **Live Site**: https://ocl-predecessor.netlify.app
+- **API**: https://predecessor-tournament-api.onrender.com
+
 ## 📚 Documentation
 
 - [Quick Start Guide](documentation/QUICK_START_GUIDE.md)
-- [Professional Setup](docs/Professional_Setup_Guide.md)
-- [External Access Setup](docs/External_Access_Setup.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
+- [Deployment Guide](documentation/DEPLOYMENT_STEPS.md)
+- [File Organization](documentation/FILE_ORGANIZATION.md)
+- [Hosting Comparison](documentation/HOSTING_COMPARISON.md)
 
 ## 🧪 Testing
 
@@ -103,16 +90,12 @@ npm run test:coverage
 
 ## 🚀 Deployment
 
-### Staging
+### Automatic Deployment
 ```bash
-git push origin develop
-# Automatically deploys to staging
-```
-
-### Production
-```bash
+# Any push to main branch automatically deploys to:
+# Frontend: https://ocl-predecessor.netlify.app
+# Backend: https://predecessor-tournament-api.onrender.com
 git push origin main
-# Automatically deploys to production
 ```
 
 ## 📊 Monitoring

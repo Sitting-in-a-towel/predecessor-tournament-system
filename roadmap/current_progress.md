@@ -1,167 +1,171 @@
 # Predecessor Tournament Management - Current Progress
 
-**Last Updated**: 2025-07-25  
-**Current Phase**: Phase 1 ✅ COMPLETED  
-**Overall Progress**: 25% Complete
+**Last Updated**: 2025-07-30  
+**Current Phase**: Phase 1 ✅ COMPLETED + Deployment ✅ LIVE  
+**Overall Progress**: 35% Complete
 
 ## Phase Status Overview
 
 | Phase | Status | Progress | Priority | Est. Duration |
 |-------|--------|----------|----------|---------------|
 | **Phase 1: Setup** | ✅ COMPLETED | 100% | HIGH | ✅ Done |
-| **Phase 2: Core Features** | 🔄 READY | 0% | HIGH | 2-3 weeks |
+| **Deployment** | ✅ LIVE | 100% | HIGH | ✅ Done |
+| **Phase 2: Core Features** | 🔄 IN PROGRESS | 60% | HIGH | 2-3 weeks |
 | **Phase 3: Draft System** | 📋 PLANNED | 0% | HIGH | 3-4 weeks |
 | **Phase 4: Advanced Features** | 📋 PLANNED | 0% | MEDIUM | 2-3 weeks |
 | **Phase 5: Polish & Testing** | 📋 PLANNED | 0% | MEDIUM | 1-2 weeks |
 
 ## Recent Accomplishments ✅
 
+### Deployment & Live Site (NEW!)
+- ✅ Deployed frontend to Netlify: https://ocl-predecessor.netlify.app
+- ✅ Deployed backend to Render: https://predecessor-tournament-api.onrender.com
+- ✅ Configured automatic deployments from GitHub
+- ✅ Set up zero-downtime deployments
+- ✅ Updated Discord OAuth for production
+
+### Phase 2 Progress (60% Complete)
+- ✅ Tournament creation form with validation
+- ✅ Tournament listing and viewing
+- ✅ Team registration and management
+- ✅ Enhanced tournament registration UI with dropdowns
+- ✅ Fixed admin panel layout (2x2 grid)
+- ✅ Fixed tournament navigation from teams page
+- ✅ Tournament check-in system
+- ✅ Match management interface
+
 ### Infrastructure Setup (Phase 1)
 - ✅ Complete project structure with frontend/backend separation
 - ✅ React frontend with routing, authentication, and styled components
 - ✅ Node.js/Express backend with comprehensive API structure
 - ✅ Discord OAuth authentication system
-- ✅ Airtable database integration with automated setup script
-- ✅ Development environment with ADHD-friendly batch launchers
-- ✅ Environment configuration templates
-- ✅ Security middleware and rate limiting
-- ✅ WebSocket infrastructure for real-time features
-- ✅ Comprehensive documentation and setup guides
+- ✅ Airtable database integration
+- ✅ Development environment with UI launcher
+- ✅ Comprehensive documentation
 
-### Database & API Foundation
-- ✅ All 8 database tables implemented with proper relationships
-- ✅ Complete API route structure (auth, tournaments, teams, draft, admin)
-- ✅ Sample data population scripts
-- ✅ Database connection management and error handling
+## What's Currently Working 🎮
 
-### Developer Experience
-- ✅ One-click project setup with `setup_project.bat`
-- ✅ Automated Airtable database creation
-- ✅ Development server launchers
-- ✅ Testing and backup utilities
-- ✅ Comprehensive README and documentation
+### Live Features
+- Discord login and authentication
+- Tournament creation (admin)
+- Tournament viewing and listing
+- Team registration for tournaments
+- Team management (captain functions)
+- Admin dashboard with statistics
+- Tournament check-in
+- Match reporting
+
+### Known Limitations
+- No real-time draft system yet (Phase 3)
+- Basic styling (will improve in Phase 5)
+- Bracket generation incomplete
 
 ## Next Immediate Steps 🎯
 
-### Ready to Start Phase 2
-1. **Tournament Creation System**
-   - Implement tournament creation form with full validation
-   - Add bracket type selection and match format configuration
-   - Create public tournament listing with filtering
+### Complete Phase 2 (40% remaining)
+1. **Bracket Generation**
+   - Implement single elimination brackets
+   - Add double elimination support
+   - Create bracket visualization
 
-2. **Team Registration**
-   - Build team creation workflow
-   - Implement player invitation system
-   - Add team roster management interface
+2. **Match Progression**
+   - Automated winner advancement
+   - Loser bracket management
+   - Tournament completion flow
 
-3. **Basic Admin Panel**
-   - Create admin dashboard with system statistics
-   - Add tournament management controls
-   - Implement user management features
+3. **Notifications**
+   - Match ready notifications
+   - Tournament updates
+   - Team invitations
 
-## Current Technical State
+### Then Phase 3: Draft System
+- Real-time pick/ban interface
+- WebSocket implementation
+- Draft history and replay
 
-### What's Working ✅
-- Project structure and dependencies
-- Authentication flow (Discord OAuth)
-- Database connectivity (Airtable)
-- API endpoints structure
-- Basic UI navigation
-- Development environment
+## Database Status
 
-### What Needs Implementation 🔲
-- Frontend form components and validation
-- Tournament business logic
-- Team management workflows
-- Admin panel functionality
-- Real-time notifications
-- Hero data integration
-
-## Blockers & Dependencies ⚠️
-
-### User Configuration Required
-- **Discord OAuth Setup**: User needs to create Discord application and configure credentials
-- **Environment Variables**: User needs to configure `.env` files with their credentials
-
-### No Technical Blockers
-- All infrastructure is in place
-- Database schema is implemented
-- API structure is complete
+### Current: PostgreSQL ✅
+- Full migration completed
+- No user limits
+- Better performance
+- Ready for all Phase 4 features
+- Both local and production databases configured
 
 ## Testing Strategy
 
-### Phase 1 Testing ✅ Complete
-- ✅ Project structure validation
-- ✅ Package.json dependency verification
-- ✅ Database script functionality
-- ✅ Launcher script testing
+### Current Testing Needs
+- Multi-user tournament flow
+- Bracket generation edge cases
+- Team size limits
+- Permission testing
 
-### Phase 2 Testing 🔄 Ready
-- User journey testing (tournament creation → team registration → admin management)
-- API endpoint validation
-- Authentication flow testing
-- Form validation testing
+### Community Testing
+- Share with OCL community
+- Gather feedback on UI/UX
+- Test tournament formats
+- Identify missing features
 
-## Success Metrics Tracking
+## Success Metrics
 
-### Phase 1 Goals Met ✅
-- ✅ User can log in with Discord and basic navigation works
-- ✅ Project can be started with launcher scripts
-- ✅ Database connection established
-- ✅ All core infrastructure operational
+### Deployment Success ✅
+- Site accessible globally
+- Authentication working
+- Data persisting correctly
+- Auto-deployment functional
 
-### Phase 2 Success Criteria 🎯
-- Users can create tournaments with all specified formats
-- Teams can register and manage their rosters  
-- Admins can manage tournaments and users
-- Public users can view tournament information
+### Phase 2 Success Criteria
+- ✅ Users can create tournaments
+- ✅ Teams can register
+- ⏳ Brackets generate correctly
+- ⏳ Matches progress smoothly
+- ✅ Admin controls functional
 
-## Resource Requirements
+## Development Workflow
 
-### Development Environment ✅ Ready
-- Node.js 22.17.0 installed
-- npm 11.4.2 available
-- All project dependencies defined
-- Development tools configured
+### Local Development
+1. Make changes locally
+2. Test at http://localhost:3000
+3. Commit changes when ready
 
-### External Services Status
-- ✅ Airtable: API token provided, ready for base creation
-- ⚠️ Discord OAuth: Requires user configuration
-- ✅ Omeda API: Endpoint identified for hero data
+### Deployment Process
+1. Push to GitHub main branch
+2. Netlify auto-deploys frontend (~2 min)
+3. Render auto-deploys backend (~3 min)
+4. Changes live at https://ocl-predecessor.netlify.app
 
 ## Risk Assessment
 
-### Low Risk Items ✅
-- Technical infrastructure
-- Database schema
-- API architecture
+### Low Risk ✅
+- Deployment infrastructure
+- Current features stable
 - Development workflow
 
-### Medium Risk Items ⚠️
-- Discord OAuth configuration complexity
-- User testing coordination
-- Real-time feature performance (Phase 3)
+### Medium Risk ⚠️
+- Complex bracket logic
+- Performance with many concurrent users
+- Real-time draft system complexity
 
-### Mitigation Strategies
-- Comprehensive setup documentation provided
-- Automated scripts reduce configuration errors
-- Phased approach allows for testing and validation
+### Mitigation
+- PostgreSQL provides unlimited scalability
+- Performance monitoring in place
+- Incremental feature releases
 
-## Quality Gates
+## Community Feedback Needed
 
-### Phase 1 ✅ PASSED
-- All technical infrastructure operational
-- Documentation complete and accurate
-- Setup process validated and automated
-- No critical technical debt
+### Questions for Testing
+1. Tournament formats - what's missing?
+2. Team management - pain points?
+3. UI/UX - confusing areas?
+4. Features - what's most important?
 
-### Phase 2 🎯 Ready to Begin
-- All prerequisites met
-- Clear success criteria defined
-- Testing strategy outlined
-- Implementation plan established
+### How to Gather Feedback
+- Share URL with trusted testers
+- Create feedback form
+- Monitor for bugs
+- Track feature requests
 
 ---
 
-**Next Review Date**: After Phase 2 completion  
-**Estimated Next Milestone**: Core tournament and team management functional
+**Next Review**: After bracket generation complete
+**Production URL**: https://ocl-predecessor.netlify.app

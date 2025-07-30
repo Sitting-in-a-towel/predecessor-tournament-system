@@ -107,9 +107,9 @@ H:\Project Folder\Predecessor website\
 - UI Launcher: Real-time log monitoring
 
 ## Deployment Targets
-- **Frontend**: Netlify (free)
-- **Backend**: Render (free tier)
-- **Database**: Supabase PostgreSQL (sessions) + Airtable (data)
+- **Frontend**: Netlify - https://ocl-predecessor.netlify.app
+- **Backend**: Render - https://predecessor-tournament-api.onrender.com
+- **Database**: Airtable (current) - PostgreSQL ready for migration
 
 ## Notes for Claude
 - Always run launchers from project root directory

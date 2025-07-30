@@ -8,12 +8,11 @@ class DatabaseConnection {
 
   async connectDatabase() {
     try {
-      // For Airtable, we don't need a persistent connection
-      // Just verify that our credentials are valid
-      await this.verifyAirtableConnection();
+      // Verify PostgreSQL connection
+      await this.verifyPostgreSQLConnection();
       
       this.isConnected = true;
-      logger.info('Database connection established (Airtable)');
+      logger.info('Database connection established (PostgreSQL)');
       return true;
     } catch (error) {
       logger.error('Database connection failed:', error);
@@ -21,45 +20,20 @@ class DatabaseConnection {
     }
   }
 
-  async verifyAirtableConnection() {
-    const Airtable = require('airtable');
-    
-    // Check required environment variables
-    if (!process.env.AIRTABLE_PERSONAL_TOKEN) {
-      throw new Error('AIRTABLE_PERSONAL_TOKEN is required');
-    }
-    
-    if (!process.env.AIRTABLE_BASE_ID) {
-      throw new Error('AIRTABLE_BASE_ID is required');
-    }
-
-    // Configure Airtable
-    Airtable.configure({
-      endpointUrl: 'https://api.airtable.com',
-      apiKey: process.env.AIRTABLE_PERSONAL_TOKEN
-    });
-
-    const base = Airtable.base(process.env.AIRTABLE_BASE_ID);
+  async verifyPostgreSQLConnection() {
+    const postgresService = require('../services/postgresql');
     
     try {
-      // Simple connection test - just try to access Users table
-      await base('Users').select({ maxRecords: 1 }).firstPage();
-      logger.info('✅ Airtable connection verified successfully');
+      // Test the PostgreSQL connection
+      await postgresService.testConnection();
+      logger.info('✅ PostgreSQL connection verified successfully');
     } catch (error) {
-      if (error.statusCode === 401) {
-        throw new Error('Invalid Airtable credentials - check your personal access token');
-      } else if (error.statusCode === 403) {
-        throw new Error('Airtable access denied - token needs more permissions');
-      } else if (error.statusCode === 404) {
-        throw new Error('Users table not found - please create tables manually first');
-      } else {
-        throw new Error(`Airtable connection error: ${error.message}`);
-      }
+      throw new Error(`PostgreSQL connection error: ${error.message}`);
     }
   }
 
   async disconnect() {
-    // Airtable doesn't require explicit disconnection
+    // PostgreSQL pool handles disconnection automatically
     this.isConnected = false;
     logger.info('Database disconnected');
   }
@@ -67,7 +41,7 @@ class DatabaseConnection {
   getConnectionStatus() {
     return {
       isConnected: this.isConnected,
-      type: 'Airtable',
+      type: 'PostgreSQL',
       timestamp: new Date().toISOString()
     };
   }

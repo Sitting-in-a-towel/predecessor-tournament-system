@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, param, query, validationResult } = require('express-validator');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
-// const postgresService = require('../services/postgresql'); // Disabled for production
+const postgresService = require('../services/postgresql');
 const logger = require('../utils/logger');
 
 const router = express.Router();
