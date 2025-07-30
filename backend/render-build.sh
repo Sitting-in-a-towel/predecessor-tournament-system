@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+cd backend
+npm install
+npm run build || echo "No build script found, skipping..."

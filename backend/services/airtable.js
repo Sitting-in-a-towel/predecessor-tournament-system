@@ -140,6 +140,28 @@ class AirtableService {
     }
   }
 
+  async getAllUsers() {
+    try {
+      const records = await this.tables.users.select({
+        sort: [{ field: 'CreatedAt', direction: 'desc' }]
+      }).all();
+
+      return records.map(record => ({
+        recordId: record.id,
+        UserID: record.get('UserID'),
+        DiscordID: record.get('DiscordID'),
+        DiscordUsername: record.get('DiscordUsername'),
+        Email: record.get('Email'),
+        IsAdmin: record.get('IsAdmin') || false,
+        CreatedAt: record.get('CreatedAt'),
+        LastActive: record.get('LastActive')
+      }));
+    } catch (error) {
+      logger.error('Error getting all users:', error);
+      throw error;
+    }
+  }
+
   // Tournament management
   async getTournaments(filters = {}) {
     try {
@@ -281,6 +303,35 @@ class AirtableService {
     }
   }
 
+  async updateTeam(recordId, updates) {
+    try {
+      const updatedRecords = await this.tables.teams.update([
+        {
+          id: recordId,
+          fields: updates
+        }
+      ]);
+
+      const record = updatedRecords[0];
+      return {
+        recordId: record.id,
+        TeamID: record.get('TeamID'),
+        TeamName: record.get('TeamName'),
+        Captain: record.get('Captain'),
+        Players: record.get('Players'),
+        Substitutes: record.get('Substitutes'),
+        Confirmed: record.get('Confirmed'),
+        CreatedAt: record.get('CreatedAt'),
+        TeamLogo: record.get('TeamLogo'),
+        Tournament: record.get('Tournament'),
+        ConfirmedAt: record.get('ConfirmedAt')
+      };
+    } catch (error) {
+      logger.error('Error updating team:', error);
+      throw error;
+    }
+  }
+
   // Heroes management (for draft system)
   async getHeroes() {
     try {
@@ -304,7 +355,187 @@ class AirtableService {
     }
   }
 
+  // Match management
+  async getMatches() {
+    try {
+      const records = await this.tables.matches.select({
+        sort: [{ field: 'CreatedAt', direction: 'desc' }]
+      }).all();
+
+      return records.map(record => ({
+        recordId: record.id,
+        MatchID: record.get('MatchID'),
+        Tournament: record.get('Tournament'),
+        Team1: record.get('Team1'),
+        Team2: record.get('Team2'),
+        Round: record.get('Round'),
+        MatchType: record.get('MatchType'),
+        Status: record.get('Status'),
+        ScheduledTime: record.get('ScheduledTime'),
+        StartedAt: record.get('StartedAt'),
+        CompletedAt: record.get('CompletedAt'),
+        Winner: record.get('Winner'),
+        Team1Score: record.get('Team1Score'),
+        Team2Score: record.get('Team2Score'),
+        GameLength: record.get('GameLength'),
+        Notes: record.get('Notes'),
+        CreatedAt: record.get('CreatedAt'),
+        CreatedBy: record.get('CreatedBy'),
+        StartedBy: record.get('StartedBy'),
+        ReportedBy: record.get('ReportedBy')
+      }));
+    } catch (error) {
+      logger.error('Error getting matches:', error);
+      throw error;
+    }
+  }
+
+  async getMatchesByTournament(tournamentID) {
+    try {
+      const records = await this.tables.matches.select({
+        filterByFormula: `SEARCH('${tournamentID}', ARRAYJOIN({Tournament}))`,
+        sort: [{ field: 'CreatedAt', direction: 'desc' }]
+      }).all();
+
+      return records.map(record => ({
+        recordId: record.id,
+        MatchID: record.get('MatchID'),
+        Tournament: record.get('Tournament'),
+        Team1: record.get('Team1'),
+        Team2: record.get('Team2'),
+        Round: record.get('Round'),
+        MatchType: record.get('MatchType'),
+        Status: record.get('Status'),
+        ScheduledTime: record.get('ScheduledTime'),
+        StartedAt: record.get('StartedAt'),
+        CompletedAt: record.get('CompletedAt'),
+        Winner: record.get('Winner'),
+        Team1Score: record.get('Team1Score'),
+        Team2Score: record.get('Team2Score'),
+        GameLength: record.get('GameLength'),
+        Notes: record.get('Notes'),
+        CreatedAt: record.get('CreatedAt'),
+        CreatedBy: record.get('CreatedBy'),
+        StartedBy: record.get('StartedBy'),
+        ReportedBy: record.get('ReportedBy')
+      }));
+    } catch (error) {
+      logger.error('Error getting matches by tournament:', error);
+      throw error;
+    }
+  }
+
+  async createMatch(matchData) {
+    try {
+      const records = await this.tables.matches.create([
+        {
+          fields: matchData
+        }
+      ]);
+
+      const record = records[0];
+      return {
+        recordId: record.id,
+        MatchID: record.get('MatchID'),
+        Tournament: record.get('Tournament'),
+        Team1: record.get('Team1'),
+        Team2: record.get('Team2'),
+        Round: record.get('Round'),
+        MatchType: record.get('MatchType'),
+        Status: record.get('Status'),
+        ScheduledTime: record.get('ScheduledTime'),
+        CreatedAt: record.get('CreatedAt'),
+        CreatedBy: record.get('CreatedBy')
+      };
+    } catch (error) {
+      logger.error('Error creating match:', error);
+      throw error;
+    }
+  }
+
+  async updateMatch(recordId, updates) {
+    try {
+      const updatedRecords = await this.tables.matches.update([
+        {
+          id: recordId,
+          fields: updates
+        }
+      ]);
+
+      const record = updatedRecords[0];
+      return {
+        recordId: record.id,
+        MatchID: record.get('MatchID'),
+        Tournament: record.get('Tournament'),
+        Team1: record.get('Team1'),
+        Team2: record.get('Team2'),
+        Round: record.get('Round'),
+        MatchType: record.get('MatchType'),
+        Status: record.get('Status'),
+        ScheduledTime: record.get('ScheduledTime'),
+        StartedAt: record.get('StartedAt'),
+        CompletedAt: record.get('CompletedAt'),
+        Winner: record.get('Winner'),
+        Team1Score: record.get('Team1Score'),
+        Team2Score: record.get('Team2Score'),
+        GameLength: record.get('GameLength'),
+        Notes: record.get('Notes'),
+        CreatedAt: record.get('CreatedAt'),
+        CreatedBy: record.get('CreatedBy'),
+        StartedBy: record.get('StartedBy'),
+        ReportedBy: record.get('ReportedBy')
+      };
+    } catch (error) {
+      logger.error('Error updating match:', error);
+      throw error;
+    }
+  }
+
+  async deleteMatch(recordId) {
+    try {
+      await this.tables.matches.destroy([recordId]);
+      return true;
+    } catch (error) {
+      logger.error('Error deleting match:', error);
+      throw error;
+    }
+  }
+
   // Draft session management
+  async getDraftSessions() {
+    try {
+      const records = await this.tables.draftSessions.select({
+        sort: [{ field: 'CreatedAt', direction: 'desc' }]
+      }).all();
+
+      return records.map(record => ({
+        recordId: record.id,
+        DraftID: record.get('DraftID'),
+        Match: record.get('Match'),
+        Team1Captain: record.get('Team1Captain'),
+        Team2Captain: record.get('Team2Captain'),
+        Status: record.get('Status'),
+        CreatedAt: record.get('CreatedAt'),
+        StartTime: record.get('StartTime'),
+        CompletedAt: record.get('CompletedAt'),
+        CurrentPhase: record.get('CurrentPhase'),
+        CurrentTurn: record.get('CurrentTurn'),
+        CoinTossWinner: record.get('CoinTossWinner'),
+        FirstPick: record.get('FirstPick'),
+        PickOrder: record.get('PickOrder'),
+        BanOrder: record.get('BanOrder'),
+        Team1Picks: record.get('Team1Picks'),
+        Team2Picks: record.get('Team2Picks'),
+        Team1Bans: record.get('Team1Bans'),
+        Team2Bans: record.get('Team2Bans'),
+        CreatedBy: record.get('CreatedBy')
+      }));
+    } catch (error) {
+      logger.error('Error getting draft sessions:', error);
+      throw error;
+    }
+  }
+
   async createDraftSession(draftData) {
     try {
       const records = await this.tables.draftSessions.create([
@@ -321,7 +552,9 @@ class AirtableService {
         Team1Captain: record.get('Team1Captain'),
         Team2Captain: record.get('Team2Captain'),
         Status: record.get('Status'),
-        StartTime: record.get('StartTime')
+        CreatedAt: record.get('CreatedAt'),
+        CurrentPhase: record.get('CurrentPhase'),
+        CurrentTurn: record.get('CurrentTurn')
       };
     } catch (error) {
       logger.error('Error creating draft session:', error);

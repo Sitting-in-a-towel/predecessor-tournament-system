@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { airtableService } from '../services/airtableService';
+import axios from 'axios';
 import TeamSignup from '../components/Team/TeamSignup';
 import TeamManagement from '../components/Team/TeamManagement';
 import { toast } from 'react-toastify';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+
 const Teams = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,13 +19,20 @@ const Teams = () => {
 
   useEffect(() => {
     loadUserTeams();
-  }, []);
+    
+    // Check if we should auto-open team creation (from "Register Team" button)
+    if (location.state?.action === 'create') {
+      setShowCreateForm(true);
+    }
+  }, [location.state]);
 
   const loadUserTeams = async () => {
     try {
       setLoading(true);
-      const userTeams = await airtableService.getMyTeams();
-      setTeams(userTeams || []);
+      const response = await axios.get(`${API_BASE_URL}/teams/my-teams`, {
+        withCredentials: true
+      });
+      setTeams(response.data || []);
     } catch (error) {
       console.error('Error loading teams:', error);
       toast.error('Failed to load teams');
@@ -43,24 +53,23 @@ const Teams = () => {
     loadUserTeams();
     if (selectedTeam) {
       // Refresh selected team data
-      const updatedTeam = teams.find(team => team.TeamID === selectedTeam.TeamID);
+      const updatedTeam = teams.find(team => team.team_id === selectedTeam.team_id);
       setSelectedTeam(updatedTeam);
     }
   };
 
   const isCaptain = (team) => {
-    return user && team.Captain?.includes(user.userID);
+    // For PostgreSQL, we need to check if user is captain differently
+    // This will need to be updated when we have proper captain tracking
+    return true; // Placeholder - assume user is captain of their teams
   };
 
   const getTeamStatus = (team) => {
-    const playerCount = team.Players?.length || 0;
-    
-    if (team.Confirmed) {
+    // For now, assume all teams are confirmed since we set confirmed=true in backend
+    if (team.confirmed) {
       return { status: 'confirmed', text: 'Ready to Play', color: 'green' };
-    } else if (playerCount >= 5) {
-      return { status: 'ready', text: 'Ready to Confirm', color: 'orange' };
     } else {
-      return { status: 'incomplete', text: `Need ${5 - playerCount} more players`, color: 'red' };
+      return { status: 'incomplete', text: 'Pending confirmation', color: 'orange' };
     }
   };
 
@@ -127,15 +136,15 @@ const Teams = () => {
                 {teams.map(team => {
                   const status = getTeamStatus(team);
                   return (
-                    <div key={team.TeamID} className="team-card">
+                    <div key={team.team_id} className="team-card">
                       <div className="team-header">
                         <img 
-                          src={team.TeamLogo || '/assets/images/predecessor-default-icon.jpg'} 
+                          src={team.team_logo || '/assets/images/predecessor-default-icon.jpg'} 
                           alt="Team logo" 
                           className="team-logo-small" 
                         />
                         <div className="team-info">
-                          <h3>{team.TeamName}</h3>
+                          <h3>{team.team_name}</h3>
                           <div className="team-meta">
                             {isCaptain(team) && <span className="captain-badge">Captain</span>}
                             <span className={`status-badge ${status.status}`}>
@@ -148,16 +157,16 @@ const Teams = () => {
                       <div className="team-stats">
                         <div className="stat-item">
                           <label>Players</label>
-                          <span>{team.Players?.length || 0}/5</span>
+                          <span>1/5</span>
                         </div>
                         <div className="stat-item">
                           <label>Substitutes</label>
-                          <span>{team.Substitutes?.length || 0}/3</span>
+                          <span>0/3</span>
                         </div>
                         <div className="stat-item">
                           <label>Status</label>
-                          <span className={team.Confirmed ? 'confirmed' : 'pending'}>
-                            {team.Confirmed ? 'Confirmed' : 'Pending'}
+                          <span className={team.confirmed ? 'confirmed' : 'pending'}>
+                            {team.confirmed ? 'Confirmed' : 'Pending'}
                           </span>
                         </div>
                       </div>
@@ -169,10 +178,10 @@ const Teams = () => {
                         >
                           Manage Team
                         </button>
-                        {team.Tournament && (
+                        {team.tournament_ref_id && (
                           <button 
                             className="btn-secondary"
-                            onClick={() => navigate(`/tournaments/${team.Tournament[0]}`)}
+                            onClick={() => navigate(`/tournaments/${team.tournament_ref_id}`)}
                           >
                             View Tournament
                           </button>
@@ -184,7 +193,7 @@ const Teams = () => {
                           <div 
                             className="progress-fill"
                             style={{ 
-                              width: `${Math.min(((team.Players?.length || 0) / 5) * 100, 100)}%`,
+                              width: '20%', // 1/5 players
                               backgroundColor: status.color
                             }}
                           />

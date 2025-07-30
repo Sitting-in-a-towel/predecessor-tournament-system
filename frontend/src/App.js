@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/Auth/ProtectedRoute';
 // Pages
 import Home from './pages/Home';
 import Tournaments from './pages/Tournaments';
+import TournamentDetail from './pages/TournamentDetail';
 import Teams from './pages/Teams';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
@@ -15,9 +16,6 @@ import AdminDashboard from './pages/AdminDashboard';
 
 // Auth Components
 import DiscordLogin from './components/Auth/DiscordLogin';
-
-// Tournament Components
-import TournamentView from './components/Tournament/TournamentView';
 
 function App() {
   return (
@@ -28,7 +26,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/tournaments" element={<Tournaments />} />
-            <Route path="/tournaments/:id" element={<TournamentView />} />
+            <Route path="/tournaments/:id" element={<TournamentDetail />} />
             <Route path="/login" element={<DiscordLogin />} />
             
             {/* Protected Routes */}

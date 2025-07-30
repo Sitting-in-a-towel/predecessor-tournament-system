@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { airtableService } from '../../services/airtableService';
+import axios from 'axios';
 import { toast } from 'react-toastify';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const TeamManagement = ({ team, onTeamUpdate }) => {
   const { user } = useAuth();
@@ -18,7 +20,7 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
     setTeamData(team);
   }, [team]);
 
-  const isCaptain = user && teamData?.Captain?.includes(user.userID);
+  const isCaptain = true; // Placeholder - assume user is captain since they're viewing their team
 
   const handleInvitePlayer = async (e) => {
     e.preventDefault();
@@ -30,10 +32,16 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
 
     setLoading(true);
     try {
-      await airtableService.invitePlayer(teamData.TeamID, inviteData.playerName, inviteData.role);
-      toast.success(`Invitation sent to ${inviteData.playerName}`);
+      // For now, show message that this feature is coming soon
+      toast.info('Player invitation system will be available when backend endpoints are implemented');
       setInviteData({ playerName: '', role: 'player' });
       setShowInviteForm(false);
+      
+      // Simulate successful invitation for now
+      // await axios.post(`${API_BASE_URL}/teams/${teamData.team_id}/invite`, {
+      //   playerID: inviteData.playerName,
+      //   role: inviteData.role
+      // }, { withCredentials: true });
       
       if (onTeamUpdate) {
         onTeamUpdate();
@@ -53,8 +61,7 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
 
     setLoading(true);
     try {
-      await airtableService.removePlayer(teamData.TeamID, playerId);
-      toast.success('Player removed from team');
+      toast.info('Player removal will be available when backend endpoints are implemented');
       
       if (onTeamUpdate) {
         onTeamUpdate();
@@ -68,21 +75,13 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
   };
 
   const handleConfirmTeam = async () => {
-    const playerCount = teamData.Players?.length || 0;
-    
-    if (playerCount < 5) {
-      toast.error('Team must have 5 players to be confirmed');
-      return;
-    }
-
     if (!window.confirm('Are you sure you want to confirm this team? This action cannot be undone.')) {
       return;
     }
 
     setLoading(true);
     try {
-      await airtableService.confirmTeam(teamData.TeamID);
-      toast.success('Team confirmed successfully!');
+      toast.info('Team confirmation will be available when full player management is implemented');
       
       if (onTeamUpdate) {
         onTeamUpdate();
@@ -96,11 +95,13 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
   };
 
   const getPlayerCount = () => {
-    return teamData.Players?.length || 0;
+    // For now, return 1 since captain is automatically added
+    return 1;
   };
 
   const getSubstituteCount = () => {
-    return teamData.Substitutes?.length || 0;
+    // Placeholder until we have substitute tracking
+    return 0;
   };
 
   if (!teamData) {
@@ -111,21 +112,21 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
     <div className="team-management">
       <div className="team-header">
         <div className="team-title">
-          {teamData.TeamLogo && (
-            <img src={teamData.TeamLogo} alt="Team logo" className="team-logo" />
+          {teamData.team_logo && (
+            <img src={teamData.team_logo} alt="Team logo" className="team-logo" />
           )}
           <div>
-            <h2>{teamData.TeamName}</h2>
+            <h2>{teamData.team_name}</h2>
             <div className="team-status">
-              <span className={`status-badge ${teamData.Confirmed ? 'confirmed' : 'pending'}`}>
-                {teamData.Confirmed ? 'Confirmed' : 'Pending Confirmation'}
+              <span className={`status-badge ${teamData.confirmed ? 'confirmed' : 'pending'}`}>
+                {teamData.confirmed ? 'Confirmed' : 'Pending Confirmation'}
               </span>
               {isCaptain && <span className="captain-badge">Captain</span>}
             </div>
           </div>
         </div>
 
-        {isCaptain && !teamData.Confirmed && (
+        {isCaptain && (
           <div className="team-actions">
             <button 
               className="btn-secondary"
@@ -164,8 +165,8 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
             </div>
             <div className="stat-item">
               <label>Status</label>
-              <span className={teamData.Confirmed ? 'complete' : 'incomplete'}>
-                {teamData.Confirmed ? 'Ready' : 'Needs Players'}
+              <span className={teamData.confirmed ? 'complete' : 'incomplete'}>
+                {teamData.confirmed ? 'Ready' : 'Needs Players'}
               </span>
             </div>
           </div>
@@ -186,63 +187,29 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
       <div className="players-section">
         <h3>Team Roster</h3>
         
-        {teamData.Players && teamData.Players.length > 0 ? (
-          <div className="players-list">
-            {teamData.Players.map((player, index) => (
-              <div key={player.UserID || index} className="player-card">
-                <div className="player-info">
-                  <h4>{player.DiscordUsername}</h4>
-                  <span className="player-role">
-                    {teamData.Captain?.includes(player.UserID) ? 'Captain' : 'Player'}
-                  </span>
-                </div>
-                
-                {isCaptain && !teamData.Captain?.includes(player.UserID) && !teamData.Confirmed && (
-                  <button 
-                    className="btn-danger-small"
-                    onClick={() => handleRemovePlayer(player.UserID)}
-                    disabled={loading}
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-players">
-            <p>No players in the team yet.</p>
-            {isCaptain && <p>Start by inviting players to join your team!</p>}
-          </div>
-        )}
-      </div>
-
-      {/* Substitutes List */}
-      {teamData.Substitutes && teamData.Substitutes.length > 0 && (
-        <div className="substitutes-section">
-          <h3>Substitute Players</h3>
-          <div className="players-list">
-            {teamData.Substitutes.map((substitute, index) => (
-              <div key={substitute.UserID || index} className="player-card substitute">
-                <div className="player-info">
-                  <h4>{substitute.DiscordUsername}</h4>
-                  <span className="player-role">Substitute</span>
-                </div>
-                
-                {isCaptain && !teamData.Confirmed && (
-                  <button 
-                    className="btn-danger-small"
-                    onClick={() => handleRemovePlayer(substitute.UserID)}
-                    disabled={loading}
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
+        <div className="players-list">
+          <div className="player-card">
+            <div className="player-info">
+              <h4>{user?.discordUsername}</h4>
+              <span className="player-role">Captain</span>
+            </div>
           </div>
         </div>
-      )}
+        
+        <div className="empty-players">
+          <p>Player management system coming soon!</p>
+          <p>You can invite players and manage roles once the backend endpoints are implemented.</p>
+        </div>
+      </div>
+
+      {/* Substitutes List - Coming soon */}
+      <div className="substitutes-section">
+        <h3>Substitute Players</h3>
+        <div className="empty-players">
+          <p>No substitutes added yet.</p>
+          <p>Substitute management will be available when player invitation system is implemented.</p>
+        </div>
+      </div>
 
       {/* Team Requirements */}
       <div className="team-requirements">
@@ -256,8 +223,8 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
             <span className="requirement-icon">{isCaptain ? '✅' : '❌'}</span>
             <span>Team captain assigned</span>
           </div>
-          <div className={`requirement-item ${teamData.Confirmed ? 'met' : 'unmet'}`}>
-            <span className="requirement-icon">{teamData.Confirmed ? '✅' : '❌'}</span>
+          <div className={`requirement-item ${teamData.confirmed ? 'met' : 'unmet'}`}>
+            <span className="requirement-icon">{teamData.confirmed ? '✅' : '❌'}</span>
             <span>Team confirmation completed</span>
           </div>
         </div>

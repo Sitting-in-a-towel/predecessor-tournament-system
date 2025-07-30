@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { airtableService } from '../../services/airtableService';
+import axios from 'axios';
 import { toast } from 'react-toastify';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const TeamSignup = ({ onClose }) => {
   const navigate = useNavigate();
@@ -31,8 +33,10 @@ const TeamSignup = ({ onClose }) => {
   const loadTournaments = async () => {
     try {
       setLoadingTournaments(true);
-      const data = await airtableService.getTournaments();
-      setTournaments(data || []);
+      const response = await axios.get(`${API_BASE_URL}/tournaments`, {
+        withCredentials: true
+      });
+      setTournaments(response.data || []);
     } catch (error) {
       console.error('Error loading tournaments:', error);
       toast.error('Failed to load tournaments');
@@ -95,11 +99,6 @@ const TeamSignup = ({ onClose }) => {
       return;
     }
 
-    if (!formData.selectedTournament) {
-      toast.error('Please select a tournament');
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -113,7 +112,10 @@ const TeamSignup = ({ onClose }) => {
         teamData.teamLogo = formData.teamLogo;
       }
 
-      const newTeam = await airtableService.createTeam(teamData);
+      const response = await axios.post(`${API_BASE_URL}/teams`, teamData, {
+        withCredentials: true
+      });
+      const newTeam = response.data;
       
       toast.success('Team created successfully! You are now the team captain.');
       
@@ -152,7 +154,7 @@ const TeamSignup = ({ onClose }) => {
       <form onSubmit={handleSubmit} className="team-form">
         {/* Tournament Selection */}
         <div className="form-group">
-          <label htmlFor="selectedTournament">Select Tournament *</label>
+          <label htmlFor="selectedTournament">Select Tournament (Optional)</label>
           {loadingTournaments ? (
             <p>Loading tournaments...</p>
           ) : (
@@ -162,12 +164,11 @@ const TeamSignup = ({ onClose }) => {
               value={formData.selectedTournament}
               onChange={handleInputChange}
               className={errors.selectedTournament ? 'error' : ''}
-              required
             >
               <option value="">Choose a tournament...</option>
               {tournaments.map(tournament => (
-                <option key={tournament.recordId} value={tournament.TournamentID}>
-                  {tournament.Name} ({tournament.BracketType})
+                <option key={tournament.id} value={tournament.tournament_id}>
+                  {tournament.name} ({tournament.bracket_type})
                 </option>
               ))}
             </select>

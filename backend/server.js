@@ -15,6 +15,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const tournamentRoutes = require('./routes/tournaments');
 const teamRoutes = require('./routes/teams');
+const matchRoutes = require('./routes/matches');
 const draftRoutes = require('./routes/draft');
 const adminRoutes = require('./routes/admin');
 
@@ -112,6 +113,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/teams', teamRoutes);
+app.use('/api/matches', matchRoutes);
 app.use('/api/draft', draftRoutes);
 app.use('/api/admin', authMiddleware.requireAdmin, adminRoutes);
 

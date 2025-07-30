@@ -1,5 +1,5 @@
 const DiscordStrategy = require('passport-discord').Strategy;
-const { airtableService } = require('../services/airtable');
+const postgresService = require('../services/postgresql');
 const logger = require('../utils/logger');
 
 module.exports = function(passport) {
@@ -12,43 +12,39 @@ module.exports = function(passport) {
     try {
       logger.info(`Discord OAuth callback for user: ${profile.username}#${profile.discriminator}`);
       
-      // Check if user exists in Airtable
-      let user = await airtableService.getUserByDiscordID(profile.id);
+      // Check if user exists in PostgreSQL
+      let user = await postgresService.getUserByDiscordId(profile.id);
       
       if (user) {
         // Update existing user's last active time
-        await airtableService.updateUser(user.UserID, {
-          LastActive: new Date().toISOString(),
-          DiscordUsername: `${profile.username}#${profile.discriminator}`,
-          Email: profile.email
-        });
+        await postgresService.updateUserLastActive(user.user_id);
         
-        logger.info(`Existing user logged in: ${user.UserID}`);
+        logger.info(`Existing user logged in: ${user.user_id}`);
       } else {
         // Create new user
         const newUser = {
-          UserID: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          DiscordID: profile.id,
-          DiscordUsername: `${profile.username}#${profile.discriminator}`,
-          Email: profile.email,
-          IsAdmin: false,
-          CreatedAt: new Date().toISOString(),
-          LastActive: new Date().toISOString()
+          user_id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          discord_id: profile.id,
+          discord_username: profile.username,
+          discord_discriminator: profile.discriminator,
+          email: profile.email,
+          is_admin: false
         };
         
-        user = await airtableService.createUser(newUser);
-        logger.info(`New user created: ${user.UserID}`);
+        user = await postgresService.createUser(newUser);
+        logger.info(`New user created: ${user.user_id}`);
       }
       
       // Return user data for session
       return done(null, {
-        userID: user.UserID,
-        discordID: user.DiscordID,
-        discordUsername: user.DiscordUsername,
-        email: user.Email,
-        isAdmin: user.IsAdmin,
-        createdAt: user.CreatedAt,
-        lastActive: user.LastActive
+        id: user.id,
+        userID: user.user_id,
+        discordID: user.discord_id,
+        discordUsername: user.discord_username,
+        email: user.email,
+        isAdmin: user.is_admin,
+        createdAt: user.created_at,
+        lastActive: user.last_active
       });
       
     } catch (error) {
@@ -63,16 +59,17 @@ module.exports = function(passport) {
 
   passport.deserializeUser(async (userID, done) => {
     try {
-      const user = await airtableService.getUserByID(userID);
+      const user = await postgresService.getUserById(userID);
       if (user) {
         done(null, {
-          userID: user.UserID,
-          discordID: user.DiscordID,
-          discordUsername: user.DiscordUsername,
-          email: user.Email,
-          isAdmin: user.IsAdmin,
-          createdAt: user.CreatedAt,
-          lastActive: user.LastActive
+          id: user.id,
+          userID: user.user_id,
+          discordID: user.discord_id,
+          discordUsername: user.discord_username,
+          email: user.email,
+          isAdmin: user.is_admin,
+          createdAt: user.created_at,
+          lastActive: user.last_active
         });
       } else {
         done(null, false);

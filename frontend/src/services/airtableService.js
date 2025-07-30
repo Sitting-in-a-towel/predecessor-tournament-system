@@ -139,6 +139,110 @@ class AirtableService {
     }
   }
 
+  // Tournament check-in services
+  async checkInTeam(tournamentId) {
+    try {
+      const response = await this.axios.post(`/tournaments/${tournamentId}/checkin`);
+      return response.data;
+    } catch (error) {
+      console.error('Error checking in team:', error);
+      throw error;
+    }
+  }
+
+  async getTournamentCheckInStatus(tournamentId) {
+    try {
+      const response = await this.axios.get(`/tournaments/${tournamentId}/checkin-status`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching check-in status:', error);
+      throw error;
+    }
+  }
+
+  async updateTeamCheckIn(tournamentId, teamId, checkedIn) {
+    try {
+      const response = await this.axios.put(`/tournaments/${tournamentId}/teams/${teamId}/checkin`, {
+        checkedIn
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating team check-in:', error);
+      throw error;
+    }
+  }
+
+  // Match services
+  async getMatches() {
+    try {
+      const response = await this.axios.get('/matches');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching matches:', error);
+      throw error;
+    }
+  }
+
+  async getMatch(matchId) {
+    try {
+      const response = await this.axios.get(`/matches/${matchId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching match:', error);
+      throw error;
+    }
+  }
+
+  async getTournamentMatches(tournamentId) {
+    try {
+      const response = await this.axios.get(`/matches/tournament/${tournamentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching tournament matches:', error);
+      throw error;
+    }
+  }
+
+  async createMatch(matchData) {
+    try {
+      const response = await this.axios.post('/matches', matchData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating match:', error);
+      throw error;
+    }
+  }
+
+  async startMatch(matchId) {
+    try {
+      const response = await this.axios.put(`/matches/${matchId}/start`);
+      return response.data;
+    } catch (error) {
+      console.error('Error starting match:', error);
+      throw error;
+    }
+  }
+
+  async reportMatchResult(matchId, resultData) {
+    try {
+      const response = await this.axios.put(`/matches/${matchId}/result`, resultData);
+      return response.data;
+    } catch (error) {
+      console.error('Error reporting match result:', error);
+      throw error;
+    }
+  }
+
+  async deleteMatch(matchId) {
+    try {
+      const response = await this.axios.delete(`/matches/${matchId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting match:', error);
+      throw error;
+    }
+  }
+
   // Draft services
   async createDraftSession(draftData) {
     try {

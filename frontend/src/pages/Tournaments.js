@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { airtableService } from '../services/airtableService';
+import axios from 'axios';
 import TournamentCreation from '../components/Tournament/TournamentCreation';
 import { toast } from 'react-toastify';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const Tournaments = () => {
   const navigate = useNavigate();
@@ -23,18 +25,20 @@ const Tournaments = () => {
   const loadTournaments = async () => {
     try {
       setLoading(true);
-      const filterParams = {};
+      const params = new URLSearchParams();
       
       if (filters.status !== 'all') {
-        filterParams.status = filters.status;
+        params.append('status', filters.status);
       }
       
       if (filters.bracketType !== 'all') {
-        filterParams.bracketType = filters.bracketType;
+        params.append('bracketType', filters.bracketType);
       }
 
-      const data = await airtableService.getTournaments(filterParams);
-      setTournaments(data || []);
+      const response = await axios.get(`${API_BASE_URL}/tournaments?${params}`, {
+        withCredentials: true
+      });
+      setTournaments(response.data || []);
     } catch (error) {
       console.error('Error loading tournaments:', error);
       toast.error('Failed to load tournaments');
@@ -60,7 +64,7 @@ const Tournaments = () => {
       navigate('/login');
       return;
     }
-    navigate('/teams/create', { state: { tournamentId } });
+    navigate('/teams', { state: { action: 'create', tournamentId } });
   };
 
   const formatDate = (dateString) => {
@@ -149,46 +153,46 @@ const Tournaments = () => {
         ) : tournaments.length > 0 ? (
           <div className="tournaments-grid">
             {tournaments.map(tournament => (
-              <div key={tournament.TournamentID} className="tournament-card">
+              <div key={tournament.tournament_id} className="tournament-card">
                 <div className="tournament-header">
-                  <h3>{tournament.Name}</h3>
-                  <span className={`status-badge ${tournament.Status?.toLowerCase()?.replace(' ', '-')}`}>
-                    {getStatusDisplayName(tournament.Status || 'Unknown')}
+                  <h3>{tournament.name}</h3>
+                  <span className={`status-badge ${tournament.status?.toLowerCase()?.replace(' ', '-')}`}>
+                    {getStatusDisplayName(tournament.status || 'Unknown')}
                   </span>
                 </div>
                 
                 <div className="tournament-details">
-                  <p><strong>Format:</strong> {tournament.BracketType}</p>
-                  <p><strong>Match Type:</strong> {tournament.GameFormat}</p>
-                  <p><strong>Max Teams:</strong> {tournament.MaxTeams}</p>
-                  <p><strong>Start Date:</strong> {formatDate(tournament.StartDate)}</p>
-                  {tournament.RegistrationOpen !== undefined && (
-                    <p><strong>Registration:</strong> {tournament.RegistrationOpen ? 'Open' : 'Closed'}</p>
+                  <p><strong>Format:</strong> {tournament.bracket_type}</p>
+                  <p><strong>Match Type:</strong> {tournament.game_format}</p>
+                  <p><strong>Max Teams:</strong> {tournament.max_teams}</p>
+                  <p><strong>Start Date:</strong> {formatDate(tournament.start_date)}</p>
+                  {tournament.registration_open !== undefined && (
+                    <p><strong>Registration:</strong> {tournament.registration_open ? 'Open' : 'Closed'}</p>
                   )}
                 </div>
                 
-                {tournament.Description && (
-                  <p className="tournament-description">{tournament.Description}</p>
+                {tournament.description && (
+                  <p className="tournament-description">{tournament.description}</p>
                 )}
                 
                 <div className="tournament-actions">
                   <button 
                     className="btn-primary"
-                    onClick={() => handleViewTournament(tournament.TournamentID)}
+                    onClick={() => handleViewTournament(tournament.tournament_id)}
                   >
                     View Details
                   </button>
                   
-                  {isAuthenticated && tournament.Status === 'Registration' && tournament.RegistrationOpen && (
+                  {isAuthenticated && tournament.status === 'Registration' && tournament.registration_open && (
                     <button 
                       className="btn-secondary"
-                      onClick={() => handleRegisterTeam(tournament.TournamentID)}
+                      onClick={() => handleRegisterTeam(tournament.tournament_id)}
                     >
                       Register Team
                     </button>
                   )}
                   
-                  {tournament.Status === 'In Progress' && (
+                  {tournament.status === 'In Progress' && (
                     <button className="btn-secondary">
                       View Bracket
                     </button>

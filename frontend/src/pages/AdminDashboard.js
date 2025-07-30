@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { airtableService } from '../services/airtableService';
+import axios from 'axios';
 import { toast } from 'react-toastify';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -14,7 +16,7 @@ const AdminDashboard = () => {
   });
   const [recentActivity, setRecentActivity] = useState([]);
   const [systemHealth, setSystemHealth] = useState({
-    airtable: 'checking',
+    database: 'checking',
     discord: 'checking'
   });
 
@@ -46,35 +48,44 @@ const AdminDashboard = () => {
   const loadStatistics = async () => {
     try {
       // Load tournament stats
-      const tournaments = await airtableService.getTournaments();
+      const tourResponse = await axios.get(`${API_BASE_URL}/tournaments`, {
+        withCredentials: true
+      });
+      const tournaments = tourResponse.data || [];
       const tournamentStats = {
         total: tournaments.length,
-        active: tournaments.filter(t => t.Status === 'Active').length,
-        completed: tournaments.filter(t => t.Status === 'Completed').length,
-        upcoming: tournaments.filter(t => t.Status === 'Upcoming').length
+        active: tournaments.filter(t => t.status === 'In Progress').length,
+        completed: tournaments.filter(t => t.status === 'Completed').length,
+        upcoming: tournaments.filter(t => t.status === 'Registration' || t.status === 'Upcoming').length
       };
 
-      // Load team stats
-      const teams = await airtableService.getAllTeams();
-      const teamStats = {
-        total: teams.length,
-        confirmed: teams.filter(t => t.Confirmed).length,
-        pending: teams.filter(t => !t.Confirmed).length
-      };
+      // Load team stats - use my-teams endpoint for now (will need admin endpoint later)
+      let teamStats = { total: 0, confirmed: 0, pending: 0 };
+      try {
+        const teamResponse = await axios.get(`${API_BASE_URL}/teams/my-teams`, {
+          withCredentials: true
+        });
+        const teams = teamResponse.data || [];
+        teamStats = {
+          total: teams.length,
+          confirmed: teams.filter(t => t.confirmed).length,
+          pending: teams.filter(t => !t.confirmed).length
+        };
+      } catch (error) {
+        console.log('Could not load team stats:', error.message);
+      }
 
-      // Load user stats
-      const users = await airtableService.getAllUsers();
+      // Load user stats - placeholder for now (will need admin endpoint)
       const userStats = {
-        total: users.length,
-        active: users.filter(u => u.Status === 'Active').length
+        total: 0, // Will need admin endpoint
+        active: 0
       };
 
-      // Load match stats
-      const matches = await airtableService.getAllMatches();
+      // Load match stats - placeholder for now (will need admin endpoint)
       const matchStats = {
-        total: matches.length,
-        completed: matches.filter(m => m.Status === 'Completed').length,
-        scheduled: matches.filter(m => m.Status === 'Scheduled').length
+        total: 0, // Will need admin endpoint
+        completed: 0,
+        scheduled: 0
       };
 
       setStats({
@@ -90,8 +101,14 @@ const AdminDashboard = () => {
 
   const loadRecentActivity = async () => {
     try {
-      const activity = await airtableService.getRecentActivity(10);
-      setRecentActivity(activity || []);
+      // Placeholder for recent activity - will need admin endpoint
+      setRecentActivity([
+        {
+          type: 'tournament_created',
+          description: 'Recent activity will be available when admin endpoints are implemented',
+          timestamp: 'Now'
+        }
+      ]);
     } catch (error) {
       console.error('Error loading recent activity:', error);
       setRecentActivity([]);
@@ -100,20 +117,27 @@ const AdminDashboard = () => {
 
   const checkSystemHealth = async () => {
     try {
-      // Check Airtable connection
-      const airtableHealth = await airtableService.checkConnection();
+      // Check database connection via backend
+      let databaseHealth = 'healthy';
+      try {
+        await axios.get(`${API_BASE_URL}/tournaments`, {
+          withCredentials: true
+        });
+      } catch (error) {
+        databaseHealth = 'error';
+      }
       
       // Check Discord OAuth (simplified check)
       const discordHealth = 'healthy'; // Would implement actual Discord API check
 
       setSystemHealth({
-        airtable: airtableHealth ? 'healthy' : 'error',
+        database: databaseHealth,
         discord: discordHealth
       });
     } catch (error) {
       console.error('Error checking system health:', error);
       setSystemHealth({
-        airtable: 'error',
+        database: 'error',
         discord: 'error'
       });
     }
@@ -291,15 +315,15 @@ const AdminDashboard = () => {
         <div className="health-grid">
           <div className="health-item">
             <div className="health-header">
-              <span className="health-label">Airtable Database</span>
-              <span className={`health-status ${systemHealth.airtable}`}>
-                {systemHealth.airtable === 'healthy' ? '✅' : 
-                 systemHealth.airtable === 'error' ? '❌' : '⏳'}
+              <span className="health-label">PostgreSQL Database</span>
+              <span className={`health-status ${systemHealth.database}`}>
+                {systemHealth.database === 'healthy' ? '✅' : 
+                 systemHealth.database === 'error' ? '❌' : '⏳'}
               </span>
             </div>
             <div className="health-description">
-              {systemHealth.airtable === 'healthy' ? 'Connected and operational' :
-               systemHealth.airtable === 'error' ? 'Connection issues detected' : 'Checking connection...'}
+              {systemHealth.database === 'healthy' ? 'Connected and operational' :
+               systemHealth.database === 'error' ? 'Connection issues detected' : 'Checking connection...'}
             </div>
           </div>
 

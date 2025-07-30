@@ -9,8 +9,12 @@ const TournamentCard = ({ tournament }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Upcoming': return 'upcoming';
+      case 'Registration': return 'active';
+      case 'Check-In': return 'active';
+      case 'In Progress': return 'active';
       case 'Active': return 'active';
       case 'Completed': return 'completed';
+      case 'Cancelled': return 'cancelled';
       default: return 'planning';
     }
   };
@@ -27,7 +31,7 @@ const TournamentCard = ({ tournament }) => {
   };
 
   const handleViewDetails = () => {
-    navigate(`/tournaments/${tournament.TournamentID}`);
+    navigate(`/tournaments/${tournament.tournament_id || tournament.TournamentID}`);
   };
 
   const handleRegisterTeam = () => {
@@ -37,7 +41,7 @@ const TournamentCard = ({ tournament }) => {
     }
     navigate('/teams', { 
       state: { 
-        tournamentId: tournament.TournamentID,
+        tournamentId: tournament.tournament_id || tournament.TournamentID,
         action: 'create' 
       } 
     });
@@ -47,33 +51,33 @@ const TournamentCard = ({ tournament }) => {
     <div className="tournament-card">
       <div className="tournament-header">
         <div className="tournament-title">
-          <h3>{tournament.Name}</h3>
-          <span className={`status-badge ${getStatusColor(tournament.Status)}`}>
-            {tournament.Status}
+          <h3>{tournament.name || tournament.Name || 'Unknown'}</h3>
+          <span className={`status-badge ${getStatusColor(tournament.status || tournament.Status)}`}>
+            {tournament.status || tournament.Status || 'Unknown'}
           </span>
         </div>
         <div className="tournament-meta">
-          <span className="bracket-type">{tournament.BracketType}</span>
+          <span className="bracket-type">{tournament.bracket_type || tournament.BracketType || 'Unknown'}</span>
         </div>
       </div>
 
       <div className="tournament-details">
-        {tournament.Description && (
-          <p className="tournament-description">{tournament.Description}</p>
+        {(tournament.description || tournament.Description) && (
+          <p className="tournament-description">{tournament.description || tournament.Description}</p>
         )}
         
         <div className="tournament-info">
           <div className="info-item">
             <span className="info-label">Format:</span>
-            <span className="info-value">{tournament.GameFormat}</span>
+            <span className="info-value">{tournament.game_format || tournament.GameFormat || 'Unknown'}</span>
           </div>
           <div className="info-item">
             <span className="info-label">Max Teams:</span>
-            <span className="info-value">{tournament.MaxTeams}</span>
+            <span className="info-value">{tournament.max_teams || tournament.MaxTeams || 'Unknown'}</span>
           </div>
           <div className="info-item">
             <span className="info-label">Start Date:</span>
-            <span className="info-value">{formatDate(tournament.StartDate)}</span>
+            <span className="info-value">{formatDate(tournament.start_date || tournament.StartDate)}</span>
           </div>
         </div>
       </div>
@@ -86,7 +90,7 @@ const TournamentCard = ({ tournament }) => {
           View Details
         </button>
         
-        {tournament.Status === 'Upcoming' && tournament.RegistrationOpen && (
+        {(tournament.status || tournament.Status) === 'Registration' && (tournament.registration_open !== false) && (
           <button 
             className="btn-primary"
             onClick={handleRegisterTeam}
