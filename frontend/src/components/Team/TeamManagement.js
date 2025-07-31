@@ -43,9 +43,7 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
       //   role: inviteData.role
       // }, { withCredentials: true });
       
-      if (onTeamUpdate) {
-        onTeamUpdate();
-      }
+      // Removed onTeamUpdate call to prevent session issues until invitation system is fully implemented
     } catch (error) {
       console.error('Error inviting player:', error);
       toast.error('Failed to send invitation');
