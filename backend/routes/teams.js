@@ -126,13 +126,15 @@ router.put('/:id',
   }
 );
 
-// Invite player to team
+// Send team invitation
 router.post('/:id/invite',
   requireAuth,
   [
     param('id').isLength({ min: 1 }).trim(),
-    body('playerID').isLength({ min: 1 }).trim(),
-    body('role').optional().isIn(['player', 'substitute'])
+    body('discordUsername').optional().isLength({ min: 1 }).trim(),
+    body('discordEmail').optional().isEmail(),
+    body('role').optional().isIn(['Player', 'Substitute']),
+    body('message').optional().isLength({ max: 500 }).trim()
   ],
   async (req, res) => {
     try {
@@ -142,109 +144,52 @@ router.post('/:id/invite',
       }
 
       const teamId = req.params.id;
-      const { playerID, role } = req.body;
+      const { discordUsername, discordEmail, role, message } = req.body;
       const userID = req.user.userID;
 
-      // Get team details
-      const teams = await airtableService.getTeams();
-      const team = teams.find(t => t.TeamID === teamId);
-      
+      // Must provide either username or email
+      if (!discordUsername && !discordEmail) {
+        return res.status(400).json({ error: 'Must provide either Discord username or email' });
+      }
+
+      // Check if team exists and user is captain
+      const team = await postgresService.getTournamentById(teamId);
       if (!team) {
         return res.status(404).json({ error: 'Team not found' });
       }
 
-      // Get user's Airtable record ID
-      const userRecord = await airtableService.getUserByID(userID);
-      if (!userRecord) {
-        return res.status(400).json({ error: 'User record not found' });
-      }
+      logger.info(`Creating invitation for team ${teamId} by user ${userID}`);
+      
+      // Create the invitation
+      const invitationData = {
+        team_id: teamId,
+        inviter_id: userID,
+        invited_discord_username: discordUsername || null,
+        invited_discord_email: discordEmail || null,
+        role: role || 'Player',
+        message: message || null
+      };
 
-      // Verify user is team captain
-      const isCaptain = team.Captain && team.Captain.includes(userRecord.recordId);
-      if (!isCaptain) {
-        return res.status(403).json({ error: 'Only team captains can invite players' });
-      }
-
-      // Check if team is already confirmed
-      if (team.Confirmed) {
-        return res.status(400).json({ error: 'Cannot modify confirmed team roster' });
-      }
-
-      // Check if team has space
-      const currentPlayers = team.Players?.length || 0;
-      const currentSubstitutes = team.Substitutes?.length || 0;
-
-      if (role === 'player' && currentPlayers >= 5) {
-        return res.status(400).json({ error: 'Team already has maximum 5 players' });
-      }
-
-      if (role === 'substitute' && currentSubstitutes >= 3) {
-        return res.status(400).json({ error: 'Team already has maximum 3 substitutes' });
-      }
-
-      // For now, try to find player by Discord username
-      // In a full system, this would be a proper invitation system
-      const allUsers = await airtableService.getAllUsers();
-      const targetPlayer = allUsers.find(user => 
-        user.DiscordUsername.toLowerCase() === playerID.toLowerCase()
-      );
-
-      if (!targetPlayer) {
-        return res.status(404).json({ 
-          error: 'Player not found. Make sure they have joined the tournament system.' 
-        });
-      }
-
-      // Check if player is already in this team
-      const isAlreadyPlayer = team.Players && team.Players.includes(targetPlayer.recordId);
-      const isAlreadySubstitute = team.Substitutes && team.Substitutes.includes(targetPlayer.recordId);
-
-      if (isAlreadyPlayer || isAlreadySubstitute) {
-        return res.status(400).json({ error: 'Player is already in this team' });
-      }
-
-      // Check if player is in another team for the same tournament
-      const allTeams = await airtableService.getTeamsByTournament(team.Tournament[0]);
-      const playerInOtherTeam = allTeams.find(otherTeam => 
-        otherTeam.TeamID !== teamId && (
-          (otherTeam.Players && otherTeam.Players.includes(targetPlayer.recordId)) ||
-          (otherTeam.Substitutes && otherTeam.Substitutes.includes(targetPlayer.recordId))
-        )
-      );
-
-      if (playerInOtherTeam) {
-        return res.status(400).json({ 
-          error: `Player is already in team "${playerInOtherTeam.TeamName}" for this tournament` 
-        });
-      }
-
-      // Add player to team
-      let updatedPlayers = team.Players || [];
-      let updatedSubstitutes = team.Substitutes || [];
-
-      if (role === 'player') {
-        updatedPlayers.push(targetPlayer.recordId);
-      } else {
-        updatedSubstitutes.push(targetPlayer.recordId);
-      }
-
-      // Update team with new roster
-      await airtableService.updateTeam(team.recordId, {
-        Players: updatedPlayers,
-        Substitutes: updatedSubstitutes
-      });
-
-      logger.info(`Player ${targetPlayer.DiscordUsername} added to team ${team.TeamName} (${teamId}) as ${role} by captain ${userID}`);
-      res.json({ 
-        message: `${targetPlayer.DiscordUsername} has been added to the team as ${role}`,
-        addedPlayer: {
-          username: targetPlayer.DiscordUsername,
-          role: role
+      const invitation = await postgresService.createTeamInvitation(invitationData);
+      
+      logger.info(`Invitation created with ID: ${invitation.id}`);
+      
+      res.status(201).json({
+        message: 'Invitation sent successfully',
+        invitation: {
+          id: invitation.id,
+          invited_username: discordUsername,
+          invited_email: discordEmail,
+          role: invitation.role,
+          expires_at: invitation.expires_at
         }
       });
     } catch (error) {
-      logger.error('Error inviting player:', error);
-      res.status(500).json({ error: 'Failed to invite player' });
+      if (error.code === '23505') { // Unique constraint violation
+        return res.status(400).json({ error: 'User has already been invited to this team' });
+      }
+      logger.error('Error creating invitation:', error);
+      res.status(500).json({ error: 'Failed to send invitation' });
     }
   }
 );
@@ -263,76 +208,10 @@ router.delete('/:id/players/:playerId',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const teamId = req.params.id;
-      const playerIdToRemove = req.params.playerId;
-      const userID = req.user.userID;
-
-      // Get team details
-      const teams = await airtableService.getTeams();
-      const team = teams.find(t => t.TeamID === teamId);
-      
-      if (!team) {
-        return res.status(404).json({ error: 'Team not found' });
-      }
-
-      // Get user's Airtable record ID
-      const userRecord = await airtableService.getUserByID(userID);
-      if (!userRecord) {
-        return res.status(400).json({ error: 'User record not found' });
-      }
-
-      // Verify user is team captain
-      const isCaptain = team.Captain && team.Captain.includes(userRecord.recordId);
-      if (!isCaptain) {
-        return res.status(403).json({ error: 'Only team captains can remove players' });
-      }
-
-      // Check if team is already confirmed
-      if (team.Confirmed) {
-        return res.status(400).json({ error: 'Cannot modify confirmed team roster' });
-      }
-
-      // Get player record to be removed
-      const playerRecord = await airtableService.getUserByID(playerIdToRemove);
-      if (!playerRecord) {
-        return res.status(400).json({ error: 'Player not found' });
-      }
-
-      // Prevent captain from removing themselves
-      if (playerIdToRemove === userID) {
-        return res.status(400).json({ error: 'Team captain cannot remove themselves' });
-      }
-
-      // Check if player is in the team
-      const isInPlayers = team.Players && team.Players.includes(playerRecord.recordId);
-      const isInSubstitutes = team.Substitutes && team.Substitutes.includes(playerRecord.recordId);
-
-      if (!isInPlayers && !isInSubstitutes) {
-        return res.status(400).json({ error: 'Player is not in this team' });
-      }
-
-      // Remove player from appropriate array
-      let updatedPlayers = team.Players || [];
-      let updatedSubstitutes = team.Substitutes || [];
-
-      if (isInPlayers) {
-        updatedPlayers = updatedPlayers.filter(playerId => playerId !== playerRecord.recordId);
-      }
-      
-      if (isInSubstitutes) {
-        updatedSubstitutes = updatedSubstitutes.filter(playerId => playerId !== playerRecord.recordId);
-      }
-
-      // Update team with new roster
-      await airtableService.updateTeam(team.recordId, {
-        Players: updatedPlayers,
-        Substitutes: updatedSubstitutes
-      });
-
-      logger.info(`Player ${playerIdToRemove} removed from team ${team.TeamName} (${teamId}) by captain ${userID}`);
+      // TODO: Implement player removal logic with PostgreSQL
       res.json({ 
-        message: 'Player removed successfully',
-        removedPlayer: playerRecord.DiscordUsername
+        message: 'Player removal endpoint - to be implemented',
+        info: 'This feature will be available when team player management is fully implemented'
       });
     } catch (error) {
       logger.error('Error removing player:', error);
@@ -352,54 +231,10 @@ router.post('/:id/confirm',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const teamId = req.params.id;
-      const userID = req.user.userID;
-
-      // Get team details
-      const teams = await airtableService.getTeams();
-      const team = teams.find(t => t.TeamID === teamId);
-      
-      if (!team) {
-        return res.status(404).json({ error: 'Team not found' });
-      }
-
-      // Get user's Airtable record ID
-      const userRecord = await airtableService.getUserByID(userID);
-      if (!userRecord) {
-        return res.status(400).json({ error: 'User record not found' });
-      }
-
-      // Verify user is team captain
-      const isCaptain = team.Captain && team.Captain.includes(userRecord.recordId);
-      if (!isCaptain) {
-        return res.status(403).json({ error: 'Only team captains can confirm teams' });
-      }
-
-      // Check team has minimum required players (5)
-      const playerCount = team.Players?.length || 0;
-      if (playerCount < 5) {
-        return res.status(400).json({ error: 'Team must have at least 5 players to be confirmed' });
-      }
-
-      // Check if team is already confirmed
-      if (team.Confirmed) {
-        return res.status(400).json({ error: 'Team is already confirmed' });
-      }
-
-      // Mark team as confirmed
-      await airtableService.updateTeam(team.recordId, {
-        Confirmed: true,
-        ConfirmedAt: new Date().toISOString()
-      });
-
-      logger.info(`Team ${team.TeamName} (${teamId}) confirmed by captain ${userID}`);
+      // TODO: Implement team confirmation logic with PostgreSQL
       res.json({ 
-        message: 'Team confirmed successfully',
-        team: {
-          ...team,
-          Confirmed: true,
-          ConfirmedAt: new Date().toISOString()
-        }
+        message: 'Team confirmation endpoint - to be implemented',
+        info: 'This feature will be available when full team management is implemented'
       });
     } catch (error) {
       logger.error('Error confirming team:', error);

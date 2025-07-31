@@ -18,6 +18,7 @@ const teamRoutes = require('./routes/teams');
 const matchRoutes = require('./routes/matches');
 const draftRoutes = require('./routes/draft');
 const adminRoutes = require('./routes/admin');
+const invitationRoutes = require('./routes/invitations');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -126,6 +127,7 @@ app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/draft', draftRoutes);
+app.use('/api/invitations', invitationRoutes);
 app.use('/api/admin', authMiddleware.requireAdmin, adminRoutes);
 
 // Socket.IO for real-time features (draft system, notifications)

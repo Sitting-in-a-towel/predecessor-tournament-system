@@ -10,8 +10,10 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [inviteData, setInviteData] = useState({
-    playerName: '',
-    role: 'player'
+    discordUsername: '',
+    discordEmail: '',
+    role: 'Player',
+    message: ''
   });
 
   const [teamData, setTeamData] = useState(team);
@@ -25,28 +27,31 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
   const handleInvitePlayer = async (e) => {
     e.preventDefault();
     
-    if (!inviteData.playerName.trim()) {
-      toast.error('Please enter a player name');
+    if (!inviteData.discordUsername.trim() && !inviteData.discordEmail.trim()) {
+      toast.error('Please enter either a Discord username or email address');
       return;
     }
 
     setLoading(true);
     try {
-      // For now, show message that this feature is coming soon
-      toast.info('Player invitation system will be available when backend endpoints are implemented');
-      setInviteData({ playerName: '', role: 'player' });
+      const response = await axios.post(`${API_BASE_URL}/teams/${teamData.team_id}/invite`, {
+        discordUsername: inviteData.discordUsername || undefined,
+        discordEmail: inviteData.discordEmail || undefined,
+        role: inviteData.role,
+        message: inviteData.message || undefined
+      }, { withCredentials: true });
+      
+      toast.success(`Invitation sent successfully! ${response.data.invitation.invited_username || response.data.invitation.invited_email} will see the invitation when they log in.`);
+      setInviteData({ discordUsername: '', discordEmail: '', role: 'Player', message: '' });
       setShowInviteForm(false);
       
-      // Simulate successful invitation for now
-      // await axios.post(`${API_BASE_URL}/teams/${teamData.team_id}/invite`, {
-      //   playerID: inviteData.playerName,
-      //   role: inviteData.role
-      // }, { withCredentials: true });
-      
-      // Removed onTeamUpdate call to prevent session issues until invitation system is fully implemented
+      if (onTeamUpdate) {
+        onTeamUpdate();
+      }
     } catch (error) {
       console.error('Error inviting player:', error);
-      toast.error('Failed to send invitation');
+      const errorMessage = error.response?.data?.error || 'Failed to send invitation';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -244,15 +249,27 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
             
             <form onSubmit={handleInvitePlayer} className="modal-content">
               <div className="form-group">
-                <label htmlFor="playerName">Player Discord Username</label>
+                <label htmlFor="discordUsername">Discord Username</label>
                 <input
                   type="text"
-                  id="playerName"
-                  value={inviteData.playerName}
-                  onChange={(e) => setInviteData(prev => ({ ...prev, playerName: e.target.value }))}
-                  placeholder="PlayerName#1234"
-                  required
+                  id="discordUsername"
+                  value={inviteData.discordUsername}
+                  onChange={(e) => setInviteData(prev => ({ ...prev, discordUsername: e.target.value }))}
+                  placeholder="PlayerName#1234 or @username"
                 />
+                <small className="field-help">Find this in Discord: User Settings → My Account → Username</small>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="discordEmail">Or Discord Email</label>
+                <input
+                  type="email"
+                  id="discordEmail"
+                  value={inviteData.discordEmail}
+                  onChange={(e) => setInviteData(prev => ({ ...prev, discordEmail: e.target.value }))}
+                  placeholder="player@email.com"
+                />
+                <small className="field-help">Enter either username or email</small>
               </div>
               
               <div className="form-group">
@@ -262,9 +279,22 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
                   value={inviteData.role}
                   onChange={(e) => setInviteData(prev => ({ ...prev, role: e.target.value }))}
                 >
-                  <option value="player">Main Player</option>
-                  <option value="substitute">Substitute</option>
+                  <option value="Player">Main Player</option>
+                  <option value="Substitute">Substitute</option>
                 </select>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="message">Optional Message</label>
+                <textarea
+                  id="message"
+                  value={inviteData.message}
+                  onChange={(e) => setInviteData(prev => ({ ...prev, message: e.target.value }))}
+                  placeholder="Hey! Would you like to join our team for the tournament?"
+                  rows="3"
+                  maxLength="500"
+                />
+                <small className="field-help">Personal message to include with the invitation</small>
               </div>
               
               <div className="modal-actions">

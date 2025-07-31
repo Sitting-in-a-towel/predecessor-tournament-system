@@ -21,10 +21,13 @@ const Profile = () => {
     experienceLevel: ''
   });
   const [savingPreferences, setSavingPreferences] = useState(false);
+  const [invitations, setInvitations] = useState([]);
+  const [loadingInvitations, setLoadingInvitations] = useState(false);
 
   useEffect(() => {
     if (user) {
       loadUserStats();
+      loadInvitations();
     }
   }, [user]);
 
@@ -55,6 +58,37 @@ const Profile = () => {
       console.error('Error loading user stats:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadInvitations = async () => {
+    try {
+      setLoadingInvitations(true);
+      const response = await axios.get(`${API_BASE_URL}/invitations/my-invitations`, {
+        withCredentials: true
+      });
+      setInvitations(response.data || []);
+    } catch (error) {
+      console.error('Error loading invitations:', error);
+    } finally {
+      setLoadingInvitations(false);
+    }
+  };
+
+  const respondToInvitation = async (invitationId, response) => {
+    try {
+      await axios.post(`${API_BASE_URL}/invitations/${invitationId}/respond`, {
+        response
+      }, { withCredentials: true });
+      
+      toast.success(response === 'accepted' ? 'Invitation accepted!' : 'Invitation declined');
+      
+      // Reload invitations to update the list
+      loadInvitations();
+    } catch (error) {
+      console.error('Error responding to invitation:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to respond to invitation';
+      toast.error(errorMessage);
     }
   };
 
@@ -164,6 +198,49 @@ const Profile = () => {
               <small>Coming soon</small>
             </div>
           </div>
+        </div>
+
+        {/* Team Invitations Section */}
+        <div className="profile-invitations">
+          <h3>Team Invitations</h3>
+          {loadingInvitations ? (
+            <div className="loading-section">Loading invitations...</div>
+          ) : invitations.length === 0 ? (
+            <div className="empty-state">
+              <p>No pending team invitations</p>
+              <small>When you receive team invitations, they'll appear here</small>
+            </div>
+          ) : (
+            <div className="invitations-list">
+              {invitations.map(invitation => (
+                <div key={invitation.id} className="invitation-card">
+                  <div className="invitation-info">
+                    <h4>{invitation.team_name}</h4>
+                    <p>Role: <strong>{invitation.role}</strong></p>
+                    <p>From: <strong>{invitation.inviter_username}</strong></p>
+                    {invitation.message && (
+                      <p className="invitation-message">"{invitation.message}"</p>
+                    )}
+                    <small>Expires: {new Date(invitation.expires_at).toLocaleDateString()}</small>
+                  </div>
+                  <div className="invitation-actions">
+                    <button 
+                      className="btn-primary"
+                      onClick={() => respondToInvitation(invitation.id, 'accepted')}
+                    >
+                      Accept
+                    </button>
+                    <button 
+                      className="btn-secondary"
+                      onClick={() => respondToInvitation(invitation.id, 'declined')}
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="profile-preferences">

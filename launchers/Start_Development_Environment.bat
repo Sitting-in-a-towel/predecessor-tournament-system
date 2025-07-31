@@ -38,12 +38,8 @@ echo ✅ NocoDB started
 
 :: Start pgAdmin automatically
 echo [3/7] Starting pgAdmin 4...
-REM Try different methods to start pgAdmin
-start "" "C:\Program Files\pgAdmin 4\v*\runtime\pgAdmin4.exe" 2>nul || (
-    start "" "%ProgramFiles%\pgAdmin 4\v*\runtime\pgAdmin4.exe" 2>nul || (
-        echo ⚠️  pgAdmin 4 not found in default location - open manually from Start Menu if needed
-    )
-)
+echo ⚠️  pgAdmin 4 location needs to be configured - open manually from Start Menu
+echo    To fix: Update pgAdmin4 path in launchers\Start_Development_Environment.bat
 timeout /t 2 >nul
 
 :: Install dependencies if needed

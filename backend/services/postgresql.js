@@ -252,6 +252,93 @@ class PostgreSQLService {
         return result.rows;
     }
 
+    // Team invitation operations
+    async createTeamInvitation(invitationData) {
+        const query = `
+            INSERT INTO team_invitations 
+            (team_id, inviter_id, invited_discord_username, invited_discord_email, 
+             invited_user_id, role, message, expires_at)
+            VALUES 
+            ((SELECT id FROM teams WHERE team_id = $1),
+             (SELECT id FROM users WHERE user_id = $2),
+             $3, $4, 
+             (SELECT id FROM users WHERE discord_username = $3 OR email = $4 LIMIT 1),
+             $5, $6, $7)
+            RETURNING *
+        `;
+        const values = [
+            invitationData.team_id,
+            invitationData.inviter_id,
+            invitationData.invited_discord_username,
+            invitationData.invited_discord_email,
+            invitationData.role || 'Player',
+            invitationData.message || null,
+            invitationData.expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days default
+        ];
+        const result = await this.query(query, values);
+        return result.rows[0];
+    }
+
+    async getTeamInvitations(teamId) {
+        const query = `
+            SELECT ti.*, 
+                   t.team_name,
+                   inviter.discord_username as inviter_username,
+                   invited.discord_username as invited_username,
+                   invited.email as invited_email
+            FROM team_invitations ti
+            JOIN teams t ON ti.team_id = t.id
+            JOIN users inviter ON ti.inviter_id = inviter.id
+            LEFT JOIN users invited ON ti.invited_user_id = invited.id
+            WHERE t.team_id = $1
+            ORDER BY ti.created_at DESC
+        `;
+        const result = await this.query(query, [teamId]);
+        return result.rows;
+    }
+
+    async getUserPendingInvitations(userId) {
+        const query = `
+            SELECT ti.*, 
+                   t.team_name, t.team_id,
+                   inviter.discord_username as inviter_username
+            FROM team_invitations ti
+            JOIN teams t ON ti.team_id = t.id
+            JOIN users inviter ON ti.inviter_id = inviter.id
+            JOIN users invited ON ti.invited_user_id = invited.id
+            WHERE invited.user_id = $1 
+            AND ti.status = 'pending'
+            AND ti.expires_at > NOW()
+            ORDER BY ti.created_at DESC
+        `;
+        const result = await this.query(query, [userId]);
+        return result.rows;
+    }
+
+    async respondToInvitation(invitationId, userId, response) {
+        const query = `
+            UPDATE team_invitations 
+            SET status = $2, responded_at = NOW()
+            WHERE id = $1 
+            AND invited_user_id = (SELECT id FROM users WHERE user_id = $3)
+            AND status = 'pending'
+            AND expires_at > NOW()
+            RETURNING *
+        `;
+        const result = await this.query(query, [invitationId, response, userId]);
+        return result.rows[0];
+    }
+
+    async findUserByDiscordInfo(username, email) {
+        const query = `
+            SELECT * FROM users 
+            WHERE discord_username = $1 OR email = $2 
+            LIMIT 1
+        `;
+        const result = await this.query(query, [username, email]);
+        return result.rows[0];
+    }
+
     // Close connection pool
     async close() {
         await this.pool.end();
