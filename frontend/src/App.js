@@ -11,6 +11,7 @@ import Tournaments from './pages/Tournaments';
 import TournamentDetail from './pages/TournamentDetail';
 import Teams from './pages/Teams';
 import Profile from './pages/Profile';
+import Feedback from './pages/Feedback';
 import Admin from './pages/Admin';
 import AdminDashboard from './pages/AdminDashboard';
 
@@ -27,6 +28,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/tournaments" element={<Tournaments />} />
             <Route path="/tournaments/:id" element={<TournamentDetail />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="/login" element={<DiscordLogin />} />
             
             {/* Protected Routes */}

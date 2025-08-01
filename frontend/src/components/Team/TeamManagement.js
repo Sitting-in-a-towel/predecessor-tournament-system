@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
 
 const TeamManagement = ({ team, onTeamUpdate }) => {
   const { user } = useAuth();
@@ -17,10 +18,44 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
   });
 
   const [teamData, setTeamData] = useState(team);
+  const [sentInvitations, setSentInvitations] = useState([]);
+  const [receivedInvitations, setReceivedInvitations] = useState([]);
+  const [loadingInvitations, setLoadingInvitations] = useState(true);
 
   useEffect(() => {
     setTeamData(team);
   }, [team]);
+
+  useEffect(() => {
+    if (teamData?.team_id) {
+      loadInvitations();
+    }
+  }, [teamData?.team_id]);
+
+  const loadInvitations = async () => {
+    try {
+      setLoadingInvitations(true);
+      console.log('Loading invitations for team:', teamData.team_id);
+      
+      // Load sent invitations
+      const sentResponse = await axios.get(`${API_BASE_URL}/invitations/team/${teamData.team_id}`, { 
+        withCredentials: true 
+      });
+      console.log('Sent invitations:', sentResponse.data);
+      setSentInvitations(sentResponse.data || []);
+
+      // Load received invitations
+      const receivedResponse = await axios.get(`${API_BASE_URL}/invitations/my-invitations`, { 
+        withCredentials: true 
+      });
+      console.log('Received invitations:', receivedResponse.data);
+      setReceivedInvitations(receivedResponse.data || []);
+    } catch (error) {
+      console.error('Error loading invitations:', error);
+    } finally {
+      setLoadingInvitations(false);
+    }
+  };
 
   const isCaptain = true; // Placeholder - assume user is captain since they're viewing their team
 
@@ -44,6 +79,9 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
       toast.success(`Invitation sent successfully! ${response.data.invitation.invited_username || response.data.invitation.invited_email} will see the invitation when they log in.`);
       setInviteData({ discordUsername: '', discordEmail: '', role: 'Player', message: '' });
       setShowInviteForm(false);
+      
+      // Reload invitations
+      loadInvitations();
       
       if (onTeamUpdate) {
         onTeamUpdate();
@@ -100,6 +138,23 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
   const getPlayerCount = () => {
     // For now, return 1 since captain is automatically added
     return 1;
+  };
+
+  const handleCancelInvitation = async (invitationId) => {
+    if (!window.confirm('Are you sure you want to cancel this invitation?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_BASE_URL}/invitations/${invitationId}`, { 
+        withCredentials: true 
+      });
+      toast.success('Invitation cancelled successfully');
+      loadInvitations(); // Reload to update the list
+    } catch (error) {
+      console.error('Error cancelling invitation:', error);
+      toast.error('Failed to cancel invitation');
+    }
   };
 
   const getSubstituteCount = () => {
@@ -233,59 +288,212 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
         </div>
       </div>
 
+      {/* Team Invitations Section - Split View */}
+      <div className="team-invitations-section" style={{ marginTop: '30px' }}>
+        <h3>Team Invitations (v2 - Split View)</h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '15px' }}>
+          {/* Sent Invitations */}
+          <div style={{ 
+            padding: '20px', 
+            backgroundColor: '#1a1a1a', 
+            border: '1px solid #333', 
+            borderRadius: '8px' 
+          }}>
+            <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#fff' }}>Invitations Sent</h4>
+            {loadingInvitations ? (
+              <p style={{ color: '#999' }}>Loading...</p>
+            ) : sentInvitations.filter(inv => inv.status === 'pending').length === 0 ? (
+              <p style={{ color: '#999' }}>No pending invitations sent</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {sentInvitations.filter(inv => inv.status === 'pending').map(invitation => (
+                  <div key={invitation.id} style={{
+                    padding: '10px',
+                    backgroundColor: '#2a2a2a',
+                    border: '1px solid #444',
+                    borderRadius: '4px'
+                  }}>
+                    <p style={{ margin: '0 0 5px 0', color: '#fff' }}>
+                      <strong>{invitation.invited_discord_username || invitation.invited_discord_email}</strong>
+                    </p>
+                    <p style={{ margin: '0 0 5px 0', color: '#999', fontSize: '14px' }}>
+                      Role: {invitation.role}
+                    </p>
+                    <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '12px' }}>
+                      Expires: {new Date(invitation.expires_at).toLocaleDateString()}
+                    </p>
+                    <button
+                      onClick={() => handleCancelInvitation(invitation.id)}
+                      style={{
+                        marginTop: '8px',
+                        padding: '4px 12px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancel Invite
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Received Invitations */}
+          <div style={{ 
+            padding: '20px', 
+            backgroundColor: '#1a1a1a', 
+            border: '1px solid #333', 
+            borderRadius: '8px' 
+          }}>
+            <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#fff' }}>Your Invitations</h4>
+            {loadingInvitations ? (
+              <p style={{ color: '#999' }}>Loading...</p>
+            ) : receivedInvitations.length === 0 ? (
+              <p style={{ color: '#999' }}>No invitations received</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {receivedInvitations.map(invitation => (
+                  <div key={invitation.id} style={{
+                    padding: '10px',
+                    backgroundColor: '#2a2a2a',
+                    border: '1px solid #444',
+                    borderRadius: '4px'
+                  }}>
+                    <p style={{ margin: '0 0 5px 0', color: '#fff' }}>
+                      <strong>{invitation.team_name}</strong>
+                    </p>
+                    <p style={{ margin: '0 0 5px 0', color: '#999', fontSize: '14px' }}>
+                      From: {invitation.inviter_username} • Role: {invitation.role}
+                    </p>
+                    <p style={{ margin: 0, color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
+                      See your <Link to="/profile" style={{ color: '#007bff', textDecoration: 'none' }}>Profile</Link> page to respond
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Invite Player Modal */}
       {showInviteForm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>Invite Player</h3>
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="modal" style={{
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '8px',
+            maxWidth: '500px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div className="modal-header" style={{
+              padding: '20px 20px 15px 20px',
+              borderBottom: '1px solid #333',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#1a1a1a',
+              borderRadius: '8px 8px 0 0'
+            }}>
+              <h3 style={{ margin: 0, color: '#fff' }}>Invite Player</h3>
               <button 
                 className="modal-close"
                 onClick={() => setShowInviteForm(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#ccc'
+                }}
               >
                 ×
               </button>
             </div>
             
-            <form onSubmit={handleInvitePlayer} className="modal-content">
-              <div className="form-group">
-                <label htmlFor="discordUsername">Discord Username</label>
+            <form onSubmit={handleInvitePlayer} className="modal-content" style={{
+              padding: '20px',
+              color: '#fff'
+            }}>
+              <div className="form-group" style={{ marginBottom: '15px' }}>
+                <label htmlFor="discordUsername" style={{ display: 'block', marginBottom: '5px', color: '#fff', fontWeight: 'bold' }}>Discord Username</label>
                 <input
                   type="text"
                   id="discordUsername"
                   value={inviteData.discordUsername}
                   onChange={(e) => setInviteData(prev => ({ ...prev, discordUsername: e.target.value }))}
                   placeholder="PlayerName#1234 or @username"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
                 />
-                <small className="field-help">Find this in Discord: User Settings → My Account → Username</small>
+                <small className="field-help" style={{ color: '#666', fontSize: '12px' }}>Find this in Discord: User Settings → My Account → Username</small>
               </div>
               
-              <div className="form-group">
-                <label htmlFor="discordEmail">Or Discord Email</label>
+              <div className="form-group" style={{ marginBottom: '15px' }}>
+                <label htmlFor="discordEmail" style={{ display: 'block', marginBottom: '5px', color: '#fff', fontWeight: 'bold' }}>Or Discord Email</label>
                 <input
                   type="email"
                   id="discordEmail"
                   value={inviteData.discordEmail}
                   onChange={(e) => setInviteData(prev => ({ ...prev, discordEmail: e.target.value }))}
                   placeholder="player@email.com"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
                 />
-                <small className="field-help">Enter either username or email</small>
+                <small className="field-help" style={{ color: '#666', fontSize: '12px' }}>Enter either username or email</small>
               </div>
               
-              <div className="form-group">
-                <label htmlFor="role">Role</label>
+              <div className="form-group" style={{ marginBottom: '15px' }}>
+                <label htmlFor="role" style={{ display: 'block', marginBottom: '5px', color: '#fff', fontWeight: 'bold' }}>Role</label>
                 <select
                   id="role"
                   value={inviteData.role}
                   onChange={(e) => setInviteData(prev => ({ ...prev, role: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
                 >
                   <option value="Player">Main Player</option>
                   <option value="Substitute">Substitute</option>
                 </select>
               </div>
               
-              <div className="form-group">
-                <label htmlFor="message">Optional Message</label>
+              <div className="form-group" style={{ marginBottom: '15px' }}>
+                <label htmlFor="message" style={{ display: 'block', marginBottom: '5px', color: '#fff', fontWeight: 'bold' }}>Optional Message</label>
                 <textarea
                   id="message"
                   value={inviteData.message}
@@ -293,16 +501,54 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
                   placeholder="Hey! Would you like to join our team for the tournament?"
                   rows="3"
                   maxLength="500"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    resize: 'vertical'
+                  }}
                 />
-                <small className="field-help">Personal message to include with the invitation</small>
+                <small className="field-help" style={{ color: '#666', fontSize: '12px' }}>Personal message to include with the invitation</small>
               </div>
               
-              <div className="modal-actions">
+              <div className="invite-notice" style={{
+                backgroundColor: '#f0f8ff',
+                border: '1px solid #4a90e2',
+                borderRadius: '4px',
+                padding: '12px',
+                marginTop: '15px',
+                fontSize: '14px'
+              }}>
+                <p style={{ margin: 0, color: '#333' }}>
+                  <strong style={{ color: '#333' }}>Note:</strong> The invited player needs to have logged into the tournament system at least once. 
+                  If they haven't registered yet, the invitation will be waiting for them when they first log in.
+                </p>
+              </div>
+              
+              <div className="modal-actions" style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '10px',
+                marginTop: '20px',
+                paddingTop: '15px',
+                borderTop: '1px solid #333'
+              }}>
                 <button 
                   type="button"
                   className="btn-secondary"
                   onClick={() => setShowInviteForm(false)}
                   disabled={loading}
+                  style={{
+                    padding: '10px 20px',
+                    border: '1px solid #ddd',
+                    backgroundColor: '#f8f9fa',
+                    color: '#333',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
                 >
                   Cancel
                 </button>
@@ -310,6 +556,15 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
                   type="submit"
                   className="btn-primary"
                   disabled={loading}
+                  style={{
+                    padding: '10px 20px',
+                    border: 'none',
+                    backgroundColor: loading ? '#ccc' : '#007bff',
+                    color: 'white',
+                    borderRadius: '4px',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    fontSize: '14px'
+                  }}
                 >
                   {loading ? 'Sending...' : 'Send Invitation'}
                 </button>

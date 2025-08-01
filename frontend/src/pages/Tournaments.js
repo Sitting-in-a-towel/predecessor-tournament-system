@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import TournamentCreation from '../components/Tournament/TournamentCreation';
@@ -9,6 +9,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
 
 const Tournaments = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user } = useAuth();
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +19,21 @@ const Tournaments = () => {
     bracketType: 'all'
   });
 
+  // Handle URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const statusParam = urlParams.get('status');
+    
+    if (statusParam && statusParam !== filters.status) {
+      // Map 'active' to the correct tournament statuses
+      const mappedStatus = statusParam === 'active' ? 'Registration,In Progress' : statusParam;
+      setFilters(prev => ({
+        ...prev,
+        status: mappedStatus
+      }));
+    }
+  }, [location.search]);
+
   useEffect(() => {
     loadTournaments();
   }, [filters]);
@@ -25,20 +41,29 @@ const Tournaments = () => {
   const loadTournaments = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
       
+      // Load all tournaments (backend doesn't support filtering yet)
+      const response = await axios.get(`${API_BASE_URL}/tournaments`, {
+        withCredentials: true
+      });
+      
+      let filteredTournaments = response.data || [];
+      
+      // Client-side filtering
       if (filters.status !== 'all') {
-        params.append('status', filters.status);
+        const activeStatuses = filters.status.split(',');
+        filteredTournaments = filteredTournaments.filter(tournament => 
+          activeStatuses.includes(tournament.status)
+        );
       }
       
       if (filters.bracketType !== 'all') {
-        params.append('bracketType', filters.bracketType);
+        filteredTournaments = filteredTournaments.filter(tournament => 
+          tournament.bracket_type === filters.bracketType
+        );
       }
-
-      const response = await axios.get(`${API_BASE_URL}/tournaments?${params}`, {
-        withCredentials: true
-      });
-      setTournaments(response.data || []);
+      
+      setTournaments(filteredTournaments);
     } catch (error) {
       console.error('Error loading tournaments:', error);
       toast.error('Failed to load tournaments');
@@ -64,7 +89,7 @@ const Tournaments = () => {
       navigate('/login');
       return;
     }
-    navigate('/teams', { state: { action: 'create', tournamentId } });
+    navigate(`/tournaments/${tournamentId}`, { state: { action: 'register' } });
   };
 
   const formatDate = (dateString) => {

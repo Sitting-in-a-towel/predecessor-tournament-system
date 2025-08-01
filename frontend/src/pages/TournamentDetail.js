@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import TournamentRegistration from '../components/Tournament/TournamentRegistration';
@@ -8,11 +8,12 @@ import MatchManagement from '../components/Match/MatchManagement';
 import { toast } from 'react-toastify';
 import './TournamentDetail.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
 
 const TournamentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user } = useAuth();
   const [tournament, setTournament] = useState(null);
   const [teams, setTeams] = useState([]);
@@ -25,6 +26,15 @@ const TournamentDetail = () => {
       loadTournamentData();
     }
   }, [id]);
+
+  // Auto-open registration modal if navigated from tournaments page
+  useEffect(() => {
+    if (location.state?.action === 'register' && tournament && isAuthenticated) {
+      setShowRegistration(true);
+      // Clear the navigation state to prevent modal from reopening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, tournament, isAuthenticated]);
 
   const loadTournamentData = async () => {
     try {
@@ -45,14 +55,26 @@ const TournamentDetail = () => {
       
       setTournament(tournamentData);
       
-      // Load teams for this tournament (placeholder for now)
-      setTeams([]); // Will need tournament teams endpoint
+      // Load registered teams for this tournament
+      await loadTournamentTeams(tournamentData.tournament_id);
       
     } catch (error) {
       console.error('Error loading tournament data:', error);
       toast.error('Failed to load tournament details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTournamentTeams = async (tournamentId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/tournaments/${tournamentId}/registrations`, {
+        withCredentials: true
+      });
+      setTeams(response.data.registrations || []);
+    } catch (error) {
+      console.error('Error loading tournament teams:', error);
+      // Don't show error toast here since it's not critical
     }
   };
 
@@ -297,21 +319,24 @@ const TournamentDetail = () => {
             ) : (
               <div className="teams-grid">
                 {teams.map((team, index) => (
-                  <div key={team.TeamID || index} className="team-card">
+                  <div key={team.team_id || team.id || index} className="team-card">
                     <div className="team-header">
-                      {team.TeamLogo && (
-                        <img src={team.TeamLogo} alt="Team logo" className="team-logo" />
+                      {team.team_logo && (
+                        <img src={team.team_logo} alt="Team logo" className="team-logo" />
                       )}
                       <div>
-                        <h4>{team.TeamName}</h4>
-                        <span className={`team-status ${team.Confirmed ? 'confirmed' : 'pending'}`}>
-                          {team.Confirmed ? 'Confirmed' : 'Pending'}
+                        <h4>{team.team_name}</h4>
+                        <p className="team-captain">Captain: {team.captain_username}</p>
+                        <span className={`team-status ${team.status === 'registered' ? 'confirmed' : 'pending'}`}>
+                          {team.status === 'registered' ? 'Registered' : team.status}
                         </span>
                       </div>
                     </div>
                     <div className="team-stats">
-                      <span>Players: {team.Players?.length || 0}/5</span>
-                      <span>Substitutes: {team.Substitutes?.length || 0}/3</span>
+                      <span>Registered: {new Date(team.registered_date).toLocaleDateString()}</span>
+                      {team.checked_in && (
+                        <span className="checked-in">✅ Checked In</span>
+                      )}
                     </div>
                   </div>
                 ))}

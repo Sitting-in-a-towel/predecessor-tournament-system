@@ -78,7 +78,10 @@ module.exports = function(passport) {
           email: user.email,
           isAdmin: user.is_admin,
           createdAt: user.created_at,
-          lastActive: user.last_active
+          lastActive: user.last_active,
+          omeda_player_id: user.omeda_player_id,
+          omeda_last_sync: user.omeda_last_sync,
+          omeda_sync_enabled: user.omeda_sync_enabled
         });
       } else {
         done(null, false);

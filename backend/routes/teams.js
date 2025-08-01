@@ -153,7 +153,7 @@ router.post('/:id/invite',
       }
 
       // Check if team exists and user is captain
-      const team = await postgresService.getTournamentById(teamId);
+      const team = await postgresService.getTeamById(teamId);
       if (!team) {
         return res.status(404).json({ error: 'Team not found' });
       }

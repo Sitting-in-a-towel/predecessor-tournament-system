@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export const Footer = () => {
   return (
@@ -13,9 +14,9 @@ export const Footer = () => {
           <div className="footer-section">
             <h4>Quick Links</h4>
             <ul>
-              <li><a href="/tournaments">Active Tournaments</a></li>
-              <li><a href="/teams">Team Registration</a></li>
-              <li><a href="https://omeda.city" target="_blank" rel="noopener noreferrer">Omeda Studios</a></li>
+              <li><Link to="/tournaments?status=active">Active Tournaments</Link></li>
+              <li><Link to="/feedback">Feedback & Support</Link></li>
+              <li><a href="https://omeda.city/dashboard" target="_blank" rel="noopener noreferrer">Omeda Studios</a></li>
             </ul>
           </div>
           

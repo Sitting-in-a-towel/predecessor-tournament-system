@@ -228,6 +228,17 @@ class PostgreSQLService {
         return result.rows;
     }
 
+    async getTeamById(teamId) {
+        const query = `
+            SELECT t.*, u.discord_username as captain_username
+            FROM teams t
+            LEFT JOIN users u ON t.captain_id = u.id
+            WHERE t.team_id = $1
+        `;
+        const result = await this.query(query, [teamId]);
+        return result.rows[0];
+    }
+
     // Team player operations
     async addPlayerToTeam(teamId, userId, role = 'Player') {
         const query = `
@@ -254,6 +265,23 @@ class PostgreSQLService {
 
     // Team invitation operations
     async createTeamInvitation(invitationData) {
+        // First, try to find the user by username or email
+        let invitedUserId = null;
+        if (invitationData.invited_discord_username || invitationData.invited_discord_email) {
+            const userQuery = `
+                SELECT id FROM users 
+                WHERE discord_username = $1 OR email = $2 
+                LIMIT 1
+            `;
+            const userResult = await this.query(userQuery, [
+                invitationData.invited_discord_username || null,
+                invitationData.invited_discord_email || null
+            ]);
+            if (userResult.rows.length > 0) {
+                invitedUserId = userResult.rows[0].id;
+            }
+        }
+
         const query = `
             INSERT INTO team_invitations 
             (team_id, inviter_id, invited_discord_username, invited_discord_email, 
@@ -261,16 +289,15 @@ class PostgreSQLService {
             VALUES 
             ((SELECT id FROM teams WHERE team_id = $1),
              (SELECT id FROM users WHERE user_id = $2),
-             $3, $4, 
-             (SELECT id FROM users WHERE discord_username = $3 OR email = $4 LIMIT 1),
-             $5, $6, $7)
+             $3, $4, $5, $6, $7, $8)
             RETURNING *
         `;
         const values = [
             invitationData.team_id,
             invitationData.inviter_id,
-            invitationData.invited_discord_username,
-            invitationData.invited_discord_email,
+            invitationData.invited_discord_username || null,
+            invitationData.invited_discord_email || null,
+            invitedUserId,
             invitationData.role || 'Player',
             invitationData.message || null,
             invitationData.expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days default
@@ -298,6 +325,15 @@ class PostgreSQLService {
     }
 
     async getUserPendingInvitations(userId) {
+        // First get the user's discord username and email
+        const userQuery = `SELECT discord_username, email FROM users WHERE user_id = $1`;
+        const userResult = await this.query(userQuery, [userId]);
+        
+        if (userResult.rows.length === 0) return [];
+        
+        const user = userResult.rows[0];
+        
+        // Find invitations by user_id OR by matching discord username/email
         const query = `
             SELECT ti.*, 
                    t.team_name, t.team_id,
@@ -305,13 +341,14 @@ class PostgreSQLService {
             FROM team_invitations ti
             JOIN teams t ON ti.team_id = t.id
             JOIN users inviter ON ti.inviter_id = inviter.id
-            JOIN users invited ON ti.invited_user_id = invited.id
-            WHERE invited.user_id = $1 
+            WHERE (ti.invited_user_id = (SELECT id FROM users WHERE user_id = $1)
+                   OR (ti.invited_discord_username = $2 AND ti.invited_user_id IS NULL)
+                   OR (ti.invited_discord_email = $3 AND ti.invited_user_id IS NULL))
             AND ti.status = 'pending'
             AND ti.expires_at > NOW()
             ORDER BY ti.created_at DESC
         `;
-        const result = await this.query(query, [userId]);
+        const result = await this.query(query, [userId, user.discord_username, user.email]);
         return result.rows;
     }
 

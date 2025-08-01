@@ -92,4 +92,50 @@ router.get('/team/:teamId', requireAuth, async (req, res) => {
   }
 });
 
+// Cancel/delete an invitation (captain only)
+router.delete('/:id', requireAuth, async (req, res) => {
+  try {
+    const invitationId = req.params.id;
+    const userID = req.user.userID;
+    
+    // Get invitation details
+    const invitationQuery = `
+      SELECT ti.*, t.captain_id, u.user_id as captain_user_id
+      FROM team_invitations ti
+      JOIN teams t ON ti.team_id = t.id
+      JOIN users u ON t.captain_id = u.id
+      WHERE ti.id = $1
+    `;
+    
+    const invitationResult = await postgresService.query(invitationQuery, [invitationId]);
+    
+    if (invitationResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Invitation not found' });
+    }
+    
+    const invitation = invitationResult.rows[0];
+    
+    // Check if user is the team captain
+    if (invitation.captain_user_id !== userID) {
+      return res.status(403).json({ error: 'Only team captains can cancel invitations' });
+    }
+    
+    // Check if invitation is still pending
+    if (invitation.status !== 'pending') {
+      return res.status(400).json({ error: 'Only pending invitations can be cancelled' });
+    }
+    
+    // Delete the invitation
+    const deleteQuery = `DELETE FROM team_invitations WHERE id = $1`;
+    await postgresService.query(deleteQuery, [invitationId]);
+    
+    logger.info(`Invitation ${invitationId} cancelled by captain ${userID}`);
+    res.json({ message: 'Invitation cancelled successfully' });
+    
+  } catch (error) {
+    logger.error('Error cancelling invitation:', error);
+    res.status(500).json({ error: 'Failed to cancel invitation' });
+  }
+});
+
 module.exports = router;

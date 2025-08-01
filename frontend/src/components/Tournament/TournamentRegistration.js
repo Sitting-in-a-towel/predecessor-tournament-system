@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import './TournamentRegistration.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
 
 const TournamentRegistration = ({ tournament, onClose }) => {
   const { user } = useAuth();
@@ -76,7 +76,12 @@ const TournamentRegistration = ({ tournament, onClose }) => {
         }
         
         // Register existing team for tournament
-        toast.info('Team tournament registration will be available when backend endpoints are implemented');
+        const response = await axios.post(`${API_BASE_URL}/tournaments/${tournament.tournament_id}/register-team`, {
+          teamId: selectedTeam,
+          type: 'existing-team'
+        }, { withCredentials: true });
+        
+        toast.success(response.data.message || 'Team registered for tournament!');
         
       } else if (registrationType === 'new-team') {
         if (!newTeamData.teamName.trim()) {
@@ -319,9 +324,23 @@ const TournamentRegistration = ({ tournament, onClose }) => {
         <div className="form-actions">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              if (onClose) {
+                onClose();
+              }
+            }}
             className="btn-secondary"
             disabled={loading}
+            style={{
+              backgroundColor: 'transparent',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-color)',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
           >
             Cancel
           </button>

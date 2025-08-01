@@ -77,7 +77,10 @@ router.get('/me', (req, res) => {
       email: req.user.email,
       isAdmin: req.user.isAdmin,
       createdAt: req.user.createdAt,
-      lastActive: req.user.lastActive
+      lastActive: req.user.lastActive,
+      omeda_player_id: req.user.omeda_player_id,
+      omeda_last_sync: req.user.omeda_last_sync,
+      omeda_sync_enabled: req.user.omeda_sync_enabled
     });
   } else {
     res.status(401).json({ error: 'Not authenticated' });
