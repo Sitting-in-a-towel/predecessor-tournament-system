@@ -290,7 +290,7 @@ const TeamManagement = ({ team, onTeamUpdate }) => {
 
       {/* Team Invitations Section - Split View */}
       <div className="team-invitations-section" style={{ marginTop: '30px' }}>
-        <h3>Team Invitations (v2 - Split View)</h3>
+        <h3>Team Invitations</h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '15px' }}>
           {/* Sent Invitations */}

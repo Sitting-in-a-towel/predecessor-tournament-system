@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import CreateTournamentModal from '../components/Admin/CreateTournamentModal';
+import UserManagementModal from '../components/Admin/UserManagementModal';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -19,6 +21,8 @@ const AdminDashboard = () => {
     database: 'checking',
     discord: 'checking'
   });
+  const [showCreateTournament, setShowCreateTournament] = useState(false);
+  const [showUserManagement, setShowUserManagement] = useState(false);
 
   // Check if user is admin
   const isAdmin = user?.role === 'admin' || user?.isAdmin;
@@ -47,68 +51,30 @@ const AdminDashboard = () => {
 
   const loadStatistics = async () => {
     try {
-      // Load tournament stats
-      const tourResponse = await axios.get(`${API_BASE_URL}/tournaments`, {
+      const response = await axios.get(`${API_BASE_URL}/admin/dashboard`, {
         withCredentials: true
       });
-      const tournaments = tourResponse.data || [];
-      const tournamentStats = {
-        total: tournaments.length,
-        active: tournaments.filter(t => t.status === 'In Progress').length,
-        completed: tournaments.filter(t => t.status === 'Completed').length,
-        upcoming: tournaments.filter(t => t.status === 'Registration' || t.status === 'Upcoming').length
-      };
-
-      // Load team stats - use my-teams endpoint for now (will need admin endpoint later)
-      let teamStats = { total: 0, confirmed: 0, pending: 0 };
-      try {
-        const teamResponse = await axios.get(`${API_BASE_URL}/teams/my-teams`, {
-          withCredentials: true
-        });
-        const teams = teamResponse.data || [];
-        teamStats = {
-          total: teams.length,
-          confirmed: teams.filter(t => t.confirmed).length,
-          pending: teams.filter(t => !t.confirmed).length
-        };
-      } catch (error) {
-        console.log('Could not load team stats:', error.message);
-      }
-
-      // Load user stats - placeholder for now (will need admin endpoint)
-      const userStats = {
-        total: 0, // Will need admin endpoint
-        active: 0
-      };
-
-      // Load match stats - placeholder for now (will need admin endpoint)
-      const matchStats = {
-        total: 0, // Will need admin endpoint
-        completed: 0,
-        scheduled: 0
-      };
-
-      setStats({
-        tournaments: tournamentStats,
-        teams: teamStats,
-        users: userStats,
-        matches: matchStats
-      });
+      
+      setStats(response.data);
     } catch (error) {
       console.error('Error loading statistics:', error);
+      toast.error('Failed to load dashboard statistics');
     }
   };
 
   const loadRecentActivity = async () => {
     try {
-      // Placeholder for recent activity - will need admin endpoint
-      setRecentActivity([
-        {
-          type: 'tournament_created',
-          description: 'Recent activity will be available when admin endpoints are implemented',
-          timestamp: 'Now'
-        }
-      ]);
+      const response = await axios.get(`${API_BASE_URL}/admin/activity`, {
+        withCredentials: true
+      });
+      
+      // Format timestamps for display
+      const formattedActivity = response.data.map(activity => ({
+        ...activity,
+        timestamp: new Date(activity.timestamp).toLocaleString()
+      }));
+      
+      setRecentActivity(formattedActivity);
     } catch (error) {
       console.error('Error loading recent activity:', error);
       setRecentActivity([]);
@@ -146,6 +112,11 @@ const AdminDashboard = () => {
   const handleRefreshData = () => {
     loadDashboardData();
     toast.success('Dashboard data refreshed');
+  };
+
+  const handleTournamentCreated = (tournament) => {
+    // Refresh dashboard data to show new tournament
+    loadDashboardData();
   };
 
   if (!isAdmin) {
@@ -374,11 +345,17 @@ const AdminDashboard = () => {
       <div className="quick-actions">
         <h2>Quick Actions</h2>
         <div className="actions-grid">
-          <button className="action-button tournament">
+          <button 
+            className="action-button tournament"
+            onClick={() => setShowCreateTournament(true)}
+          >
             <span className="action-icon">🏆</span>
             <span className="action-label">Create Tournament</span>
           </button>
-          <button className="action-button users">
+          <button 
+            className="action-button users"
+            onClick={() => setShowUserManagement(true)}
+          >
             <span className="action-icon">👤</span>
             <span className="action-label">Manage Users</span>
           </button>
@@ -392,6 +369,18 @@ const AdminDashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Modals */}
+      <CreateTournamentModal
+        isOpen={showCreateTournament}
+        onClose={() => setShowCreateTournament(false)}
+        onSuccess={handleTournamentCreated}
+      />
+      
+      <UserManagementModal
+        isOpen={showUserManagement}
+        onClose={() => setShowUserManagement(false)}
+      />
     </div>
   );
 };
