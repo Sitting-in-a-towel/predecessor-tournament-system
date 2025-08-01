@@ -9,6 +9,15 @@ This is the Predecessor Tournament Management System - a web-based platform for 
 - ALL Airtable code has been removed
 - Database: PostgreSQL (local: localhost:5432, production: Render)
 - Service file: `backend/services/postgresql.js`
+- **Omeda.city Migration**: Auto-runs on server startup (August 1, 2025)
+
+## CRITICAL: Admin Issues Identified
+**⚠️ ADMIN FUNCTIONALITY HAS ISSUES ⚠️**
+- Admin dashboard showing all 0s for statistics in production
+- "Failed to load dashboard statistics" error on page load
+- Admin page not working in dev/local environment
+- Recent activity showing empty
+- Root cause: Likely authentication/authorization issues with admin endpoints
 
 ## Architecture
 - **Frontend**: React 18 (Port 3000)
@@ -228,6 +237,39 @@ color: '#fff'
 - **Full Details**: Shown when account management section is expanded
 - **Responsive**: Grid layouts adapt to screen size
 
+## Current Status & Issues (August 1, 2025)
+
+### ✅ WORKING Features
+- **Authentication**: Discord OAuth login/logout
+- **Profile Management**: User profiles with collapsible sections
+- **Omeda.city Integration**: Player stats, favorite hero/role (production working)
+- **Team Management**: Create teams, send/receive invitations
+- **Tournament Registration**: Users can register teams for tournaments
+- **Tournament Viewing**: Browse tournaments, view details
+- **UI/UX**: Dark theme, responsive design, proper modal styling
+
+### 🚨 BROKEN Features (Need Immediate Attention)
+- **Admin Dashboard**: All statistics showing 0, authentication issues
+- **Admin Endpoints**: Not properly authenticating admin users
+- **Tournament Check-in**: Tab functionality not implemented
+- **Tournament Brackets**: Not implemented
+- **Tournament Matches**: Not implemented
+- **System Health Monitoring**: Not accurately reflecting status
+
+### 🔧 NEXT PRIORITIES (In Order)
+1. **Fix Admin Authentication** - Admin endpoints failing auth checks
+2. **Fix Admin Dashboard Statistics** - Connect to real database queries
+3. **Implement Tournament Check-in** - Allow teams to check in before tournaments
+4. **Fix Tournament Tabs** - Brackets, matches, standings
+5. **Implement Bracket Generation** - Create tournament brackets
+
+### 🐛 KNOWN ISSUES
+- Admin page not working in dev/local environment
+- Production admin dashboard shows "Failed to load dashboard statistics"
+- All admin statistics showing 0 values
+- Recent activity feed empty
+- Admin user management may have authentication issues
+
 ## Notes for Claude
 - NEVER add Airtable code - migration is complete
 - Always check ALL .env files when debugging
@@ -237,4 +279,5 @@ color: '#fff'
 - Always verify environment variables in deployment dashboards
 - Follow the dark theme UI style guide above for all modals and forms
 - Tournament registration endpoints are functional - test with existing teams
-- Omeda integration UI is ready - backend API calls need implementation
+- **CRITICAL**: Admin functionality has authentication issues - investigate requireAdmin middleware
+- **DO NOT** claim things are "working perfectly" - always acknowledge issues exist

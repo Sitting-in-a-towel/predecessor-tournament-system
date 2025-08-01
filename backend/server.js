@@ -132,7 +132,7 @@ app.use('/api/draft', draftRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api', tournamentRegistrationRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/api/admin', authMiddleware.requireAdmin, adminRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Socket.IO for real-time features (draft system, notifications)
 io.on('connection', (socket) => {

@@ -167,20 +167,20 @@ const AdminDashboard = () => {
           </div>
           <div className="stat-content">
             <div className="stat-main">
-              <span className="stat-number">{stats.tournaments.total}</span>
+              <span className="stat-number">{stats.tournaments?.total || 0}</span>
               <span className="stat-label">Total</span>
             </div>
             <div className="stat-breakdown">
               <div className="stat-item">
-                <span className="stat-value active">{stats.tournaments.active}</span>
+                <span className="stat-value active">{stats.tournaments?.active || 0}</span>
                 <span className="stat-text">Active</span>
               </div>
               <div className="stat-item">
-                <span className="stat-value upcoming">{stats.tournaments.upcoming}</span>
+                <span className="stat-value upcoming">{stats.tournaments?.upcoming || 0}</span>
                 <span className="stat-text">Upcoming</span>
               </div>
               <div className="stat-item">
-                <span className="stat-value completed">{stats.tournaments.completed}</span>
+                <span className="stat-value completed">{stats.tournaments?.completed || 0}</span>
                 <span className="stat-text">Completed</span>
               </div>
             </div>
@@ -195,21 +195,21 @@ const AdminDashboard = () => {
           </div>
           <div className="stat-content">
             <div className="stat-main">
-              <span className="stat-number">{stats.teams.total}</span>
+              <span className="stat-number">{stats.teams?.total || 0}</span>
               <span className="stat-label">Total</span>
             </div>
             <div className="stat-breakdown">
               <div className="stat-item">
-                <span className="stat-value confirmed">{stats.teams.confirmed}</span>
+                <span className="stat-value confirmed">{stats.teams?.confirmed || 0}</span>
                 <span className="stat-text">Confirmed</span>
               </div>
               <div className="stat-item">
-                <span className="stat-value pending">{stats.teams.pending}</span>
+                <span className="stat-value pending">{stats.teams?.pending || 0}</span>
                 <span className="stat-text">Pending</span>
               </div>
               <div className="stat-item">
                 <span className="stat-value">
-                  {stats.teams.total > 0 ? Math.round((stats.teams.confirmed / stats.teams.total) * 100) : 0}%
+                  {(stats.teams?.total && stats.teams.total > 0) ? Math.round(((stats.teams.confirmed || 0) / stats.teams.total) * 100) : 0}%
                 </span>
                 <span className="stat-text">Completion</span>
               </div>
@@ -225,23 +225,23 @@ const AdminDashboard = () => {
           </div>
           <div className="stat-content">
             <div className="stat-main">
-              <span className="stat-number">{stats.users.total}</span>
+              <span className="stat-number">{stats.users?.total || 0}</span>
               <span className="stat-label">Total</span>
             </div>
             <div className="stat-breakdown">
               <div className="stat-item">
-                <span className="stat-value active">{stats.users.active}</span>
+                <span className="stat-value active">{stats.users?.active || 0}</span>
                 <span className="stat-text">Active</span>
               </div>
               <div className="stat-item">
                 <span className="stat-value">
-                  {stats.users.total - stats.users.active}
+                  {(stats.users?.total || 0) - (stats.users?.active || 0)}
                 </span>
                 <span className="stat-text">Inactive</span>
               </div>
               <div className="stat-item">
                 <span className="stat-value">
-                  {stats.users.total > 0 ? Math.round((stats.users.active / stats.users.total) * 100) : 0}%
+                  {(stats.users?.total && stats.users.total > 0) ? Math.round(((stats.users.active || 0) / stats.users.total) * 100) : 0}%
                 </span>
                 <span className="stat-text">Activity</span>
               </div>
@@ -257,21 +257,21 @@ const AdminDashboard = () => {
           </div>
           <div className="stat-content">
             <div className="stat-main">
-              <span className="stat-number">{stats.matches.total}</span>
+              <span className="stat-number">{stats.matches?.total || 0}</span>
               <span className="stat-label">Total</span>
             </div>
             <div className="stat-breakdown">
               <div className="stat-item">
-                <span className="stat-value completed">{stats.matches.completed}</span>
+                <span className="stat-value completed">{stats.matches?.completed || 0}</span>
                 <span className="stat-text">Completed</span>
               </div>
               <div className="stat-item">
-                <span className="stat-value scheduled">{stats.matches.scheduled}</span>
+                <span className="stat-value scheduled">{stats.matches?.scheduled || 0}</span>
                 <span className="stat-text">Scheduled</span>
               </div>
               <div className="stat-item">
                 <span className="stat-value">
-                  {stats.matches.total > 0 ? Math.round((stats.matches.completed / stats.matches.total) * 100) : 0}%
+                  {(stats.matches?.total && stats.matches.total > 0) ? Math.round(((stats.matches.completed || 0) / stats.matches.total) * 100) : 0}%
                 </span>
                 <span className="stat-text">Progress</span>
               </div>
