@@ -138,6 +138,66 @@ router.post('/add-test-teams', async (req, res) => {
   }
 });
 
+// Initialize tournament registration table
+router.post('/init-registration-table', async (req, res) => {
+  try {
+    logger.info('Initializing tournament_registrations table...');
+
+    // Create tournament_registrations table if it doesn't exist
+    await postgresService.query(`
+      CREATE TABLE IF NOT EXISTS tournament_registrations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tournament_id UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+        team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        registered_by UUID NOT NULL REFERENCES users(id),
+        registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        status VARCHAR(50) DEFAULT 'registered',
+        checked_in BOOLEAN DEFAULT false,
+        check_in_time TIMESTAMP WITH TIME ZONE,
+        UNIQUE(tournament_id, team_id)
+      )
+    `);
+
+    await postgresService.query(`
+      CREATE INDEX IF NOT EXISTS idx_tournament_registrations_tournament ON tournament_registrations(tournament_id)
+    `);
+
+    await postgresService.query(`
+      CREATE INDEX IF NOT EXISTS idx_tournament_registrations_team ON tournament_registrations(team_id)
+    `);
+
+    await postgresService.query(`
+      COMMENT ON TABLE tournament_registrations IS 'Stores team registrations for tournaments'
+    `);
+
+    await postgresService.query(`
+      COMMENT ON COLUMN tournament_registrations.status IS 'Registration status: registered, confirmed, disqualified'
+    `);
+
+    await postgresService.query(`
+      COMMENT ON COLUMN tournament_registrations.checked_in IS 'Whether team has checked in for tournament'
+    `);
+
+    const result = {
+      success: true,
+      message: 'Tournament registration table initialized successfully',
+      table: 'tournament_registrations',
+      indexes: ['idx_tournament_registrations_tournament', 'idx_tournament_registrations_team']
+    };
+
+    logger.info('Tournament registration table initialized', result);
+    res.json(result);
+    
+  } catch (error) {
+    logger.error('Error initializing tournament registration table:', error);
+    res.status(500).json({ 
+      error: 'Failed to initialize tournament registration table', 
+      message: error.message,
+      success: false 
+    });
+  }
+});
+
 // Register test teams to a specific tournament
 router.post('/register-test-teams/:tournamentId', async (req, res) => {
   try {
