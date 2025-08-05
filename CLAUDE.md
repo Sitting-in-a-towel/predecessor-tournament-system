@@ -306,14 +306,17 @@ color: '#fff'
 
 #### **Available Admin Tools Endpoints:**
 - `POST /api/admin-tools/add-test-teams` - Adds 10 test teams to current database
+- `POST /api/admin-tools/init-registration-table` - Creates tournament_registrations table
+- `POST /api/admin-tools/register-test-teams/:tournamentId` - Registers test teams to specific tournament
 - Creates teams with proper captain relationships
 - Auto-registers teams to existing tournaments (if registration table exists)
 - Returns detailed success/failure report
 
 #### **Database Structure Differences:**
-- **Local**: Full schema with all tables
-- **Production**: May have different table structure (e.g., missing `tournament_registrations`)
+- **Local**: Full schema with all tables including `tournament_registrations`
+- **Production**: May have different table structure (missing tables need to be created)
 - **Always check schema** before writing scripts: `node scripts/check-schema.js`
+- **⚠️ CRITICAL**: Always sync NocoDB after database changes to show new tables
 
 #### **When Creating New Data Scripts:**
 1. Use the existing `postgresService` (connects to current environment automatically)
@@ -321,6 +324,15 @@ color: '#fff'
 3. Create proper relationships (teams → users → tournaments)
 4. Include error handling and detailed logging
 5. Test locally first, then use API endpoint for production
+6. **⚠️ ALWAYS**: After database schema changes, sync NocoDB to display new tables
+
+#### **Database Deployment Checklist:**
+Before deploying to production, always check:
+- [ ] All new tables from local exist in production
+- [ ] Foreign key relationships are intact
+- [ ] Required indexes are created
+- [ ] NocoDB has been synced to show all tables
+- [ ] Test data endpoints work with new schema
 
 ## Notes for Claude
 - NEVER add Airtable code - migration is complete
