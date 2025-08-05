@@ -138,4 +138,102 @@ router.post('/add-test-teams', async (req, res) => {
   }
 });
 
+// Register test teams to a specific tournament
+router.post('/register-test-teams/:tournamentId', async (req, res) => {
+  try {
+    const { tournamentId } = req.params;
+    
+    logger.info(`Registering test teams to tournament: ${tournamentId}`);
+
+    // Get the tournament
+    const tournamentQuery = `SELECT * FROM tournaments WHERE id = $1`;
+    const tournamentResult = await postgresService.query(tournamentQuery, [tournamentId]);
+    
+    if (tournamentResult.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Tournament not found',
+        success: false 
+      });
+    }
+
+    const tournament = tournamentResult.rows[0];
+
+    // Get all test teams (created with prod prefix)
+    const testTeamsQuery = `
+      SELECT * FROM teams 
+      WHERE team_id LIKE 'team_prod_%' 
+      ORDER BY created_at DESC
+    `;
+    const testTeamsResult = await postgresService.query(testTeamsQuery);
+    
+    if (testTeamsResult.rows.length === 0) {
+      return res.status(400).json({ 
+        error: 'No test teams found. Please create test teams first.',
+        success: false 
+      });
+    }
+
+    const results = [];
+    let registeredCount = 0;
+
+    // Register each test team
+    for (const team of testTeamsResult.rows) {
+      try {
+        // Check if already registered
+        const existingQuery = `
+          SELECT * FROM tournament_registrations 
+          WHERE tournament_id = $1 AND team_id = $2
+        `;
+        const existingResult = await postgresService.query(existingQuery, [tournament.id, team.id]);
+        
+        if (existingResult.rows.length > 0) {
+          results.push(`   ℹ️ ${team.team_name} already registered`);
+          registeredCount++;
+          continue;
+        }
+
+        // Register team
+        const registrationQuery = `
+          INSERT INTO tournament_registrations 
+          (tournament_id, team_id, registered_by, registration_date, status, checked_in)
+          VALUES ($1, $2, $3, NOW(), 'registered', true)
+          RETURNING *
+        `;
+        
+        await postgresService.query(registrationQuery, [
+          tournament.id,
+          team.id,
+          team.captain_id
+        ]);
+        
+        results.push(`   ✅ Registered ${team.team_name}`);
+        registeredCount++;
+        
+      } catch (error) {
+        results.push(`   ❌ Failed to register ${team.team_name}: ${error.message}`);
+      }
+    }
+
+    const summary = {
+      success: true,
+      message: `Registered test teams to tournament: ${tournament.name}`,
+      tournamentName: tournament.name,
+      teamsFound: testTeamsResult.rows.length,
+      teamsRegistered: registeredCount,
+      results: results
+    };
+
+    logger.info('Test teams registration completed', summary);
+    res.json(summary);
+    
+  } catch (error) {
+    logger.error('Error registering test teams:', error);
+    res.status(500).json({ 
+      error: 'Failed to register test teams', 
+      message: error.message,
+      success: false 
+    });
+  }
+});
+
 module.exports = router;

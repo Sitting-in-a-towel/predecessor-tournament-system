@@ -270,9 +270,11 @@ color: '#fff'
 ### 🔧 NEXT PRIORITIES (In Order)
 1. **Fix Admin Authentication** - Admin endpoints failing auth checks
 2. **Fix Admin Dashboard Statistics** - Connect to real database queries
-3. **Implement Tournament Check-in** - Allow teams to check in before tournaments
-4. **Fix Tournament Tabs** - Brackets, matches, standings
-5. **Implement Bracket Generation** - Create tournament brackets
+3. **Fix Tournament Registration** - "Failed to register team for tournament" error
+4. **Admin Team Visibility** - Admins can only see teams they created, not all teams
+5. **Implement Tournament Check-in** - Allow teams to check in before tournaments
+6. **Fix Tournament Tabs** - Brackets, matches, standings
+7. **Implement Bracket Generation** - Create tournament brackets
 
 ### 🐛 KNOWN ISSUES
 - Admin page not working in dev/local environment
@@ -280,6 +282,45 @@ color: '#fff'
 - All admin statistics showing 0 values
 - Recent activity feed empty
 - Admin user management may have authentication issues
+
+## Database Management & Adding Test Data
+
+### **CRITICAL: How to Add Teams/Data to Databases**
+
+**❌ NEVER manually add data through NocoDB interface** - This causes relationship issues and incomplete records.
+
+**✅ ALWAYS use proper scripts or API endpoints:**
+
+#### **For Local/Development Database:**
+- Use existing scripts in `backend/scripts/add-test-teams.js`
+- This handles all relationships and registrations correctly
+- Run with: `cd backend && node scripts/add-test-teams.js`
+
+#### **For Production Database (Render):**
+- **Method 1 (Recommended)**: Use API endpoint
+  ```bash
+  curl -X POST "https://predecessor-tournament-api.onrender.com/api/admin-tools/add-test-teams"
+  ```
+- **Method 2**: Direct database connection using production DATABASE_URL
+- **NEVER** try to connect locally to production - Use the API endpoint
+
+#### **Available Admin Tools Endpoints:**
+- `POST /api/admin-tools/add-test-teams` - Adds 10 test teams to current database
+- Creates teams with proper captain relationships
+- Auto-registers teams to existing tournaments (if registration table exists)
+- Returns detailed success/failure report
+
+#### **Database Structure Differences:**
+- **Local**: Full schema with all tables
+- **Production**: May have different table structure (e.g., missing `tournament_registrations`)
+- **Always check schema** before writing scripts: `node scripts/check-schema.js`
+
+#### **When Creating New Data Scripts:**
+1. Use the existing `postgresService` (connects to current environment automatically)
+2. Handle existing data checks (avoid duplicates)
+3. Create proper relationships (teams → users → tournaments)
+4. Include error handling and detailed logging
+5. Test locally first, then use API endpoint for production
 
 ## Notes for Claude
 - NEVER add Airtable code - migration is complete
@@ -291,5 +332,6 @@ color: '#fff'
 - Follow the dark theme UI style guide above for all modals and forms
 - Tournament registration endpoints are functional - test with existing teams
 - **CRITICAL**: Admin functionality has authentication issues - investigate requireAdmin middleware
+- **CRITICAL**: For adding test data, ALWAYS use API endpoints or proper scripts - NEVER manual database entry
 - **DO NOT** claim things are "working perfectly" - always acknowledge issues exist
 - **TROUBLESHOOTING**: When encountering errors, follow the TROUBLESHOOTING_CHECKLIST.md
