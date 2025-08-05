@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { airtableService } from '../../services/airtableService';
+import axios from 'axios';
 import { toast } from 'react-toastify';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const TournamentCreation = ({ onClose }) => {
   const navigate = useNavigate();
@@ -17,8 +19,10 @@ const TournamentCreation = ({ onClose }) => {
     semiFinalFormat: 'Best of 5',
     grandFinalFormat: 'Best of 5',
     maxTeams: 16,
-    startDate: '',
-    endDate: ''
+    registrationStart: '',
+    registrationEnd: '',
+    tournamentStart: '',
+    rules: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -54,21 +58,33 @@ const TournamentCreation = ({ onClose }) => {
       newErrors.description = 'Description must be less than 1000 characters';
     }
 
-    if (!formData.startDate) {
-      newErrors.startDate = 'Start date is required';
+    if (!formData.registrationStart) {
+      newErrors.registrationStart = 'Registration start date is required';
     } else {
-      const startDate = new Date(formData.startDate);
+      const regStart = new Date(formData.registrationStart);
       const now = new Date();
-      if (startDate < now) {
-        newErrors.startDate = 'Start date must be in the future';
+      if (regStart < now) {
+        newErrors.registrationStart = 'Registration start must be in the future';
       }
     }
 
-    if (formData.endDate) {
-      const startDate = new Date(formData.startDate);
-      const endDate = new Date(formData.endDate);
-      if (endDate <= startDate) {
-        newErrors.endDate = 'End date must be after start date';
+    if (!formData.registrationEnd) {
+      newErrors.registrationEnd = 'Registration end date is required';
+    } else if (formData.registrationStart) {
+      const regStart = new Date(formData.registrationStart);
+      const regEnd = new Date(formData.registrationEnd);
+      if (regEnd <= regStart) {
+        newErrors.registrationEnd = 'Registration end must be after registration start';
+      }
+    }
+
+    if (!formData.tournamentStart) {
+      newErrors.tournamentStart = 'Tournament start date is required';
+    } else if (formData.registrationEnd) {
+      const regEnd = new Date(formData.registrationEnd);
+      const tournStart = new Date(formData.tournamentStart);
+      if (tournStart <= regEnd) {
+        newErrors.tournamentStart = 'Tournament start must be after registration ends';
       }
     }
 
@@ -110,12 +126,19 @@ const TournamentCreation = ({ onClose }) => {
 
     try {
       const tournamentData = {
-        ...formData,
-        startDate: new Date(formData.startDate).toISOString(),
-        endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
+        format: formData.bracketType,
+        maxTeams: parseInt(formData.maxTeams),
+        registrationStart: new Date(formData.registrationStart).toISOString(),
+        registrationEnd: new Date(formData.registrationEnd).toISOString(),
+        tournamentStart: new Date(formData.tournamentStart).toISOString(),
+        rules: formData.rules.trim() || null
       };
 
-      const newTournament = await airtableService.createTournament(tournamentData);
+      const response = await axios.post(`${API_BASE_URL}/admin/tournaments`, tournamentData, {
+        withCredentials: true
+      });
       
       toast.success('Tournament created successfully!');
       
@@ -126,7 +149,7 @@ const TournamentCreation = ({ onClose }) => {
       }
     } catch (error) {
       console.error('Error creating tournament:', error);
-      toast.error('Failed to create tournament. Please try again.');
+      toast.error(error.response?.data?.error || 'Failed to create tournament. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -279,33 +302,62 @@ const TournamentCreation = ({ onClose }) => {
           </div>
         </div>
 
-        {/* Tournament Dates */}
+        {/* Registration Dates */}
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="startDate">Start Date & Time *</label>
+            <label htmlFor="registrationStart">Registration Start *</label>
             <input
               type="datetime-local"
-              id="startDate"
-              name="startDate"
-              value={formData.startDate}
+              id="registrationStart"
+              name="registrationStart"
+              value={formData.registrationStart}
               onChange={handleInputChange}
-              className={errors.startDate ? 'error' : ''}
+              className={errors.registrationStart ? 'error' : ''}
             />
-            {errors.startDate && <span className="error-message">{errors.startDate}</span>}
+            {errors.registrationStart && <span className="error-message">{errors.registrationStart}</span>}
           </div>
 
           <div className="form-group">
-            <label htmlFor="endDate">End Date & Time (Optional)</label>
+            <label htmlFor="registrationEnd">Registration End *</label>
             <input
               type="datetime-local"
-              id="endDate"
-              name="endDate"
-              value={formData.endDate}
+              id="registrationEnd"
+              name="registrationEnd"
+              value={formData.registrationEnd}
               onChange={handleInputChange}
-              className={errors.endDate ? 'error' : ''}
+              className={errors.registrationEnd ? 'error' : ''}
             />
-            {errors.endDate && <span className="error-message">{errors.endDate}</span>}
+            {errors.registrationEnd && <span className="error-message">{errors.registrationEnd}</span>}
           </div>
+        </div>
+
+        {/* Tournament Start - Single Row */}
+        <div className="form-group">
+          <label htmlFor="tournamentStart">Tournament Start *</label>
+          <input
+            type="datetime-local"
+            id="tournamentStart"
+            name="tournamentStart"
+            value={formData.tournamentStart}
+            onChange={handleInputChange}
+            className={errors.tournamentStart ? 'error' : ''}
+          />
+          {errors.tournamentStart && <span className="error-message">{errors.tournamentStart}</span>}
+        </div>
+
+        {/* Rules Section */}
+        <div className="form-group">
+          <label htmlFor="rules">Tournament Rules</label>
+          <textarea
+            id="rules"
+            name="rules"
+            value={formData.rules}
+            onChange={handleInputChange}
+            placeholder="Enter tournament rules and additional information..."
+            rows="4"
+            maxLength={2000}
+          />
+          <small className="char-count">{formData.rules.length}/2000 characters</small>
         </div>
 
         {/* Tournament Preview */}
@@ -327,9 +379,14 @@ const TournamentCreation = ({ onClose }) => {
                 <span className="preview-item">
                   <strong>Finals:</strong> {formData.grandFinalFormat}
                 </span>
-                {formData.startDate && (
+                {formData.registrationStart && (
                   <span className="preview-item">
-                    <strong>Starts:</strong> {new Date(formData.startDate).toLocaleDateString()}
+                    <strong>Registration:</strong> {new Date(formData.registrationStart).toLocaleDateString()} - {formData.registrationEnd ? new Date(formData.registrationEnd).toLocaleDateString() : 'TBD'}
+                  </span>
+                )}
+                {formData.tournamentStart && (
+                  <span className="preview-item">
+                    <strong>Tournament Starts:</strong> {new Date(formData.tournamentStart).toLocaleDateString()}
                   </span>
                 )}
               </div>

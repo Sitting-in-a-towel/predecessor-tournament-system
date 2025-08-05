@@ -1,0 +1,384 @@
+/* Tournament Bracket Styles */
+.tournament-bracket {
+  padding: 20px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  min-height: 400px;
+}
+
+.tournament-bracket.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cccccc;
+  font-size: 16px;
+}
+
+/* Bracket Header */
+.bracket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #444444;
+}
+
+.bracket-header h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 24px;
+}
+
+.bracket-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.view-mode-selector {
+  display: flex;
+  background: #3a3a3a;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #555555;
+}
+
+.mode-btn {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  color: #cccccc;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-right: 1px solid #555555;
+}
+
+.mode-btn:last-child {
+  border-right: none;
+}
+
+.mode-btn:hover {
+  background: #4a4a4a;
+  color: #ffffff;
+}
+
+.mode-btn.active {
+  background: #667eea;
+  color: white;
+}
+
+.bracket-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #cccccc;
+}
+
+/* Bracket Error State */
+.bracket-error {
+  text-align: center;
+  padding: 40px 20px;
+  background: #3a3a3a;
+  border-radius: 8px;
+  border: 2px dashed #555555;
+}
+
+.bracket-error h3 {
+  color: #ffffff;
+  margin: 0 0 10px 0;
+}
+
+.bracket-error p {
+  color: #cccccc;
+  margin: 0 0 20px 0;
+}
+
+/* Bracket Container */
+.bracket-container {
+  display: flex;
+  gap: 40px;
+  overflow-x: auto;
+  padding: 20px 0;
+  min-height: 400px;
+}
+
+/* Bracket Rounds */
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  flex-shrink: 0;
+}
+
+.round-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.round-header h4 {
+  margin: 0;
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.round-matches {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  flex: 1;
+  justify-content: center;
+}
+
+/* Bracket Matches */
+.bracket-match {
+  background: #3a3a3a;
+  border: 2px solid #555555;
+  border-radius: 8px;
+  padding: 15px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.bracket-match:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.bracket-match.completed {
+  border-color: #a8d8a8;
+  background: rgba(168, 216, 168, 0.1);
+}
+
+.bracket-match.in_progress {
+  border-color: #fee75c;
+  background: rgba(254, 231, 92, 0.1);
+  animation: pulse 2s infinite;
+}
+
+.bracket-match.bye {
+  border-color: #6c757d;
+  background: rgba(108, 117, 125, 0.1);
+  opacity: 0.7;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(254, 231, 92, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(254, 231, 92, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(254, 231, 92, 0); }
+}
+
+/* Match Teams */
+.match-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.team.winner {
+  background: rgba(168, 216, 168, 0.2);
+  border-color: #a8d8a8;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.team-name {
+  font-weight: 500;
+  color: #cccccc;
+  flex: 1;
+}
+
+.team.winner .team-name {
+  color: #ffffff;
+}
+
+.team-score {
+  font-weight: 600;
+  color: #ffffff;
+  background: #4a4a4a;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.team.winner .team-score {
+  background: #a8d8a8;
+  color: #2a2a2a;
+}
+
+.match-vs {
+  text-align: center;
+  color: #888888;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 4px 0;
+}
+
+/* Match Status */
+.match-status {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #2a2a2a;
+  border: 2px solid #555555;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.bracket-match.completed .match-status {
+  border-color: #a8d8a8;
+  background: #a8d8a8;
+}
+
+.bracket-match.in_progress .match-status {
+  border-color: #fee75c;
+  background: #fee75c;
+}
+
+.bracket-match.bye .match-status {
+  border-color: #6c757d;
+  background: #6c757d;
+}
+
+/* Bracket Legend */
+.bracket-legend {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #444444;
+}
+
+.bracket-legend h4 {
+  margin: 0 0 15px 0;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.legend-items {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  color: #cccccc;
+  font-size: 14px;
+  padding: 4px 8px;
+  background: #3a3a3a;
+  border-radius: 4px;
+  border: 1px solid #555555;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tournament-bracket {
+    padding: 15px;
+  }
+  
+  .bracket-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .bracket-container {
+    gap: 20px;
+  }
+  
+  .bracket-round {
+    min-width: 180px;
+  }
+  
+  .round-matches {
+    gap: 20px;
+  }
+  
+  .bracket-match {
+    padding: 12px;
+  }
+  
+  .legend-items {
+    justify-content: center;
+  }
+}
+
+/* Empty State */
+.bracket-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888888;
+}
+
+.bracket-empty h4 {
+  color: #cccccc;
+  margin: 0 0 10px 0;
+}
+
+.bracket-empty p {
+  margin: 0 0 20px 0;
+}
+
+/* Button Styles */
+.btn-primary, .btn-secondary {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #5a6fd8;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #667eea;
+  border: 1px solid #667eea;
+}
+
+.btn-secondary:hover {
+  background: #667eea;
+  color: white;
+}
+
+.btn-primary:disabled, .btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

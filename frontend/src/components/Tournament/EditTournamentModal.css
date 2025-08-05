@@ -1,0 +1,242 @@
+/* Edit Tournament Modal Styles */
+.edit-tournament-modal {
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.edit-tournament-modal .modal-header {
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.edit-tournament-modal .modal-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 24px;
+}
+
+.edit-tournament-modal .modal-close {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.edit-tournament-modal .modal-close:hover {
+  background: #333;
+  color: #fff;
+}
+
+.edit-tournament-modal .modal-content {
+  padding: 20px;
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.edit-tournament-modal .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.edit-tournament-modal .form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.edit-tournament-modal .form-section.full-width {
+  grid-column: 1 / -1;
+}
+
+.edit-tournament-modal .form-section h3 {
+  margin: 0 0 10px 0;
+  color: #667eea;
+  font-size: 18px;
+  font-weight: 600;
+  border-bottom: 2px solid #333;
+  padding-bottom: 8px;
+}
+
+.edit-tournament-modal .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.edit-tournament-modal .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.edit-tournament-modal .form-group label {
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.edit-tournament-modal .form-group input,
+.edit-tournament-modal .form-group select,
+.edit-tournament-modal .form-group textarea {
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.edit-tournament-modal .form-group input:focus,
+.edit-tournament-modal .form-group select:focus,
+.edit-tournament-modal .form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.edit-tournament-modal .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.edit-tournament-modal .checkbox-label {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.edit-tournament-modal .checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.edit-tournament-modal .modal-actions {
+  padding: 20px;
+  border-top: 1px solid #333;
+  background: #1a1a1a;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+.edit-tournament-modal .btn-primary,
+.edit-tournament-modal .btn-secondary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.edit-tournament-modal .btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.edit-tournament-modal .btn-primary:hover:not(:disabled) {
+  background: #5a6fd8;
+  transform: translateY(-1px);
+}
+
+.edit-tournament-modal .btn-secondary {
+  background: #f8f9fa;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.edit-tournament-modal .btn-secondary:hover:not(:disabled) {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.edit-tournament-modal .btn-primary:disabled,
+.edit-tournament-modal .btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .edit-tournament-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .edit-tournament-modal .form-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .edit-tournament-modal .form-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .edit-tournament-modal .modal-header,
+  .edit-tournament-modal .modal-content,
+  .edit-tournament-modal .modal-actions {
+    padding: 15px;
+  }
+  
+  .edit-tournament-modal .modal-actions {
+    flex-direction: column;
+  }
+  
+  .edit-tournament-modal .btn-primary,
+  .edit-tournament-modal .btn-secondary {
+    width: 100%;
+  }
+}
+
+/* Form Validation */
+.edit-tournament-modal .form-group input:invalid,
+.edit-tournament-modal .form-group select:invalid,
+.edit-tournament-modal .form-group textarea:invalid {
+  border-color: #d4a574;
+}
+
+.edit-tournament-modal .form-group input:valid,
+.edit-tournament-modal .form-group select:valid,
+.edit-tournament-modal .form-group textarea:valid {
+  border-color: #a8d8a8;
+}
+
+/* Help Text */
+.edit-tournament-modal .help-text {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* Access Denied Styles */
+.edit-tournament-modal .modal-content p {
+  margin: 0 0 15px 0;
+  line-height: 1.5;
+  color: #ccc;
+}

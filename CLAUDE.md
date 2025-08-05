@@ -4,10 +4,11 @@
 This is the Predecessor Tournament Management System - a web-based platform for managing esports tournaments with real-time features.
 
 ## CRITICAL: Database Migration Status
-**⚠️ POSTGRESQL ONLY - NO AIRTABLE ⚠️**
+**⚠️ POSTGRESQL + NOCODB - NO AIRTABLE ⚠️**
 - Migration completed: July 29-30, 2025
 - ALL Airtable code has been removed
 - Database: PostgreSQL (local: localhost:5432, production: Render)
+- Database UI: NocoDB (local: localhost:8080) - Web interface for PostgreSQL
 - Service file: `backend/services/postgresql.js`
 - **Omeda.city Migration**: Auto-runs on server startup (August 1, 2025)
 
@@ -59,14 +60,24 @@ Frontend MUST use `/api` prefix:
 
 ### Start Development Environment
 ```bash
-# Start UI Launcher (recommended)
+# Simplified launcher (3 windows only) - RECOMMENDED
+./launchers/Start_Development_Simple.bat
+
+# Full launcher (5 windows, includes unused UI)
 ./launchers/Start_Development_Environment.bat
 
-# Or start services individually
-npm run dev:backend    # Backend only
-npm run dev:frontend   # Frontend only
-npm run dev           # Both services
+# Or start services manually:
+# 1. Check PostgreSQL is running (Windows Service)
+# 2. Start NocoDB: cd NocoDB && Noco-win-x64.exe
+# 3. Start Backend: cd backend && npm run dev
+# 4. Start Frontend: cd frontend && npm start
 ```
+
+### What Actually Runs
+- **PostgreSQL**: Windows Service (must be running separately)
+- **NocoDB**: Web UI for PostgreSQL database (localhost:8080)
+- **Backend**: Node.js/Express API (localhost:3001)
+- **Frontend**: React application (localhost:3000)
 
 ### Git Deployment
 ```bash
@@ -281,3 +292,4 @@ color: '#fff'
 - Tournament registration endpoints are functional - test with existing teams
 - **CRITICAL**: Admin functionality has authentication issues - investigate requireAdmin middleware
 - **DO NOT** claim things are "working perfectly" - always acknowledge issues exist
+- **TROUBLESHOOTING**: When encountering errors, follow the TROUBLESHOOTING_CHECKLIST.md

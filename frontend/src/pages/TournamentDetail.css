@@ -17,12 +17,12 @@
 }
 
 .error-container h2 {
-  color: #dc3545;
+  color: #d4a574;
   margin-bottom: 15px;
 }
 
 .error-container p {
-  color: #6c757d;
+  color: #cccccc;
   margin-bottom: 25px;
 }
 
@@ -36,7 +36,15 @@
   position: relative;
 }
 
-.back-button {
+.tournament-header-controls {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.back-button,
+.edit-button {
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
@@ -45,12 +53,22 @@
   cursor: pointer;
   font-size: 14px;
   transition: all 0.3s ease;
-  margin-bottom: 20px;
+  font-weight: 500;
 }
 
 .back-button:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: translateX(-2px);
+}
+
+.edit-button {
+  background: rgba(102, 126, 234, 0.3);
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+.edit-button:hover {
+  background: rgba(102, 126, 234, 0.5);
+  transform: translateY(-1px);
 }
 
 .tournament-title-section {
@@ -114,8 +132,8 @@
 /* Navigation Tabs */
 .tournament-tabs {
   display: flex;
-  background: white;
-  border: 1px solid #e9ecef;
+  background: #333333;
+  border: 1px solid #444444;
   border-radius: 8px 8px 0 0;
   overflow: hidden;
   margin-bottom: 0;
@@ -124,13 +142,14 @@
 .tab {
   flex: 1;
   padding: 15px 20px;
-  background: white;
+  background: #333333;
   border: none;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
   transition: all 0.3s ease;
-  border-right: 1px solid #e9ecef;
+  border-right: 1px solid #555555;
+  color: #cccccc;
 }
 
 .tab:last-child {
@@ -138,7 +157,8 @@
 }
 
 .tab:hover {
-  background: #f8f9fa;
+  background: #404040;
+  color: #ffffff;
 }
 
 .tab.active {
@@ -148,12 +168,19 @@
 
 /* Tab Content */
 .tournament-content {
-  background: white;
-  border: 1px solid #e9ecef;
+  background: #2a2a2a;
+  border: 1px solid #444444;
   border-top: none;
   border-radius: 0 0 8px 8px;
   padding: 30px;
   min-height: 400px;
+}
+
+/* Bracket Tab Specific */
+.bracket-tab {
+  padding: 0;
+  margin: -30px;
+  background: #2a2a2a;
 }
 
 /* Overview Tab */
@@ -263,19 +290,20 @@
 /* Teams Tab */
 .teams-tab h3 {
   margin: 0 0 25px 0;
-  color: #495057;
+  color: #ffffff;
   font-size: 20px;
 }
 
 .no-teams {
   text-align: center;
   padding: 40px;
-  color: #6c757d;
+  color: #cccccc;
 }
 
 .no-teams p {
   margin: 0 0 20px 0;
   font-size: 16px;
+  color: #cccccc;
 }
 
 .teams-grid {
@@ -285,8 +313,8 @@
 }
 
 .team-card {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: #3a3a3a;
+  border: 1px solid #555555;
   border-radius: 8px;
   padding: 20px;
   transition: all 0.3s ease;
@@ -295,7 +323,8 @@
 .team-card:hover {
   border-color: #667eea;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: #404040;
 }
 
 .team-header {
@@ -314,8 +343,9 @@
 
 .team-header h4 {
   margin: 0;
-  color: #495057;
+  color: #ffffff;
   font-size: 16px;
+  font-weight: 600;
 }
 
 .team-status {
@@ -342,7 +372,12 @@
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #6c757d;
+  color: #cccccc;
+}
+
+.team-captain {
+  color: #cccccc !important;
+  font-size: 14px;
 }
 
 /* Check-In Tab */

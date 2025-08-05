@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import './TournamentRegistration.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const TournamentRegistration = ({ tournament, onClose }) => {
   const { user } = useAuth();
@@ -34,12 +34,15 @@ const TournamentRegistration = ({ tournament, onClose }) => {
 
   const loadMyTeams = async () => {
     try {
+      console.log('Loading teams from:', `${API_BASE_URL}/teams/my-teams`);
       const response = await axios.get(`${API_BASE_URL}/teams/my-teams`, {
         withCredentials: true
       });
+      console.log('Teams loaded:', response.data);
       setMyTeams(response.data || []);
     } catch (error) {
       console.error('Error loading teams:', error);
+      console.error('Error details:', error.response?.data);
     }
   };
 
@@ -121,7 +124,9 @@ const TournamentRegistration = ({ tournament, onClose }) => {
       
     } catch (error) {
       console.error('Error registering:', error);
-      toast.error('Failed to register. Please try again.');
+      console.error('Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.error || 'Failed to register. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -170,7 +175,7 @@ const TournamentRegistration = ({ tournament, onClose }) => {
                 >
                   <option value="">Choose a team...</option>
                   {myTeams.map(team => (
-                    <option key={team.team_id} value={team.team_id}>
+                    <option key={team.id} value={team.id}>
                       {team.team_name}
                     </option>
                   ))}

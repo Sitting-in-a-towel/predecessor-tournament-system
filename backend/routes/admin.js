@@ -182,11 +182,11 @@ router.get('/activity', requireAuth, requireAdmin, async (req, res) => {
     const teamActivity = await postgresService.query(`
       SELECT 
         'team_registered' as type,
-        'Team "' || t.name || '" registered for tournament' as description,
-        tr.registered_at as timestamp
+        'Team "' || t.team_name || '" registered for tournament' as description,
+        tr.registration_date as timestamp
       FROM tournament_registrations tr
-      JOIN teams t ON tr.team_id = t.team_id
-      ORDER BY tr.registered_at DESC 
+      JOIN teams t ON tr.team_id = t.id
+      ORDER BY tr.registration_date DESC 
       LIMIT 5
     `);
 
@@ -230,21 +230,42 @@ router.post('/tournaments', requireAuth, requireAdmin, async (req, res) => {
       rules
     } = req.body;
 
-    const createdBy = req.user.userID;
+    // Need to get the UUID id from the user_id string
+    const userResult = await postgresService.query(
+      'SELECT id FROM users WHERE user_id = $1',
+      [req.user.userID]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({ error: 'User not found' });
+    }
+    
+    const createdBy = userResult.rows[0].id;
 
+    // Note: Using start_date for registration start and check_in_start for tournament start
+    // since the database schema doesn't have separate registration dates
     const query = `
       INSERT INTO tournaments (
-        name, description, format, max_teams, 
-        registration_start, registration_end, tournament_start,
-        rules, status, created_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Registration', $9)
+        tournament_id, name, description, bracket_type, 
+        game_format, quarter_final_format, semi_final_format, grand_final_format,
+        max_teams, start_date, check_in_start,
+        status, created_by, registration_open, current_teams, check_in_enabled
+      ) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Registration', $11, true, 0, false)
       RETURNING *
     `;
 
+    // Set default game formats based on bracket type
+    const gameFormat = 'Best of 3';
+    const quarterFinalFormat = 'Best of 3';
+    const semiFinalFormat = 'Best of 5';
+    const grandFinalFormat = 'Best of 5';
+
     const values = [
-      name, description, format, maxTeams,
-      registrationStart, registrationEnd, tournamentStart,
-      rules, createdBy
+      name, description || '', format, 
+      gameFormat, quarterFinalFormat, semiFinalFormat, grandFinalFormat,
+      maxTeams,
+      registrationStart, tournamentStart,
+      createdBy
     ];
 
     const result = await postgresService.query(query, values);
@@ -307,6 +328,97 @@ router.put('/tournaments/:id/status',
     }
   }
 );
+
+// Update tournament details (admin or creator)
+router.put('/tournaments/:id', requireAuth, [
+  param('id').isLength({ min: 1 }).trim(),
+  body('name').optional().isLength({ min: 1, max: 255 }).trim(),
+  body('description').optional().isLength({ max: 1000 }).trim(),
+  body('bracket_type').optional().isIn(['Single Elimination', 'Double Elimination', 'Round Robin', 'Swiss']),
+  body('game_format').optional().isIn(['Best of 1', 'Best of 3', 'Best of 5']),
+  body('quarter_final_format').optional().isIn(['Best of 1', 'Best of 3', 'Best of 5']),
+  body('semi_final_format').optional().isIn(['Best of 1', 'Best of 3', 'Best of 5']),
+  body('grand_final_format').optional().isIn(['Best of 1', 'Best of 3', 'Best of 5']),
+  body('max_teams').optional().isInt({ min: 2, max: 64 }),
+  body('registration_open').optional().isBoolean(),
+  body('status').optional().isIn(['Planning', 'Registration', 'In Progress', 'Completed', 'Cancelled']),
+  body('start_date').optional().isISO8601().toDate(),
+  body('registration_start').optional().isISO8601().toDate(),
+  body('registration_end').optional().isISO8601().toDate()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { id: tournamentId } = req.params;
+    const userId = req.user.id || req.user.userID;
+
+    // Get tournament to check permissions
+    const tournamentQuery = `SELECT * FROM tournaments WHERE tournament_id = $1`;
+    const tournamentResult = await postgresService.query(tournamentQuery, [tournamentId]);
+    
+    if (tournamentResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+
+    const tournament = tournamentResult.rows[0];
+
+    // Check permissions - admin or creator
+    const isAdmin = req.user.role === 'admin';
+    const isCreator = tournament.created_by === userId || tournament.created_by === req.user.id;
+
+    if (!isAdmin && !isCreator) {
+      return res.status(403).json({ error: 'Only tournament creators and administrators can edit tournaments' });
+    }
+
+    // Build update query dynamically
+    const allowedFields = [
+      'name', 'description', 'bracket_type', 'game_format', 
+      'quarter_final_format', 'semi_final_format', 'grand_final_format',
+      'max_teams', 'registration_open', 'status', 'start_date', 
+      'registration_start', 'registration_end'
+    ];
+
+    const updates = {};
+    const values = [];
+    let paramIndex = 1;
+
+    for (const field of allowedFields) {
+      if (req.body.hasOwnProperty(field)) {
+        updates[field] = `$${paramIndex}`;
+        values.push(req.body[field]);
+        paramIndex++;
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const updateQuery = `
+      UPDATE tournaments 
+      SET ${Object.keys(updates).map(key => `${key} = ${updates[key]}`).join(', ')}, 
+          updated_at = NOW()
+      WHERE tournament_id = $${paramIndex}
+      RETURNING *
+    `;
+    values.push(tournamentId);
+
+    const result = await postgresService.query(updateQuery, values);
+
+    logger.info(`User ${userId} updated tournament ${tournamentId}: ${Object.keys(updates).join(', ')}`);
+    
+    res.json({
+      message: 'Tournament updated successfully',
+      tournament: result.rows[0]
+    });
+  } catch (error) {
+    logger.error('Error updating tournament:', error);
+    res.status(500).json({ error: 'Failed to update tournament' });
+  }
+});
 
 // Get system logs
 router.get('/logs',

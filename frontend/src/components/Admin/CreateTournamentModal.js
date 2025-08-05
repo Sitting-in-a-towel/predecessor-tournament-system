@@ -30,6 +30,9 @@ const CreateTournamentModal = ({ isOpen, onClose, onSuccess }) => {
     setLoading(true);
 
     try {
+      console.log('Submitting tournament data:', formData);
+      console.log('API URL:', `${API_BASE_URL}/admin/tournaments`);
+      
       const response = await axios.post(`${API_BASE_URL}/admin/tournaments`, formData, {
         withCredentials: true
       });
@@ -167,7 +170,7 @@ const CreateTournamentModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
             <div>
               <label style={{ color: '#fff', fontWeight: 'bold', display: 'block', marginBottom: '0.5rem' }}>
                 Registration Start *
@@ -207,26 +210,26 @@ const CreateTournamentModal = ({ isOpen, onClose, onSuccess }) => {
                 }}
               />
             </div>
+          </div>
 
-            <div>
-              <label style={{ color: '#fff', fontWeight: 'bold', display: 'block', marginBottom: '0.5rem' }}>
-                Tournament Start *
-              </label>
-              <input
-                type="datetime-local"
-                name="tournamentStart"
-                value={formData.tournamentStart}
-                onChange={handleChange}
-                required
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ddd',
-                  backgroundColor: '#fff'
-                }}
-              />
-            </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ color: '#fff', fontWeight: 'bold', display: 'block', marginBottom: '0.5rem' }}>
+              Tournament Start *
+            </label>
+            <input
+              type="datetime-local"
+              name="tournamentStart"
+              value={formData.tournamentStart}
+              onChange={handleChange}
+              required
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid #ddd',
+                backgroundColor: '#fff'
+              }}
+            />
           </div>
 
           <div style={{ marginBottom: '2rem' }}>

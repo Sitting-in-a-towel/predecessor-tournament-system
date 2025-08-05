@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { airtableService } from '../../services/airtableService';
+import axios from 'axios';
 import { toast } from 'react-toastify';
 import './TournamentCheckIn.css';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const TournamentCheckIn = ({ tournamentId, onStatusUpdate }) => {
   const { user } = useAuth();
@@ -19,8 +21,10 @@ const TournamentCheckIn = ({ tournamentId, onStatusUpdate }) => {
 
   const loadCheckInStatus = async () => {
     try {
-      const data = await airtableService.getTournamentCheckInStatus(tournamentId);
-      setCheckInData(data);
+      const response = await axios.get(`${API_BASE_URL}/tournaments/${tournamentId}/check-in-status`, {
+        withCredentials: true
+      });
+      setCheckInData(response.data);
     } catch (error) {
       console.error('Error loading check-in status:', error);
       toast.error('Failed to load check-in status');
@@ -31,11 +35,28 @@ const TournamentCheckIn = ({ tournamentId, onStatusUpdate }) => {
     if (!user) return;
     
     try {
-      const teams = await airtableService.getMyTeams();
-      const tournamentTeam = teams.find(team => 
-        team.Tournament && team.Tournament.some(t => t === tournamentId)
+      // Get tournament registrations to find user's team
+      const response = await axios.get(`${API_BASE_URL}/tournaments/${tournamentId}/registrations`, {
+        withCredentials: true
+      });
+      
+      // Find user's team by checking if they are the captain
+      const registrations = response.data.registrations || [];
+      const userTeamRegistration = registrations.find(reg => 
+        reg.captain_username === user.discord_username
       );
-      setUserTeam(tournamentTeam);
+      
+      if (userTeamRegistration) {
+        setUserTeam({
+          team_id: userTeamRegistration.team_id,
+          team_name: userTeamRegistration.team_name,
+          captain_username: userTeamRegistration.captain_username,
+          status: userTeamRegistration.status,
+          checked_in: userTeamRegistration.checked_in,
+          check_in_time: userTeamRegistration.check_in_time,
+          confirmed: userTeamRegistration.status === 'registered'
+        });
+      }
     } catch (error) {
       console.error('Error loading user team:', error);
     }
@@ -46,7 +67,9 @@ const TournamentCheckIn = ({ tournamentId, onStatusUpdate }) => {
 
     setLoading(true);
     try {
-      await airtableService.checkInTeam(tournamentId);
+      const response = await axios.post(`${API_BASE_URL}/tournaments/${tournamentId}/check-in`, {}, {
+        withCredentials: true
+      });
       toast.success('Successfully checked in for tournament!');
       await loadCheckInStatus();
       await loadUserTeam();
@@ -65,7 +88,11 @@ const TournamentCheckIn = ({ tournamentId, onStatusUpdate }) => {
   const handleAdminToggleCheckIn = async (teamId, currentStatus) => {
     setLoading(true);
     try {
-      await airtableService.updateTeamCheckIn(tournamentId, teamId, !currentStatus);
+      await axios.post(`${API_BASE_URL}/tournaments/${tournamentId}/admin-toggle-checkin/${teamId}`, {
+        checked_in: !currentStatus
+      }, {
+        withCredentials: true
+      });
       toast.success(`Team check-in ${!currentStatus ? 'enabled' : 'disabled'}`);
       await loadCheckInStatus();
     } catch (error) {
@@ -78,15 +105,15 @@ const TournamentCheckIn = ({ tournamentId, onStatusUpdate }) => {
 
   const canCheckIn = () => {
     if (!userTeam) return false;
-    if (!userTeam.Confirmed) return false;
-    if (userTeam.CheckedIn) return false;
-    // Check if user is team captain
-    return userTeam.Captain && userTeam.Captain.includes(user?.userID);
+    if (!userTeam.confirmed) return false;
+    if (userTeam.checked_in) return false;
+    // Check if user is team captain (user's discord username matches team captain)
+    return userTeam.captain_username === user?.discord_username;
   };
 
   const getTeamStatus = (team) => {
-    if (!team.Confirmed) return { status: 'Not Confirmed', className: 'status-error' };
-    if (team.CheckedIn) return { status: 'Checked In', className: 'status-success' };
+    if (!team.confirmed) return { status: 'Not Confirmed', className: 'status-error' };
+    if (team.checked_in) return { status: 'Checked In', className: 'status-success' };
     return { status: 'Ready to Check In', className: 'status-warning' };
   };
 
@@ -127,12 +154,12 @@ const TournamentCheckIn = ({ tournamentId, onStatusUpdate }) => {
       {/* User Team Check-In Section */}
       {userTeam && (
         <div className="user-team-checkin">
-          <h4>Your Team: {userTeam.TeamName}</h4>
+          <h4>Your Team: {userTeam.team_name}</h4>
           <div className="team-checkin-status">
-            {userTeam.CheckedIn ? (
+            {userTeam.checked_in ? (
               <div className="checked-in-status">
                 <span className="status-badge success">✅ Checked In</span>
-                <small>Checked in at: {new Date(userTeam.CheckInTime).toLocaleString()}</small>
+                <small>Checked in at: {new Date(userTeam.check_in_time).toLocaleString()}</small>
               </div>
             ) : (
               <div className="checkin-actions">
@@ -146,9 +173,9 @@ const TournamentCheckIn = ({ tournamentId, onStatusUpdate }) => {
                   </button>
                 ) : (
                   <div className="checkin-disabled">
-                    {!userTeam.Confirmed && <p>⚠️ Team must be confirmed before checking in</p>}
-                    {userTeam.Confirmed && userTeam.CheckedIn && <p>✅ Already checked in</p>}
-                    {userTeam.Confirmed && !userTeam.CheckedIn && !userTeam.Captain?.includes(user?.userID) && 
+                    {!userTeam.confirmed && <p>⚠️ Team must be confirmed before checking in</p>}
+                    {userTeam.confirmed && userTeam.checked_in && <p>✅ Already checked in</p>}
+                    {userTeam.confirmed && !userTeam.checked_in && userTeam.captain_username !== user?.discord_username && 
                       <p>ℹ️ Only team captains can check in</p>
                     }
                   </div>
@@ -171,32 +198,32 @@ const TournamentCheckIn = ({ tournamentId, onStatusUpdate }) => {
             {checkInData.teams.map((team, index) => {
               const statusInfo = getTeamStatus(team);
               return (
-                <div key={team.TeamID || index} className="team-checkin-item">
+                <div key={team.team_id || index} className="team-checkin-item">
                   <div className="team-info">
-                    <h5>{team.TeamName}</h5>
+                    <h5>{team.team_name}</h5>
                     <div className="team-details">
-                      <span className="player-count">{team.PlayerCount}/5 players</span>
+                      <span className="player-count">{team.player_count || 0}/5 players</span>
                       <span className={`team-status ${statusInfo.className}`}>
                         {statusInfo.status}
                       </span>
                     </div>
-                    {team.CheckInTime && (
+                    {team.check_in_time && (
                       <small className="checkin-time">
-                        Checked in: {new Date(team.CheckInTime).toLocaleString()}
+                        Checked in: {new Date(team.check_in_time).toLocaleString()}
                       </small>
                     )}
                   </div>
 
                   {/* Admin Controls */}
-                  {user?.isAdmin && (
+                  {(user?.role === 'admin' || user?.isAdmin) && (
                     <div className="admin-controls">
                       <button
-                        className={`btn-admin ${team.CheckedIn ? 'btn-danger' : 'btn-success'}`}
-                        onClick={() => handleAdminToggleCheckIn(team.TeamID, team.CheckedIn)}
-                        disabled={loading || !team.Confirmed}
-                        title={!team.Confirmed ? 'Team must be confirmed first' : ''}
+                        className={`btn-admin ${team.checked_in ? 'btn-danger' : 'btn-success'}`}
+                        onClick={() => handleAdminToggleCheckIn(team.team_id, team.checked_in)}
+                        disabled={loading || !team.confirmed}
+                        title={!team.confirmed ? 'Team must be confirmed first' : ''}
                       >
-                        {team.CheckedIn ? 'Uncheck' : 'Check In'}
+                        {team.checked_in ? 'Uncheck' : 'Check In'}
                       </button>
                     </div>
                   )}

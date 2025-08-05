@@ -4,11 +4,13 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import TournamentRegistration from '../components/Tournament/TournamentRegistration';
 import TournamentCheckIn from '../components/Tournament/TournamentCheckIn';
+import TournamentBracket from '../components/Tournament/TournamentBracket';
+import EditTournamentModal from '../components/Tournament/EditTournamentModal';
 import MatchManagement from '../components/Match/MatchManagement';
 import { toast } from 'react-toastify';
 import './TournamentDetail.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const TournamentDetail = () => {
   const { id } = useParams();
@@ -20,6 +22,7 @@ const TournamentDetail = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [showRegistration, setShowRegistration] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -84,6 +87,17 @@ const TournamentDetail = () => {
       return;
     }
     setShowRegistration(true);
+  };
+
+  const handleEditTournament = () => {
+    setShowEditModal(true);
+  };
+
+  const canEditTournament = () => {
+    if (!isAuthenticated || !user) return false;
+    if (user.role === 'admin' || user.isAdmin) return true;
+    if (tournament?.created_by === user.id) return true;
+    return false;
   };
 
   const formatDate = (dateString) => {
@@ -154,9 +168,16 @@ const TournamentDetail = () => {
     <div className="tournament-detail-page">
       {/* Tournament Header */}
       <div className="tournament-header">
-        <button className="back-button" onClick={() => navigate('/tournaments')}>
-          ← Back to Tournaments
-        </button>
+        <div className="tournament-header-controls">
+          <button className="back-button" onClick={() => navigate('/tournaments')}>
+            ← Back to Tournaments
+          </button>
+          {canEditTournament() && (
+            <button className="edit-button" onClick={handleEditTournament}>
+              ✏️ Edit Tournament
+            </button>
+          )}
+        </div>
         
         <div className="tournament-title-section">
           <h1>{tournament.name}</h1>
@@ -366,11 +387,10 @@ const TournamentDetail = () => {
 
         {activeTab === 'bracket' && (
           <div className="bracket-tab">
-            <h3>Tournament Bracket</h3>
-            <div className="bracket-placeholder">
-              <p>Tournament bracket will be generated once matches are created.</p>
-              <small>Bracket functionality coming soon...</small>
-            </div>
+            <TournamentBracket 
+              tournamentId={id}
+              onBracketUpdate={loadTournamentData}
+            />
           </div>
         )}
       </div>
@@ -394,6 +414,18 @@ const TournamentDetail = () => {
             />
           </div>
         </div>
+      )}
+
+      {/* Edit Tournament Modal */}
+      {showEditModal && (
+        <EditTournamentModal 
+          tournament={tournament}
+          onClose={() => setShowEditModal(false)}
+          onTournamentUpdated={(updatedTournament) => {
+            setTournament(updatedTournament);
+            loadTournamentData(); // Refresh all data
+          }}
+        />
       )}
     </div>
   );

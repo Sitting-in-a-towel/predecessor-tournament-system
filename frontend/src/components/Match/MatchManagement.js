@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { airtableService } from '../../services/airtableService';
+import axios from 'axios';
 import { toast } from 'react-toastify';
 import './MatchManagement.css';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
   const { user } = useAuth();
@@ -34,8 +36,10 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
   const loadMatches = async () => {
     try {
       setLoading(true);
-      const matchData = await airtableService.getTournamentMatches(tournamentId);
-      setMatches(matchData);
+      const response = await axios.get(`${API_BASE_URL}/matches/tournament/${tournamentId}`, {
+        withCredentials: true
+      });
+      setMatches(response.data.matches || []);
     } catch (error) {
       console.error('Error loading matches:', error);
       toast.error('Failed to load matches');
@@ -63,7 +67,10 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
         scheduledTime: createFormData.scheduledTime || undefined
       };
 
-      await airtableService.createMatch(matchData);
+      await axios.post(`${API_BASE_URL}/matches`, matchData, {
+        withCredentials: true
+      });
+      
       toast.success('Match created successfully!');
       setShowCreateForm(false);
       setCreateFormData({
@@ -87,7 +94,9 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
   const handleStartMatch = async (matchId) => {
     setLoading(true);
     try {
-      await airtableService.startMatch(matchId);
+      await axios.put(`${API_BASE_URL}/matches/${matchId}/start`, {}, {
+        withCredentials: true
+      });
       toast.success('Match started!');
       await loadMatches();
       
@@ -108,7 +117,9 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
 
     setLoading(true);
     try {
-      await airtableService.reportMatchResult(match.MatchID, resultFormData);
+      await axios.put(`${API_BASE_URL}/matches/${match.match_id}/result`, resultFormData, {
+        withCredentials: true
+      });
       toast.success('Match result reported successfully!');
       setShowResultForm(null);
       setResultFormData({
@@ -136,22 +147,24 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
 
     setLoading(true);
     try {
-      await airtableService.deleteMatch(matchId);
+      await axios.delete(`${API_BASE_URL}/matches/${matchId}`, {
+        withCredentials: true
+      });
       toast.success('Match deleted successfully');
       await loadMatches();
       
       if (onMatchUpdate) onMatchUpdate();
     } catch (error) {
       console.error('Error deleting match:', error);
-      toast.error('Failed to delete match');
+      toast.error(error.response?.data?.error || 'Failed to delete match');
     } finally {
       setLoading(false);
     }
   };
 
   const getTeamName = (teamId) => {
-    const team = teams.find(t => t.TeamID === teamId);
-    return team ? team.TeamName : 'Unknown Team';
+    const team = teams.find(t => t.team_id === teamId);
+    return team ? team.team_name : 'Unknown Team';
   };
 
   const getMatchStatusColor = (status) => {
@@ -169,13 +182,13 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
     return new Date(dateString).toLocaleString();
   };
 
-  const confirmedTeams = teams.filter(team => team.Confirmed && team.CheckedIn);
+  const confirmedTeams = teams.filter(team => team.status === 'registered' && team.checked_in);
 
   return (
     <div className="match-management">
       <div className="match-header">
         <h3>Match Management</h3>
-        {user?.isAdmin && (
+        {(user?.role === 'admin' || user?.isAdmin) && (
           <button 
             className="btn-primary"
             onClick={() => setShowCreateForm(true)}
@@ -199,65 +212,65 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
         ) : matches.length === 0 ? (
           <div className="no-matches">
             <p>No matches created yet.</p>
-            {user?.isAdmin && confirmedTeams.length >= 2 && (
+            {(user?.role === 'admin' || user?.isAdmin) && confirmedTeams.length >= 2 && (
               <p>Create the first match to get the tournament started!</p>
             )}
           </div>
         ) : (
           <div className="matches-list">
             {matches.map((match, index) => (
-              <div key={match.MatchID || index} className="match-card">
+              <div key={match.match_id || index} className="match-card">
                 <div className="match-info">
                   <div className="match-teams">
-                    <h4>{getTeamName(match.Team1)} vs {getTeamName(match.Team2)}</h4>
+                    <h4>{match.team1_name} vs {match.team2_name}</h4>
                     <div className="match-details">
-                      <span className="match-round">{match.Round}</span>
-                      <span className="match-type">{match.MatchType}</span>
+                      <span className="match-round">{match.round}</span>
+                      <span className="match-type">{match.match_type}</span>
                       <span 
                         className="match-status"
-                        style={{ backgroundColor: getMatchStatusColor(match.Status) }}
+                        style={{ backgroundColor: getMatchStatusColor(match.status) }}
                       >
-                        {match.Status}
+                        {match.status}
                       </span>
                     </div>
                   </div>
                   
-                  {match.Status === 'Completed' && (
+                  {match.status === 'Completed' && (
                     <div className="match-result">
                       <div className="score">
-                        {match.Team1Score} - {match.Team2Score}
+                        {match.team1_score} - {match.team2_score}
                       </div>
                       <div className="winner">
-                        Winner: {match.Winner === 'team1' ? getTeamName(match.Team1) : getTeamName(match.Team2)}
+                        Winner: {match.winner === 'team1' ? match.team1_name : match.team2_name}
                       </div>
                     </div>
                   )}
                   
                   <div className="match-time">
-                    {match.Status === 'Scheduled' && (
-                      <span>Scheduled: {formatDateTime(match.ScheduledTime)}</span>
+                    {match.status === 'Scheduled' && (
+                      <span>Scheduled: {formatDateTime(match.scheduled_time)}</span>
                     )}
-                    {match.Status === 'In Progress' && (
-                      <span>Started: {formatDateTime(match.StartedAt)}</span>
+                    {match.status === 'In Progress' && (
+                      <span>Started: {formatDateTime(match.started_at)}</span>
                     )}
-                    {match.Status === 'Completed' && (
-                      <span>Completed: {formatDateTime(match.CompletedAt)}</span>
+                    {match.status === 'Completed' && (
+                      <span>Completed: {formatDateTime(match.completed_at)}</span>
                     )}
                   </div>
                 </div>
 
                 <div className="match-actions">
-                  {match.Status === 'Scheduled' && user?.isAdmin && (
+                  {match.status === 'Scheduled' && (user?.role === 'admin' || user?.isAdmin) && (
                     <button 
                       className="btn-success"
-                      onClick={() => handleStartMatch(match.MatchID)}
+                      onClick={() => handleStartMatch(match.match_id)}
                       disabled={loading}
                     >
                       Start Match
                     </button>
                   )}
                   
-                  {(match.Status === 'In Progress' || match.Status === 'Scheduled') && (
+                  {(match.status === 'In Progress' || match.status === 'Scheduled') && (
                     <button 
                       className="btn-primary"
                       onClick={() => {
@@ -275,10 +288,10 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
                     </button>
                   )}
                   
-                  {user?.isAdmin && (
+                  {(user?.role === 'admin' || user?.isAdmin) && (
                     <button 
                       className="btn-danger"
-                      onClick={() => handleDeleteMatch(match.MatchID)}
+                      onClick={() => handleDeleteMatch(match.match_id)}
                       disabled={loading}
                     >
                       Delete
@@ -315,8 +328,8 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
                 >
                   <option value="">Select Team 1</option>
                   {confirmedTeams.map(team => (
-                    <option key={team.TeamID} value={team.TeamID}>
-                      {team.TeamName}
+                    <option key={team.team_id} value={team.team_id}>
+                      {team.team_name}
                     </option>
                   ))}
                 </select>
@@ -330,9 +343,9 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
                   required
                 >
                   <option value="">Select Team 2</option>
-                  {confirmedTeams.filter(team => team.TeamID !== createFormData.team1Id).map(team => (
-                    <option key={team.TeamID} value={team.TeamID}>
-                      {team.TeamName}
+                  {confirmedTeams.filter(team => team.team_id !== createFormData.team1Id).map(team => (
+                    <option key={team.team_id} value={team.team_id}>
+                      {team.team_name}
                     </option>
                   ))}
                 </select>
@@ -411,7 +424,7 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
             
             <form onSubmit={handleReportResult} className="modal-content">
               <div className="match-teams-display">
-                <h4>{getTeamName(showResultForm.Team1)} vs {getTeamName(showResultForm.Team2)}</h4>
+                <h4>{showResultForm.team1_name} vs {showResultForm.team2_name}</h4>
               </div>
 
               <div className="form-group">
@@ -422,14 +435,14 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
                   required
                 >
                   <option value="">Select Winner</option>
-                  <option value="team1">{getTeamName(showResultForm.Team1)}</option>
-                  <option value="team2">{getTeamName(showResultForm.Team2)}</option>
+                  <option value="team1">{showResultForm.team1_name}</option>
+                  <option value="team2">{showResultForm.team2_name}</option>
                 </select>
               </div>
 
               <div className="score-inputs">
                 <div className="form-group">
-                  <label>{getTeamName(showResultForm.Team1)} Score</label>
+                  <label>{showResultForm.team1_name} Score</label>
                   <input
                     type="number"
                     min="0"
@@ -441,7 +454,7 @@ const MatchManagement = ({ tournamentId, teams, onMatchUpdate }) => {
                 </div>
 
                 <div className="form-group">
-                  <label>{getTeamName(showResultForm.Team2)} Score</label>
+                  <label>{showResultForm.team2_name} Score</label>
                   <input
                     type="number"
                     min="0"
