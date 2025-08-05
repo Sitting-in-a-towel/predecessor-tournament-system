@@ -18,6 +18,7 @@ const teamRoutes = require('./routes/teams');
 const matchRoutes = require('./routes/matches');
 const draftRoutes = require('./routes/draft');
 const adminRoutes = require('./routes/admin');
+const adminToolsRoutes = require('./routes/admin-tools');
 const invitationRoutes = require('./routes/invitations');
 const tournamentRegistrationRoutes = require('./routes/tournament-registration');
 const profileRoutes = require('./routes/profile');
@@ -133,6 +134,7 @@ app.use('/api/invitations', invitationRoutes);
 app.use('/api', tournamentRegistrationRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin-tools', adminToolsRoutes);
 
 // Socket.IO for real-time features (draft system, notifications)
 io.on('connection', (socket) => {
