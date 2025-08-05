@@ -66,12 +66,14 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       const teamsResponse = await axios.get(`${API_BASE_URL}/tournaments/${tournamentId}/registrations`, {
         withCredentials: true
       });
-      const checkedInTeams = (teamsResponse.data.registrations || []).filter(team => team.checked_in);
+      const allRegisteredTeams = teamsResponse.data.registrations || [];
+      const checkedInTeams = allRegisteredTeams.filter(team => team.checked_in);
       setTeams(checkedInTeams);
 
-      // Initialize bracket structure
-      if (checkedInTeams.length >= 2) {
-        initializeBracket(checkedInTeams, tournamentData?.bracket_type || 'Single Elimination');
+      // Initialize bracket structure based on ALL registered teams
+      // This ensures we have enough match boxes for everyone
+      if (allRegisteredTeams.length >= 2) {
+        initializeBracket(allRegisteredTeams, tournamentData?.bracket_type || 'Single Elimination');
       }
       
     } catch (error) {
@@ -93,8 +95,9 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
   };
 
   const initializeSingleElimination = (teamCount) => {
-    // Calculate the minimum number of rounds needed
-    const rounds = Math.ceil(Math.log2(teamCount));
+    // Calculate the next power of 2 to determine bracket size
+    const bracketSize = Math.pow(2, Math.ceil(Math.log2(teamCount)));
+    const rounds = Math.ceil(Math.log2(bracketSize));
     
     const bracketStructure = {
       type: 'Single Elimination',
@@ -104,7 +107,7 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
     };
 
     // Calculate matches needed per round
-    let teamsInRound = teamCount;
+    let teamsInRound = bracketSize;
     
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.ceil(teamsInRound / 2);
@@ -117,7 +120,17 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
 
       for (let match = 0; match < matchesInRound; match++) {
         const matchId = `r${round}m${match}`;
-        const isByeMatch = round === 1 && (match * 2 + 1) >= teamCount;
+        // In the first round, check if this match will have a bye
+        // A bye occurs when the team position exceeds the actual team count
+        let isByeMatch = false;
+        if (round === 1) {
+          const team1Position = match * 2;
+          const team2Position = match * 2 + 1;
+          // If either position would be for a team beyond our actual count, it's a bye
+          if (team2Position >= teamCount) {
+            isByeMatch = true;
+          }
+        }
         
         roundData.matches.push({
           id: matchId,
@@ -156,7 +169,7 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       totalTeams: teamCount
     };
 
-    // For 10 teams specifically (matching Challonge structure)
+    // Special handling for specific team counts
     if (teamCount === 10) {
       // Upper bracket - ALL 10 teams start here
       // Round 1: 5 matches (10 teams all play)
@@ -263,7 +276,9 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       const upperRounds = Math.ceil(Math.log2(bracketSize));
       
       // Create upper bracket
-      let teamsInRound = teamCount;
+      // First round should have enough matches for ALL teams
+      let teamsInRound = bracketSize; // Use bracket size, not team count
+      
       for (let round = 1; round <= upperRounds; round++) {
         const matchesInRound = Math.ceil(teamsInRound / 2);
         
@@ -275,7 +290,16 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
 
         for (let match = 0; match < matchesInRound; match++) {
           const matchId = `u${round}m${match}`;
-          const isByeMatch = round === 1 && (match * 2 + 1) >= teamCount;
+          // In the first round, check if this match will have a bye
+          let isByeMatch = false;
+          if (round === 1) {
+            const team1Position = match * 2;
+            const team2Position = match * 2 + 1;
+            // If team2 position would be beyond our actual team count, it's a bye
+            if (team2Position >= teamCount) {
+              isByeMatch = true;
+            }
+          }
           
           roundData.matches.push({
             id: matchId,
@@ -360,33 +384,47 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
 
   // Get proper bracket placement order for seeding
   const getBracketPlacementOrder = (teamCount) => {
-    // For 10 teams specifically
-    if (teamCount === 10) {
-      // For 10 teams: All teams play in round 1
-      // Winner of match u1m4 gets bye in round 2 (advances directly to u3m1)
-      return [
-        { matchId: 'u1m0', position: 'team1', seed: 1 },  // 1 vs 8
-        { matchId: 'u1m0', position: 'team2', seed: 8 },
-        { matchId: 'u1m1', position: 'team1', seed: 4 },  // 4 vs 5
-        { matchId: 'u1m1', position: 'team2', seed: 5 },
-        { matchId: 'u1m2', position: 'team1', seed: 3 },  // 3 vs 6
-        { matchId: 'u1m2', position: 'team2', seed: 6 },
-        { matchId: 'u1m3', position: 'team1', seed: 2 },  // 2 vs 7
-        { matchId: 'u1m3', position: 'team2', seed: 7 },
-        { matchId: 'u1m4', position: 'team1', seed: 9 },  // 9 vs 10 (winner gets bye)
-        { matchId: 'u1m4', position: 'team2', seed: 10 }
-      ];
-    }
-    
-    // For other team counts, return standard placement
-    const order = [];
     const bracketSize = Math.pow(2, Math.ceil(Math.log2(teamCount)));
+    const order = [];
     
-    // Standard bracket seeding pattern
-    for (let i = 0; i < bracketSize / 2; i++) {
-      order.push({ matchId: `u1m${i}`, position: 'team1', seed: i * 2 + 1 });
-      order.push({ matchId: `u1m${i}`, position: 'team2', seed: i * 2 + 2 });
+    // Create seeding pairs using standard tournament bracket seeding
+    // This ensures 1 vs 16, 2 vs 15, etc. in proper bracket positions
+    const seeds = [];
+    for (let i = 1; i <= bracketSize; i++) {
+      seeds.push(i);
     }
+    
+    // Function to create proper bracket pairings
+    const createBracketPairs = (seeds) => {
+      if (seeds.length === 2) {
+        return [[seeds[0], seeds[1]]];
+      }
+      
+      const halfSize = seeds.length / 2;
+      const topHalf = seeds.slice(0, halfSize);
+      const bottomHalf = seeds.slice(halfSize);
+      
+      // Pair up seeds: 1 vs last, 2 vs second-to-last, etc.
+      const pairs = [];
+      for (let i = 0; i < halfSize / 2; i++) {
+        pairs.push([topHalf[i], bottomHalf[halfSize - 1 - i]]);
+        pairs.push([bottomHalf[i], topHalf[halfSize - 1 - i]]);
+      }
+      
+      return pairs;
+    };
+    
+    const bracketPairs = createBracketPairs(seeds);
+    
+    // Assign pairs to matches
+    bracketPairs.forEach((pair, matchIndex) => {
+      const matchId = bracketData?.type === 'Single Elimination' 
+        ? `r1m${matchIndex}` 
+        : `u1m${matchIndex}`;
+      
+      order.push({ matchId, position: 'team1', seed: pair[0] });
+      order.push({ matchId, position: 'team2', seed: pair[1] });
+    });
     
     return order;
   };
@@ -833,6 +871,7 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
     }
 
     try {
+      // Use ALL checked-in teams, not just teams already placed in bracket
       const availableTeams = [...teams];
       const newBracketData = deepCloneBracket(bracketData); // Deep clone
       
