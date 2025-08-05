@@ -3,6 +3,8 @@ const router = express.Router();
 const postgresService = require('../services/postgresql');
 const logger = require('../utils/logger');
 
+// Admin tools for database management
+
 // Add test teams endpoint (admin only)
 router.post('/add-test-teams', async (req, res) => {
   try {
