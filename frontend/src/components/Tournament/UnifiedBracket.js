@@ -866,8 +866,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
     }
 
     try {
-      // Use ALL registered teams for bracket generation
-      const availableTeams = [...allRegisteredTeams];
+      // Use only checked-in teams for bracket generation
+      const availableTeams = [...teams];
       const newBracketData = deepCloneBracket(bracketData); // Deep clone
       
       // Collect locked teams to preserve them
@@ -1093,8 +1093,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
   };
 
   const canGenerateBracket = () => {
-    // Allow bracket generation if we have registered teams (not just checked-in)
-    return allRegisteredTeams.length >= 2 && isAdmin() && !isPublished;
+    // Only allow bracket generation if we have checked-in teams
+    return teams.length >= 2 && isAdmin() && !isPublished;
   };
 
   const publishBracket = () => {
