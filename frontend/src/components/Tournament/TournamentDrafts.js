@@ -36,18 +36,30 @@ const TournamentDrafts = ({ tournamentId, tournament, teams, isAdmin, isTeamCapt
         withCredentials: true
       });
       
-      if (bracketRes.data && bracketRes.data.bracketData) {
-        const allMatches = extractMatchesFromBracket(bracketRes.data.bracketData);
-        // Filter out matches that already have drafts or completed results
-        const availableMatches = allMatches.filter(match => 
-          match.team1 && match.team2 && 
-          !match.winner && 
-          !tournamentDrafts.some(d => 
-            (d.team1_name === getTeamId(match.team1) && d.team2_name === getTeamId(match.team2)) ||
-            (d.team1_name === getTeamId(match.team2) && d.team2_name === getTeamId(match.team1))
-          )
-        );
-        setMatches(availableMatches);
+      if (bracketRes.data && bracketRes.data.bracket && bracketRes.data.bracket.bracket_data) {
+        const bracketData = bracketRes.data.bracket.bracket_data;
+        const isPublished = bracketRes.data.bracket.is_published;
+        
+        if (isPublished) {
+          const allMatches = extractMatchesFromBracket(bracketData);
+          // Filter out matches that already have drafts or completed results
+          const availableMatches = allMatches.filter(match => 
+            match.team1 && match.team2 && 
+            !match.winner && 
+            !tournamentDrafts.some(d => 
+              (d.team1_name === getTeamId(match.team1) && d.team2_name === getTeamId(match.team2)) ||
+              (d.team1_name === getTeamId(match.team2) && d.team2_name === getTeamId(match.team1))
+            )
+          );
+          setMatches(availableMatches);
+        } else {
+          setMatches([]);
+          if (bracketData) {
+            toast.warning('Bracket must be published before creating drafts');
+          }
+        }
+      } else {
+        setMatches([]);
       }
       
     } catch (error) {

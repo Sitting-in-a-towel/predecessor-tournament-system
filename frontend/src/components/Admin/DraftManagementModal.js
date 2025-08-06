@@ -62,29 +62,34 @@ const DraftManagementModal = ({ isOpen, onClose }) => {
         withCredentials: true
       });
 
-      if (bracketResponse.data && bracketResponse.data.bracketData && bracketResponse.data.isPublished) {
-        const allMatches = extractMatchesFromBracket(bracketResponse.data.bracketData);
+      if (bracketResponse.data && bracketResponse.data.bracket && bracketResponse.data.bracket.bracket_data) {
+        const bracketData = bracketResponse.data.bracket.bracket_data;
+        const isPublished = bracketResponse.data.bracket.is_published;
         
-        // Filter out matches that already have drafts or completed results
-        const existingDrafts = drafts.filter(d => 
-          teamsResponse.data.some(t => t.team_id === d.team1_name || t.team_id === d.team2_name)
-        );
-        
-        const availableMatches = allMatches.filter(match => 
-          match.team1 && match.team2 && 
-          !match.winner && 
-          !existingDrafts.some(d => 
-            (d.team1_name === getTeamId(match.team1) && d.team2_name === getTeamId(match.team2)) ||
-            (d.team1_name === getTeamId(match.team2) && d.team2_name === getTeamId(match.team1))
-          )
-        );
-        
-        setMatches(availableMatches);
-      } else {
-        setMatches([]);
-        if (bracketResponse.data && bracketResponse.data.bracketData && !bracketResponse.data.isPublished) {
+        if (isPublished) {
+          const allMatches = extractMatchesFromBracket(bracketData);
+          
+          // Filter out matches that already have drafts or completed results
+          const existingDrafts = drafts.filter(d => 
+            teamsResponse.data.some(t => t.team_id === d.team1_name || t.team_id === d.team2_name)
+          );
+          
+          const availableMatches = allMatches.filter(match => 
+            match.team1 && match.team2 && 
+            !match.winner && 
+            !existingDrafts.some(d => 
+              (d.team1_name === getTeamId(match.team1) && d.team2_name === getTeamId(match.team2)) ||
+              (d.team1_name === getTeamId(match.team2) && d.team2_name === getTeamId(match.team1))
+            )
+          );
+          
+          setMatches(availableMatches);
+        } else {
+          setMatches([]);
           toast.warning('Bracket must be published before creating drafts');
         }
+      } else {
+        setMatches([]);
       }
     } catch (error) {
       console.error('Error loading tournament matches:', error);
