@@ -34,7 +34,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [tournament, setTournament] = useState(null);
-  const [teams, setTeams] = useState([]);
+  const [teams, setTeams] = useState([]); // Checked-in teams for bracket generation
+  const [allRegisteredTeams, setAllRegisteredTeams] = useState([]); // All registered teams for dropdown
   const [bracketData, setBracketData] = useState(null);
   const [lockedSlots, setLockedSlots] = useState(new Set());
   const [bracketView, setBracketView] = useState('upper'); // For double elimination
@@ -66,14 +67,17 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       const teamsResponse = await axios.get(`${API_BASE_URL}/tournaments/${tournamentId}/registrations`, {
         withCredentials: true
       });
-      const allRegisteredTeams = teamsResponse.data.registrations || [];
-      const checkedInTeams = allRegisteredTeams.filter(team => team.checked_in);
+      const registeredTeams = teamsResponse.data.registrations || [];
+      const checkedInTeams = registeredTeams.filter(team => team.checked_in);
+      
+      // Store both sets of teams
+      setAllRegisteredTeams(registeredTeams);
       setTeams(checkedInTeams);
 
       // Initialize bracket structure based on ALL registered teams
       // This ensures we have enough match boxes for everyone
-      if (allRegisteredTeams.length >= 2) {
-        initializeBracket(allRegisteredTeams, tournamentData?.bracket_type || 'Single Elimination');
+      if (registeredTeams.length >= 2) {
+        initializeBracket(registeredTeams, tournamentData?.bracket_type || 'Single Elimination');
       }
       
     } catch (error) {
@@ -430,7 +434,7 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       return;
     }
 
-    const team = teamId === 'bye' ? 'bye' : teams.find(t => t.team_id === teamId) || null;
+    const team = teamId === 'bye' ? 'bye' : allRegisteredTeams.find(t => t.team_id === teamId) || null;
     
     setBracketData(prev => {
       const newData = JSON.parse(JSON.stringify(prev)); // Deep clone to avoid mutations
@@ -863,6 +867,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
     try {
       // Use ALL checked-in teams, not just teams already placed in bracket
       const availableTeams = [...teams];
+      // Also include registered teams for placement options
+      const allAvailableTeams = [...allRegisteredTeams];
       const newBracketData = deepCloneBracket(bracketData); // Deep clone
       
       // Collect locked teams to preserve them
@@ -1241,7 +1247,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
         {bracketData.type === 'Single Elimination' ? (
           <SingleEliminationBracket 
             bracketData={bracketData}
-            teams={teams}
+            teams={allRegisteredTeams}
+            allRegisteredTeams={allRegisteredTeams}
             lockedSlots={lockedSlots}
             onTeamAssign={handleTeamAssignment}
             onToggleLock={toggleLockSlot}
@@ -1256,7 +1263,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
             {bracketView === 'upper' ? (
               <UpperBracket 
                 bracketData={bracketData.upperBracket}
-                teams={teams}
+                teams={allRegisteredTeams}
+                allRegisteredTeams={allRegisteredTeams}
                 lockedSlots={lockedSlots}
                 onTeamAssign={handleTeamAssignment}
                 onToggleLock={toggleLockSlot}
@@ -1269,7 +1277,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
             ) : bracketView === 'lower' ? (
               <LowerBracket 
                 bracketData={bracketData.lowerBracket}
-                teams={teams}
+                teams={allRegisteredTeams}
+                allRegisteredTeams={allRegisteredTeams}
                 lockedSlots={lockedSlots}
                 onTeamAssign={handleTeamAssignment}
                 onToggleLock={toggleLockSlot}
@@ -1282,7 +1291,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
             ) : (
               <GrandFinalView
                 grandFinal={bracketData.grandFinal}
-                teams={teams}
+                teams={allRegisteredTeams}
+                allRegisteredTeams={allRegisteredTeams}
                 lockedSlots={lockedSlots}
                 onTeamAssign={handleTeamAssignment}
                 onToggleLock={toggleLockSlot}
@@ -1298,7 +1308,7 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       {scoreModalOpen && selectedMatch && (
         <MatchScoreModal
           match={selectedMatch}
-          teams={teams}
+          teams={allRegisteredTeams}
           seriesLength={seriesLength}
           onSave={handleSaveScore}
           onPublish={handlePublishScore}
@@ -1311,7 +1321,7 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
 };
 
 // Single Elimination Bracket Component
-const SingleEliminationBracket = ({ bracketData, teams, lockedSlots, onTeamAssign, onToggleLock, isAdmin, isPublished, onAddMatch, onRemoveMatch, onOpenScoreModal }) => {
+const SingleEliminationBracket = ({ bracketData, teams, allRegisteredTeams, lockedSlots, onTeamAssign, onToggleLock, isAdmin, isPublished, onAddMatch, onRemoveMatch, onOpenScoreModal }) => {
   return (
     <div className="single-elimination-bracket">
       {bracketData.rounds.map((round, roundIndex) => (
@@ -1324,7 +1334,8 @@ const SingleEliminationBracket = ({ bracketData, teams, lockedSlots, onTeamAssig
               <CompactMatch
                 key={match.id}
                 match={match}
-                teams={teams}
+                teams={allRegisteredTeams}
+                allRegisteredTeams={allRegisteredTeams}
                 lockedSlots={lockedSlots}
                 onTeamAssign={onTeamAssign}
                 onToggleLock={onToggleLock}
@@ -1354,7 +1365,7 @@ const SingleEliminationBracket = ({ bracketData, teams, lockedSlots, onTeamAssig
 };
 
 // Upper Bracket Component
-const UpperBracket = ({ bracketData, teams, lockedSlots, onTeamAssign, onToggleLock, isAdmin, isPublished, onAddMatch, onRemoveMatch, onOpenScoreModal }) => {
+const UpperBracket = ({ bracketData, teams, allRegisteredTeams, lockedSlots, onTeamAssign, onToggleLock, isAdmin, isPublished, onAddMatch, onRemoveMatch, onOpenScoreModal }) => {
   return (
     <div className="upper-bracket-view">
       {bracketData.rounds.map((round, roundIndex) => (
@@ -1367,7 +1378,8 @@ const UpperBracket = ({ bracketData, teams, lockedSlots, onTeamAssign, onToggleL
               <CompactMatch
                 key={match.id}
                 match={match}
-                teams={teams}
+                teams={allRegisteredTeams}
+                allRegisteredTeams={allRegisteredTeams}
                 lockedSlots={lockedSlots}
                 onTeamAssign={onTeamAssign}
                 onToggleLock={onToggleLock}
@@ -1397,7 +1409,7 @@ const UpperBracket = ({ bracketData, teams, lockedSlots, onTeamAssign, onToggleL
 };
 
 // Lower Bracket Component
-const LowerBracket = ({ bracketData, teams, lockedSlots, onTeamAssign, onToggleLock, isAdmin, isPublished, onAddMatch, onRemoveMatch, onOpenScoreModal }) => {
+const LowerBracket = ({ bracketData, teams, allRegisteredTeams, lockedSlots, onTeamAssign, onToggleLock, isAdmin, isPublished, onAddMatch, onRemoveMatch, onOpenScoreModal }) => {
   return (
     <div className="lower-bracket-view">
       {bracketData.rounds.map((round, roundIndex) => (
@@ -1410,7 +1422,8 @@ const LowerBracket = ({ bracketData, teams, lockedSlots, onTeamAssign, onToggleL
               <CompactMatch
                 key={match.id}
                 match={match}
-                teams={teams}
+                teams={allRegisteredTeams}
+                allRegisteredTeams={allRegisteredTeams}
                 lockedSlots={lockedSlots}
                 onTeamAssign={onTeamAssign}
                 onToggleLock={onToggleLock}
@@ -1440,7 +1453,7 @@ const LowerBracket = ({ bracketData, teams, lockedSlots, onTeamAssign, onToggleL
 };
 
 // Compact Match Component
-const CompactMatch = ({ match, teams, lockedSlots, onTeamAssign, onToggleLock, isAdmin, isPublished, showDropIndicator, onRemoveMatch, onOpenScoreModal }) => {
+const CompactMatch = ({ match, teams, allRegisteredTeams, lockedSlots, onTeamAssign, onToggleLock, isAdmin, isPublished, showDropIndicator, onRemoveMatch, onOpenScoreModal }) => {
   const isLocked = (position) => lockedSlots.has(`${match.id}-${position}`);
   const isBye = match.isBye || false;
 
@@ -1481,7 +1494,7 @@ const CompactMatch = ({ match, teams, lockedSlots, onTeamAssign, onToggleLock, i
         matchId={match.id}
         position="team1"
         team={match.team1}
-        teams={teams}
+        teams={allRegisteredTeams}
         locked={isLocked('team1')}
         onTeamAssign={onTeamAssign}
         onToggleLock={onToggleLock}
@@ -1505,7 +1518,7 @@ const CompactMatch = ({ match, teams, lockedSlots, onTeamAssign, onToggleLock, i
         matchId={match.id}
         position="team2"
         team={match.team2}
-        teams={teams}
+        teams={allRegisteredTeams}
         locked={isLocked('team2')}
         onTeamAssign={onTeamAssign}
         onToggleLock={onToggleLock}
@@ -1541,7 +1554,7 @@ const CompactTeamSlot = ({ matchId, position, team, teams, locked, onTeamAssign,
           >
             <option value="">TBD</option>
             <option value="bye">BYE</option>
-            {teams.map(t => (
+            {allRegisteredTeams.map(t => (
               <option key={t.team_id} value={t.team_id}>
                 {t.team_name}
               </option>
@@ -1565,7 +1578,7 @@ const CompactTeamSlot = ({ matchId, position, team, teams, locked, onTeamAssign,
 };
 
 // Grand Final View Component
-const GrandFinalView = ({ grandFinal, teams, lockedSlots, onTeamAssign, onToggleLock, isAdmin, isPublished }) => {
+const GrandFinalView = ({ grandFinal, teams, allRegisteredTeams, lockedSlots, onTeamAssign, onToggleLock, isAdmin, isPublished }) => {
   return (
     <div className="grand-final-view">
       <div className="grand-final-container">
@@ -1587,6 +1600,7 @@ const GrandFinalView = ({ grandFinal, teams, lockedSlots, onTeamAssign, onToggle
                 isBye: false
               }}
               teams={teams}
+              allRegisteredTeams={allRegisteredTeams}
               lockedSlots={lockedSlots}
               onTeamAssign={onTeamAssign}
               onToggleLock={onToggleLock}
@@ -1607,6 +1621,7 @@ const GrandFinalView = ({ grandFinal, teams, lockedSlots, onTeamAssign, onToggle
                   isBye: false
                 }}
                 teams={teams}
+                allRegisteredTeams={allRegisteredTeams}
                 lockedSlots={lockedSlots}
                 onTeamAssign={onTeamAssign}
                 onToggleLock={onToggleLock}
