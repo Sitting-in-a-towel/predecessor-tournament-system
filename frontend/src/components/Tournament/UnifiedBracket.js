@@ -95,9 +95,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
   };
 
   const initializeSingleElimination = (teamCount) => {
-    // Calculate the next power of 2 to determine bracket size
-    const bracketSize = Math.pow(2, Math.ceil(Math.log2(teamCount)));
-    const rounds = Math.ceil(Math.log2(bracketSize));
+    // Calculate rounds needed for the actual team count
+    const rounds = Math.ceil(Math.log2(teamCount));
     
     const bracketStructure = {
       type: 'Single Elimination',
@@ -106,8 +105,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       totalTeams: teamCount
     };
 
-    // Calculate matches needed per round
-    let teamsInRound = bracketSize;
+    // Calculate matches needed per round starting with actual team count
+    let teamsInRound = teamCount;
     
     for (let round = 1; round <= rounds; round++) {
       const matchesInRound = Math.ceil(teamsInRound / 2);
@@ -121,15 +120,11 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       for (let match = 0; match < matchesInRound; match++) {
         const matchId = `r${round}m${match}`;
         // In the first round, check if this match will have a bye
-        // A bye occurs when the team position exceeds the actual team count
+        // A bye occurs when we have odd teams and this is the last match
         let isByeMatch = false;
-        if (round === 1) {
-          const team1Position = match * 2;
-          const team2Position = match * 2 + 1;
-          // If either position would be for a team beyond our actual count, it's a bye
-          if (team2Position >= teamCount) {
-            isByeMatch = true;
-          }
+        if (round === 1 && teamCount % 2 === 1 && match === matchesInRound - 1) {
+          // If we have odd teams, the last match in round 1 will have a bye
+          isByeMatch = true;
         }
         
         roundData.matches.push({
@@ -272,12 +267,11 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       });
     } else {
       // General case for other team counts
-      const bracketSize = Math.pow(2, Math.ceil(Math.log2(teamCount)));
-      const upperRounds = Math.ceil(Math.log2(bracketSize));
+      const upperRounds = Math.ceil(Math.log2(teamCount));
       
       // Create upper bracket
-      // First round should have enough matches for ALL teams
-      let teamsInRound = bracketSize; // Use bracket size, not team count
+      // First round should have enough matches for actual team count
+      let teamsInRound = teamCount;
       
       for (let round = 1; round <= upperRounds; round++) {
         const matchesInRound = Math.ceil(teamsInRound / 2);
@@ -290,15 +284,11 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
 
         for (let match = 0; match < matchesInRound; match++) {
           const matchId = `u${round}m${match}`;
-          // In the first round, check if this match will have a bye
+          // In the first round, check if this match will have a bye  
           let isByeMatch = false;
-          if (round === 1) {
-            const team1Position = match * 2;
-            const team2Position = match * 2 + 1;
-            // If team2 position would be beyond our actual team count, it's a bye
-            if (team2Position >= teamCount) {
-              isByeMatch = true;
-            }
+          if (round === 1 && teamCount % 2 === 1 && match === matchesInRound - 1) {
+            // If we have odd teams, the last match in round 1 will have a bye
+            isByeMatch = true;
           }
           
           roundData.matches.push({
@@ -1537,14 +1527,7 @@ const CompactMatch = ({ match, teams, lockedSlots, onTeamAssign, onToggleLock, i
 
 // Compact Team Slot Component
 const CompactTeamSlot = ({ matchId, position, team, teams, locked, onTeamAssign, onToggleLock, isAdmin, isBye, isPublished, isWinner, isLoser }) => {
-  // For bye matches, second slot shows BYE
-  if (isBye && position === 'team2') {
-    return (
-      <div className="compact-team-slot bye-slot">
-        <div className="team-display">BYE</div>
-      </div>
-    );
-  }
+  // BYE slots are now editable like regular slots per user request
 
   return (
     <div className={`compact-team-slot ${locked ? 'locked' : ''} ${isPublished ? 'published' : ''} ${isWinner ? 'winner' : ''} ${isLoser ? 'loser' : ''}`}>

@@ -107,10 +107,11 @@
   border: 1px solid #333;
   border-radius: 8px;
   padding: 20px;
-  overflow-x: hidden;
-  max-height: 700px;
-  overflow-y: auto;
+  /* Allow horizontal expansion up to 6 rounds before scrolling */
+  overflow-x: auto;
+  /* Removed max-height and overflow-y to allow full height */
   width: 100%;
+  min-width: fit-content;
 }
 
 /* Single Elimination Bracket */
@@ -119,17 +120,18 @@
 .lower-bracket-view {
   display: flex;
   gap: 20px;
-  width: 100%;
-  justify-content: space-evenly;
+  /* Allow natural width expansion for rounds */
+  min-width: fit-content;
+  justify-content: flex-start;
 }
 
 /* Bracket Column */
 .bracket-column {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-width: 120px;
-  max-width: 180px;
+  /* Fixed width for consistent layout and horizontal expansion */
+  width: 200px;
+  min-width: 200px;
 }
 
 .round-header {
@@ -405,14 +407,9 @@
   stroke-dasharray: 5,5;
 }
 
-/* Bye match styling */
+/* Bye match styling - Removed greyed out styling per user request */
 .compact-match.bye {
-  opacity: 0.6;
   border-style: dashed;
-}
-
-.compact-match.bye .compact-team-slot:last-child {
-  opacity: 0.3;
 }
 
 /* Drop indicator styling */
@@ -504,7 +501,7 @@
 /* Responsive Design */
 @media (max-width: 1200px) {
   .bracket-viewport {
-    max-height: 500px;
+    /* Removed max-height to allow full height */
   }
   
   .bracket-column {
@@ -537,7 +534,7 @@
   
   .bracket-viewport {
     padding: 15px;
-    max-height: 400px;
+    /* Removed max-height to allow full height */
   }
   
   .single-elimination-bracket,
@@ -560,25 +557,7 @@
   }
 }
 
-/* Scrollbar Styling */
-.bracket-viewport::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.bracket-viewport::-webkit-scrollbar-track {
-  background: #1a1a1a;
-  border-radius: 4px;
-}
-
-.bracket-viewport::-webkit-scrollbar-thumb {
-  background: #555555;
-  border-radius: 4px;
-}
-
-.bracket-viewport::-webkit-scrollbar-thumb:hover {
-  background: #666666;
-}
+/* Scrollbar Styling - Removed since viewport no longer scrolls vertically */
 
 /* Match Status Indicators */
 .compact-match.completed {
