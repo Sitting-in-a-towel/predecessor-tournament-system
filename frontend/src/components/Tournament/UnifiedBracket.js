@@ -168,8 +168,9 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       totalTeams: teamCount
     };
 
-    // Special handling for specific team counts
-    if (teamCount === 10) {
+    // Use general algorithm for all team counts instead of hardcoded cases
+    // This ensures proper bracket generation for any number of teams
+    if (false) { // Disabled hardcoded 10-team case
       // Upper bracket - ALL 10 teams start here
       // Round 1: 5 matches (10 teams all play)
       bracketStructure.upperBracket.rounds.push({
