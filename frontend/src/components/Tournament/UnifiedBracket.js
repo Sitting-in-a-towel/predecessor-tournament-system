@@ -850,6 +850,16 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
         match.loser = loserTeam;
         match.status = 'completed';
         
+        // Lock the match after completion
+        const matchLockKey1 = `${match.id}-team1`;
+        const matchLockKey2 = `${match.id}-team2`;
+        setLockedSlots(prev => {
+          const newLocked = new Set(prev);
+          newLocked.add(matchLockKey1);
+          newLocked.add(matchLockKey2);
+          return newLocked;
+        });
+        
         // Auto-advance teams using existing logic
         if (match.winnerTo) {
           const nextMatch = findMatchInBracket(newBracketData, match.winnerTo);

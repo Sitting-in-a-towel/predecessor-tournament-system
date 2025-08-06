@@ -1,0 +1,295 @@
+.tournament-drafts {
+  padding: 20px;
+}
+
+.drafts-header {
+  margin-bottom: 30px;
+}
+
+.drafts-header h2 {
+  color: #faa61a;
+  margin-bottom: 10px;
+  font-size: 2rem;
+}
+
+.drafts-description {
+  color: #b3b3b3;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* My Draft Section */
+.my-draft-section {
+  background: #2c2f33;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid #4f545c;
+  margin-bottom: 30px;
+}
+
+.my-draft-section h3 {
+  color: #fff;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.draft-card {
+  background: #36393f;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #4f545c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.draft-card.active {
+  border-color: #5865f2;
+  box-shadow: 0 0 10px rgba(88, 101, 242, 0.3);
+}
+
+.draft-info h4 {
+  color: #fff;
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+}
+
+.draft-status {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.draft-phase {
+  color: #b3b3b3;
+  font-size: 0.9rem;
+}
+
+.draft-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Create Draft Section */
+.create-draft-section {
+  background: #2c2f33;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid #4f545c;
+  margin-bottom: 30px;
+}
+
+.create-draft-section h3 {
+  color: #fff;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.create-draft-form {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.form-group {
+  flex: 1;
+}
+
+.form-group label {
+  display: block;
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.form-group select {
+  width: 100%;
+  padding: 10px 15px;
+  background: #1a1a1a;
+  border: 1px solid #4f545c;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: #5865f2;
+  box-shadow: 0 0 5px rgba(88, 101, 242, 0.3);
+}
+
+/* All Drafts Section */
+.all-drafts-section {
+  background: #2c2f33;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid #4f545c;
+  margin-bottom: 30px;
+}
+
+.all-drafts-section h3 {
+  color: #fff;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.no-drafts {
+  color: #b3b3b3;
+  text-align: center;
+  padding: 40px;
+  font-style: italic;
+}
+
+.drafts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+/* Spectator Section */
+.spectator-section {
+  background: #2c2f33;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid #4f545c;
+}
+
+.spectator-section h3 {
+  color: #fff;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.spectator-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.spectator-link-item {
+  background: #36393f;
+  padding: 15px 20px;
+  border-radius: 6px;
+  border: 1px solid #4f545c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.spectator-link-item span {
+  color: #fff;
+  font-weight: 500;
+}
+
+/* Loading */
+.loading-container {
+  text-align: center;
+  padding: 60px;
+  color: #b3b3b3;
+  font-size: 1.1rem;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary {
+  background: #5865f2;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #4752c4;
+}
+
+.btn-success {
+  background: #57f287;
+  color: #1a1a1a;
+}
+
+.btn-success:hover {
+  background: #3dd675;
+}
+
+.btn-secondary {
+  background: #4f545c;
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  background: #5d6269;
+}
+
+.btn-outline {
+  background: transparent;
+  color: #5865f2;
+  border: 1px solid #5865f2;
+}
+
+.btn-outline:hover {
+  background: #5865f2;
+  color: #fff;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .create-draft-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .drafts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .draft-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .spectator-link-item {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    text-align: center;
+  }
+}

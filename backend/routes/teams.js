@@ -6,6 +6,31 @@ const logger = require('../utils/logger');
 
 const router = express.Router();
 
+// Get all teams (admin only)
+router.get('/', requireAuth, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const query = `
+      SELECT t.*, u.discord_username as captain_username,
+             tour.name as tournament_name
+      FROM teams t
+      LEFT JOIN users u ON t.captain_id = u.id
+      LEFT JOIN tournaments tour ON t.tournament_id = tour.id
+      ORDER BY t.created_at DESC
+    `;
+    
+    const result = await postgresService.query(query);
+    res.json(result.rows);
+  } catch (error) {
+    logger.error('Error fetching all teams:', error);
+    res.status(500).json({ error: 'Failed to fetch teams' });
+  }
+});
+
 // Get user's teams
 router.get('/my-teams', requireAuth, async (req, res) => {
   try {

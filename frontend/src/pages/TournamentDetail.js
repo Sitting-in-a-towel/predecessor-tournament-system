@@ -5,6 +5,7 @@ import axios from 'axios';
 import TournamentRegistration from '../components/Tournament/TournamentRegistration';
 import TournamentCheckIn from '../components/Tournament/TournamentCheckIn';
 import TournamentBracket from '../components/Tournament/TournamentBracket';
+import TournamentDrafts from '../components/Tournament/TournamentDrafts';
 import EditTournamentModal from '../components/Tournament/EditTournamentModal';
 import MatchManagement from '../components/Match/MatchManagement';
 import { toast } from 'react-toastify';
@@ -140,6 +141,16 @@ const TournamentDetail = () => {
     );
   };
 
+  const isAdmin = () => {
+    return user && (user.role === 'admin' || user.isAdmin);
+  };
+
+  const isTeamCaptain = () => {
+    if (!user || !teams.length) return false;
+    // Check if user is captain of any team in this tournament
+    return teams.some(team => team.captain_id === user.id || team.captain_username === user.discord_username);
+  };
+
   if (loading) {
     return (
       <div className="tournament-detail-page">
@@ -246,6 +257,14 @@ const TournamentDetail = () => {
         >
           Bracket
         </button>
+        {(isAdmin() || isTeamCaptain()) && (
+          <button 
+            className={`tab ${activeTab === 'drafts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('drafts')}
+          >
+            Drafts
+          </button>
+        )}
       </div>
 
       {/* Tab Content */}
@@ -390,6 +409,19 @@ const TournamentDetail = () => {
             <TournamentBracket 
               tournamentId={id}
               onBracketUpdate={loadTournamentData}
+            />
+          </div>
+        )}
+
+        {activeTab === 'drafts' && (isAdmin() || isTeamCaptain()) && (
+          <div className="drafts-tab">
+            <TournamentDrafts 
+              tournamentId={id}
+              tournament={tournament}
+              teams={teams}
+              isAdmin={isAdmin()}
+              isTeamCaptain={isTeamCaptain()}
+              user={user}
             />
           </div>
         )}
