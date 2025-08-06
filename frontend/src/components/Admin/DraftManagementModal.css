@@ -52,6 +52,14 @@
   box-shadow: 0 0 5px rgba(88, 101, 242, 0.3);
 }
 
+.form-help {
+  display: block;
+  color: #faa61a;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  font-style: italic;
+}
+
 .form-actions {
   margin-top: 20px;
   display: flex;

@@ -9,13 +9,13 @@ const DraftManagementModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [drafts, setDrafts] = useState([]);
   const [tournaments, setTournaments] = useState([]);
-  const [teams, setTeams] = useState([]);
+  const [matches, setMatches] = useState([]);
   const [showCreateDraft, setShowCreateDraft] = useState(false);
   
   // Create draft form state
   const [selectedTournament, setSelectedTournament] = useState('');
-  const [selectedTeam1, setSelectedTeam1] = useState('');
-  const [selectedTeam2, setSelectedTeam2] = useState('');
+  const [selectedMatch, setSelectedMatch] = useState('');
+  const [tournamentTeams, setTournamentTeams] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -26,15 +26,13 @@ const DraftManagementModal = ({ isOpen, onClose }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [draftsResponse, tournamentsResponse, teamsResponse] = await Promise.all([
+      const [draftsResponse, tournamentsResponse] = await Promise.all([
         axios.get(`${API_BASE_URL}/draft`, { withCredentials: true }),
-        axios.get(`${API_BASE_URL}/tournaments`, { withCredentials: true }),
-        axios.get(`${API_BASE_URL}/teams`, { withCredentials: true })
+        axios.get(`${API_BASE_URL}/tournaments`, { withCredentials: true })
       ]);
 
       setDrafts(draftsResponse.data);
       setTournaments(tournamentsResponse.data);
-      setTeams(teamsResponse.data);
     } catch (error) {
       console.error('Error loading draft management data:', error);
       toast.error('Failed to load draft data');
@@ -43,28 +41,130 @@ const DraftManagementModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleCreateDraft = async (e) => {
-    e.preventDefault();
-    
-    if (!selectedTournament || !selectedTeam1 || !selectedTeam2) {
-      toast.error('Please select tournament and both teams');
+  const loadTournamentMatches = async (tournamentId) => {
+    if (!tournamentId) {
+      setMatches([]);
+      setTournamentTeams([]);
       return;
     }
 
-    if (selectedTeam1 === selectedTeam2) {
-      toast.error('Please select different teams');
+    try {
+      setLoading(true);
+
+      // Load tournament teams
+      const teamsResponse = await axios.get(`${API_BASE_URL}/tournaments/${tournamentId}/registrations`, {
+        withCredentials: true
+      });
+      setTournamentTeams(teamsResponse.data);
+
+      // Load bracket data to get matches
+      const bracketResponse = await axios.get(`${API_BASE_URL}/tournaments/${tournamentId}/bracket`, {
+        withCredentials: true
+      });
+
+      if (bracketResponse.data && bracketResponse.data.bracketData && bracketResponse.data.isPublished) {
+        const allMatches = extractMatchesFromBracket(bracketResponse.data.bracketData);
+        
+        // Filter out matches that already have drafts or completed results
+        const existingDrafts = drafts.filter(d => 
+          teamsResponse.data.some(t => t.team_id === d.team1_name || t.team_id === d.team2_name)
+        );
+        
+        const availableMatches = allMatches.filter(match => 
+          match.team1 && match.team2 && 
+          !match.winner && 
+          !existingDrafts.some(d => 
+            (d.team1_name === getTeamId(match.team1) && d.team2_name === getTeamId(match.team2)) ||
+            (d.team1_name === getTeamId(match.team2) && d.team2_name === getTeamId(match.team1))
+          )
+        );
+        
+        setMatches(availableMatches);
+      } else {
+        setMatches([]);
+        if (bracketResponse.data && bracketResponse.data.bracketData && !bracketResponse.data.isPublished) {
+          toast.warning('Bracket must be published before creating drafts');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading tournament matches:', error);
+      toast.error('Failed to load tournament matches');
+      setMatches([]);
+      setTournamentTeams([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const extractMatchesFromBracket = (bracketData) => {
+    const matches = [];
+    
+    if (bracketData.type === 'Single Elimination') {
+      bracketData.rounds.forEach(round => {
+        round.matches.forEach(match => {
+          if (match.team1 && match.team2) {
+            matches.push(match);
+          }
+        });
+      });
+    } else if (bracketData.type === 'Double Elimination') {
+      // Extract from upper bracket
+      bracketData.upperBracket.rounds.forEach(round => {
+        round.matches.forEach(match => {
+          if (match.team1 && match.team2) {
+            matches.push(match);
+          }
+        });
+      });
+      // Extract from lower bracket
+      bracketData.lowerBracket.rounds.forEach(round => {
+        round.matches.forEach(match => {
+          if (match.team1 && match.team2) {
+            matches.push(match);
+          }
+        });
+      });
+    }
+    
+    return matches;
+  };
+
+  const getTeamId = (team) => {
+    if (typeof team === 'string') return team;
+    return team?.team_id || team?.name || '';
+  };
+
+  // Load matches when tournament is selected
+  useEffect(() => {
+    if (selectedTournament) {
+      loadTournamentMatches(selectedTournament);
+    }
+  }, [selectedTournament, drafts]);
+
+  const handleCreateDraft = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedTournament || !selectedMatch) {
+      toast.error('Please select tournament and match');
       return;
     }
 
     try {
       setLoading(true);
       
-      // Find the team UUIDs
-      const team1 = teams.find(t => t.team_id === selectedTeam1);
-      const team2 = teams.find(t => t.team_id === selectedTeam2);
+      // Find the selected match
+      const match = matches.find(m => m.id === selectedMatch);
+      if (!match) {
+        toast.error('Selected match not found');
+        return;
+      }
+
+      // Find the team UUIDs from tournament teams
+      const team1 = tournamentTeams.find(t => t.team_id === getTeamId(match.team1));
+      const team2 = tournamentTeams.find(t => t.team_id === getTeamId(match.team2));
       
       if (!team1 || !team2) {
-        toast.error('Selected teams not found');
+        toast.error('Match teams not found in tournament registrations');
         return;
       }
 
@@ -77,14 +177,13 @@ const DraftManagementModal = ({ isOpen, onClose }) => {
       toast.success('Draft session created successfully!');
       setShowCreateDraft(false);
       setSelectedTournament('');
-      setSelectedTeam1('');
-      setSelectedTeam2('');
+      setSelectedMatch('');
       loadData(); // Refresh the list
       
       // Show the draft links
       const draftData = response.data;
       const linkMessage = `
-Draft created successfully!
+Draft created for ${getTeamId(match.team1)} vs ${getTeamId(match.team2)}
 
 Team 1 Captain Link: ${draftData.team1Link}
 Team 2 Captain Link: ${draftData.team2Link}
@@ -152,7 +251,10 @@ Copy these links and send them to the team captains.
                       <label>Tournament</label>
                       <select 
                         value={selectedTournament}
-                        onChange={(e) => setSelectedTournament(e.target.value)}
+                        onChange={(e) => {
+                          setSelectedTournament(e.target.value);
+                          setSelectedMatch(''); // Reset match selection
+                        }}
                         required
                       >
                         <option value="">Select Tournament</option>
@@ -165,40 +267,41 @@ Copy these links and send them to the team captains.
                     </div>
 
                     <div className="form-group">
-                      <label>Team 1</label>
+                      <label>Match</label>
                       <select 
-                        value={selectedTeam1}
-                        onChange={(e) => setSelectedTeam1(e.target.value)}
+                        value={selectedMatch}
+                        onChange={(e) => setSelectedMatch(e.target.value)}
                         required
+                        disabled={!selectedTournament}
                       >
-                        <option value="">Select Team 1</option>
-                        {teams.map(team => (
-                          <option key={team.id} value={team.team_id}>
-                            {team.team_id}
+                        <option value="">
+                          {!selectedTournament 
+                            ? 'Select tournament first' 
+                            : matches.length === 0 
+                              ? 'No available matches (bracket must be published)'
+                              : 'Select a match'
+                          }
+                        </option>
+                        {matches.map(match => (
+                          <option key={match.id} value={match.id}>
+                            {getTeamId(match.team1)} vs {getTeamId(match.team2)}
                           </option>
                         ))}
                       </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Team 2</label>
-                      <select 
-                        value={selectedTeam2}
-                        onChange={(e) => setSelectedTeam2(e.target.value)}
-                        required
-                      >
-                        <option value="">Select Team 2</option>
-                        {teams.map(team => (
-                          <option key={team.id} value={team.team_id}>
-                            {team.team_id}
-                          </option>
-                        ))}
-                      </select>
+                      {selectedTournament && matches.length === 0 && (
+                        <small className="form-help">
+                          No matches available. Make sure the bracket is published and has matches without scores.
+                        </small>
+                      )}
                     </div>
 
                     <div className="form-actions">
-                      <button type="submit" className="btn btn-success" disabled={loading}>
-                        Create Draft Session
+                      <button 
+                        type="submit" 
+                        className="btn btn-success" 
+                        disabled={loading || !selectedMatch}
+                      >
+                        {loading ? 'Creating...' : 'Create Draft Session'}
                       </button>
                     </div>
                   </form>
