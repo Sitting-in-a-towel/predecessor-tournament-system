@@ -926,29 +926,35 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       const lockedTeams = new Map(); // matchId-position -> team
       
       if (newBracketData.type === 'Single Elimination') {
-        // First pass: collect locked teams from FIRST ROUND only and clear unlocked slots
-        if (newBracketData.rounds.length > 0) {
-          const firstRound = newBracketData.rounds[0];
-          for (const match of firstRound.matches) {
+        // Collect locked teams from ALL ROUNDS and clear only unlocked slots
+        for (let roundIndex = 0; roundIndex < newBracketData.rounds.length; roundIndex++) {
+          const round = newBracketData.rounds[roundIndex];
+          for (const match of round.matches) {
+            // Check and preserve locked team1
             if (lockedSlots.has(`${match.id}-team1`) && match.team1) {
               lockedTeams.set(`${match.id}-team1`, match.team1);
+            } else if (roundIndex === 0) {
+              // Only clear first round unlocked slots - later rounds will be cleared selectively
+              match.team1 = null;
             } else {
-              match.team1 = null; // Clear unlocked slots
+              // For later rounds, only clear if not locked
+              if (!lockedSlots.has(`${match.id}-team1`)) {
+                match.team1 = null;
+              }
             }
             
+            // Check and preserve locked team2
             if (lockedSlots.has(`${match.id}-team2`) && match.team2) {
               lockedTeams.set(`${match.id}-team2`, match.team2);
+            } else if (roundIndex === 0) {
+              // Only clear first round unlocked slots
+              match.team2 = null;
             } else {
-              match.team2 = null; // Clear unlocked slots
+              // For later rounds, only clear if not locked
+              if (!lockedSlots.has(`${match.id}-team2`)) {
+                match.team2 = null;
+              }
             }
-          }
-        }
-        
-        // Clear all later rounds (they'll be filled by advancement)
-        for (let i = 1; i < newBracketData.rounds.length; i++) {
-          for (const match of newBracketData.rounds[i].matches) {
-            match.team1 = null;
-            match.team2 = null;
           }
         }
       } else {

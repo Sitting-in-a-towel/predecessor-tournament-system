@@ -295,6 +295,25 @@ const Teams = () => {
           </div>
 
           {/* Team Invitations Section - Split View */}
+          {/* Active Drafts Section */}
+          <div className="team-drafts-section" style={{ marginTop: '30px' }}>
+            <h3 style={{ color: '#faa61a', marginBottom: '15px' }}>🎮 Active Draft Sessions</h3>
+            <div style={{
+              background: '#2c2f33',
+              padding: '20px',
+              borderRadius: '8px',
+              border: '1px solid #4f545c',
+              textAlign: 'center'
+            }}>
+              <p style={{ color: '#b3b3b3', marginBottom: '15px' }}>
+                When your team has an active draft session, links will appear here
+              </p>
+              <p style={{ color: '#72767d', fontSize: '0.9rem' }}>
+                Draft links will be provided by tournament admins
+              </p>
+            </div>
+          </div>
+
           <div className="team-invitations-section" style={{ marginTop: '30px' }}>
             <h2>Team Invitations</h2>
             

@@ -201,7 +201,7 @@ class PostgreSQLService {
     async getTeamsByTournament(tournamentId) {
         const query = `
             SELECT t.*, u.discord_username as captain_username,
-                   COUNT(tp.player_id) as player_count
+                   COUNT(CASE WHEN tp.role = 'player' THEN 1 END) + 1 as player_count
             FROM teams t
             LEFT JOIN users u ON t.captain_id = u.id
             LEFT JOIN team_players tp ON t.id = tp.team_id AND tp.accepted = true
@@ -223,7 +223,7 @@ class PostgreSQLService {
                      WHEN t.captain_id = u.id THEN 'captain'
                      ELSE COALESCE(tp.role, 'captain')
                    END as player_role,
-                   (SELECT COUNT(*) FROM team_players tp2 WHERE tp2.team_id = t.id AND tp2.accepted = true) + 1 as player_count
+                   (SELECT COUNT(*) FROM team_players tp2 WHERE tp2.team_id = t.id AND tp2.accepted = true AND tp2.role = 'player') + 1 as player_count
             FROM teams t
             LEFT JOIN team_players tp ON t.id = tp.team_id AND tp.accepted = true
             LEFT JOIN tournaments tour ON t.tournament_id = tour.id

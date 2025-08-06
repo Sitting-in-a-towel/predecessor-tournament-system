@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import CreateTournamentModal from '../components/Admin/CreateTournamentModal';
 import UserManagementModal from '../components/Admin/UserManagementModal';
+import DraftManagementModal from '../components/Admin/DraftManagementModal';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
   });
   const [showCreateTournament, setShowCreateTournament] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showDraftManagement, setShowDraftManagement] = useState(false);
 
   // Check if user is admin
   const isAdmin = user?.role === 'admin' || user?.isAdmin;
@@ -359,6 +361,13 @@ const AdminDashboard = () => {
             <span className="action-icon">👤</span>
             <span className="action-label">Manage Users</span>
           </button>
+          <button 
+            className="action-button drafts"
+            onClick={() => setShowDraftManagement(true)}
+          >
+            <span className="action-icon">⚔️</span>
+            <span className="action-label">Manage Drafts</span>
+          </button>
           <button className="action-button system">
             <span className="action-icon">⚙️</span>
             <span className="action-label">System Settings</span>
@@ -380,6 +389,11 @@ const AdminDashboard = () => {
       <UserManagementModal
         isOpen={showUserManagement}
         onClose={() => setShowUserManagement(false)}
+      />
+      
+      <DraftManagementModal
+        isOpen={showDraftManagement}
+        onClose={() => setShowDraftManagement(false)}
       />
     </div>
   );
