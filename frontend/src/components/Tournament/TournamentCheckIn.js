@@ -97,7 +97,7 @@ const TournamentCheckIn = ({ tournamentId, onStatusUpdate }) => {
       await loadCheckInStatus();
     } catch (error) {
       console.error('Error updating check-in:', error);
-      toast.error('Failed to update check-in status');
+      toast.error(error.response?.data?.error || 'Failed to update check-in status');
     } finally {
       setLoading(false);
     }

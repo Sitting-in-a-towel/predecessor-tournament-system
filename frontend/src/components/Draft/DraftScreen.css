@@ -1,0 +1,140 @@
+.draft-screen {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 200px);
+  padding: 20px;
+  gap: 20px;
+}
+
+.draft-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #36393f;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #4f545c;
+}
+
+.phase-info h2 {
+  color: #fff;
+  margin: 0 0 10px 0;
+  font-size: 1.8rem;
+}
+
+.turn-indicator {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.your-turn {
+  color: #57f287;
+  font-weight: bold;
+}
+
+.opponent-turn {
+  color: #faa61a;
+}
+
+.draft-boards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  flex: 0 0 auto;
+}
+
+.team-board {
+  background: #2c2f33;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #4f545c;
+}
+
+.team-board.team1 {
+  border-left: 4px solid #5865f2;
+}
+
+.team-board.team2 {
+  border-left: 4px solid #ed4245;
+}
+
+.team-board h3 {
+  color: #fff;
+  margin: 0 0 20px 0;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.picks-bans {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bans h4,
+.picks h4 {
+  color: #b3b3b3;
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+}
+
+.hero-slots {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hero-slot {
+  background: #1a1a1a;
+  border: 1px solid #4f545c;
+  border-radius: 6px;
+  padding: 8px 12px;
+  min-width: 80px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.hero-slot.banned {
+  background: rgba(237, 66, 69, 0.2);
+  border-color: #ed4245;
+  color: #ed4245;
+}
+
+.hero-slot.picked {
+  background: rgba(87, 242, 135, 0.2);
+  border-color: #57f287;
+  color: #57f287;
+}
+
+.hero-slot:empty::after {
+  content: '-';
+  color: #72767d;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .draft-boards {
+    grid-template-columns: 1fr;
+  }
+  
+  .draft-status {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .draft-screen {
+    padding: 15px;
+    gap: 15px;
+  }
+  
+  .hero-slots {
+    justify-content: center;
+  }
+  
+  .team-board {
+    padding: 15px;
+  }
+}

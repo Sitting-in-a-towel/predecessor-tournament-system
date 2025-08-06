@@ -1,0 +1,272 @@
+.spectator-screen {
+  padding: 20px;
+}
+
+.spectator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #36393f;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #4f545c;
+  margin-bottom: 20px;
+}
+
+.spectator-header h2 {
+  color: #faa61a;
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.current-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+}
+
+.current-action .action {
+  color: #57f287;
+  font-weight: bold;
+}
+
+.current-action .team {
+  color: #5865f2;
+  font-weight: bold;
+}
+
+/* Coin Toss Spectator */
+.coin-toss-spectator {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.coin-toss-spectator h3 {
+  color: #fff;
+  font-size: 1.8rem;
+  margin-bottom: 30px;
+}
+
+.team-choices {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 600px;
+  margin: 0 auto 30px auto;
+}
+
+.team-choice-status {
+  text-align: center;
+}
+
+.team-choice-status h4 {
+  color: #5865f2;
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+}
+
+.choice-status .chosen {
+  color: #57f287;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.choice-status .waiting {
+  color: #faa61a;
+  font-style: italic;
+}
+
+.vs-divider {
+  color: #b3b3b3;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.coin-result {
+  background: rgba(87, 242, 135, 0.1);
+  border: 1px solid #57f287;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 30px;
+}
+
+.coin-result h3 {
+  color: #57f287;
+  margin-bottom: 10px;
+}
+
+.coin-result .winner {
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+/* Draft Results */
+.draft-results {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.draft-results h3 {
+  color: #fff;
+  font-size: 2rem;
+  margin-bottom: 30px;
+}
+
+.team-results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.team-result {
+  background: #2c2f33;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #4f545c;
+}
+
+.team-result h4 {
+  color: #5865f2;
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+}
+
+.final-picks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.final-pick {
+  background: rgba(87, 242, 135, 0.1);
+  color: #57f287;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Spectator Draft Boards */
+.spectator-draft-boards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.spectator-team-board {
+  background: #2c2f33;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #4f545c;
+}
+
+.spectator-team-board.team1 {
+  border-left: 4px solid #5865f2;
+}
+
+.spectator-team-board.team2 {
+  border-left: 4px solid #ed4245;
+}
+
+.spectator-team-board h3 {
+  color: #fff;
+  margin: 0 0 20px 0;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.spectator-picks-bans {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.spectator-picks-bans .bans h4,
+.spectator-picks-bans .picks h4 {
+  color: #b3b3b3;
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+}
+
+.spectator-picks-bans .hero-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.spectator-picks-bans .hero-slot {
+  background: #1a1a1a;
+  border: 1px solid #4f545c;
+  border-radius: 6px;
+  padding: 8px 12px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.spectator-picks-bans .hero-slot.banned {
+  background: rgba(237, 66, 69, 0.2);
+  border-color: #ed4245;
+}
+
+.spectator-picks-bans .hero-slot.picked {
+  background: rgba(87, 242, 135, 0.2);
+  border-color: #57f287;
+}
+
+.spectator-picks-bans .hero-slot.empty {
+  background: #36393f;
+  border-color: #72767d;
+}
+
+.hero-name {
+  color: #fff;
+  font-weight: 500;
+}
+
+.hero-role {
+  color: #b3b3b3;
+  font-size: 0.9rem;
+}
+
+.spectator-picks-bans .hero-slot.empty .placeholder {
+  color: #72767d;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .spectator-draft-boards,
+  .team-results {
+    grid-template-columns: 1fr;
+  }
+  
+  .spectator-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .spectator-screen {
+    padding: 15px;
+  }
+  
+  .team-choices {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .vs-divider {
+    order: 2;
+  }
+  
+  .spectator-team-board {
+    padding: 15px;
+  }
+}

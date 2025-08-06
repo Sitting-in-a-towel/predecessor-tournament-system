@@ -74,6 +74,26 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       setAllRegisteredTeams(registeredTeams);
       setTeams(checkedInTeams);
 
+      // Load existing bracket data from backend
+      try {
+        const bracketResponse = await axios.get(`${API_BASE_URL}/tournaments/${tournamentId}/bracket`, {
+          withCredentials: true
+        });
+        
+        if (bracketResponse.data.has_bracket_data && bracketResponse.data.bracket) {
+          const savedBracket = bracketResponse.data.bracket;
+          setBracketData(savedBracket.bracket_data);
+          setLockedSlots(new Set(savedBracket.locked_slots || []));
+          setIsPublished(savedBracket.is_published || false);
+          setSeedingMode(savedBracket.seeding_mode || 'random');
+          setSeriesLength(savedBracket.series_length || 1);
+          console.log('Loaded existing bracket data from backend');
+          return; // Don't initialize new bracket if we have saved data
+        }
+      } catch (bracketError) {
+        console.log('No existing bracket data found, will initialize new bracket');
+      }
+
       // Initialize bracket structure based on ALL registered teams
       // This ensures we have enough match boxes for everyone
       if (registeredTeams.length >= 2) {
@@ -370,6 +390,28 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
     setBracketData(bracketStructure);
   };
 
+  // Auto-save bracket data to backend
+  const saveBracketData = async (dataToSave = null) => {
+    try {
+      const saveData = {
+        bracketData: dataToSave || bracketData,
+        lockedSlots: Array.from(lockedSlots),
+        isPublished,
+        seedingMode,
+        seriesLength
+      };
+
+      await axios.post(`${API_BASE_URL}/tournaments/${tournamentId}/bracket`, saveData, {
+        withCredentials: true
+      });
+      
+      console.log('Bracket data auto-saved');
+    } catch (error) {
+      console.error('Error auto-saving bracket data:', error);
+      // Don't show error toast for auto-save failures to avoid spam
+    }
+  };
+
   const getRoundName = (round, totalRounds) => {
     if (round === totalRounds) return 'Final';
     if (round === totalRounds - 1) return 'Semi-Final';
@@ -576,6 +618,11 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       
       return newData;
     });
+
+    // Auto-save after team assignment
+    setTimeout(() => {
+      saveBracketData();
+    }, 500); // Debounce saves
   };
 
   const toggleLockSlot = (matchId, position) => {
@@ -593,6 +640,11 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       }
       return newLocked;
     });
+
+    // Auto-save after lock change
+    setTimeout(() => {
+      saveBracketData();
+    }, 500);
   };
 
   const addMatch = (bracketType, roundIndex) => {
@@ -1080,6 +1132,11 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       } else {
         toast.info('Generated new bracket layout');
       }
+
+      // Auto-save after generating bracket
+      setTimeout(() => {
+        saveBracketData(newBracketData);
+      }, 500);
       
     } catch (error) {
       console.error('Error generating bracket:', error);
@@ -1132,7 +1189,10 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
     setIsPublished(true);
     toast.success('Bracket published! All teams are now locked.');
     
-    // TODO: Save published state to backend
+    // Auto-save published state
+    setTimeout(() => {
+      saveBracketData();
+    }, 500);
   };
 
   const unpublishBracket = () => {
@@ -1143,6 +1203,11 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
 
     setIsPublished(false);
     toast.info('Bracket unpublished. You can now edit team placements.');
+    
+    // Auto-save unpublished state
+    setTimeout(() => {
+      saveBracketData();
+    }, 500);
   };
 
   if (loading) {

@@ -22,6 +22,7 @@ const adminToolsRoutes = require('./routes/admin-tools');
 const invitationRoutes = require('./routes/invitations');
 const tournamentRegistrationRoutes = require('./routes/tournament-registration');
 const profileRoutes = require('./routes/profile');
+const bracketRoutes = require('./routes/brackets');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -135,6 +136,7 @@ app.use('/api', tournamentRegistrationRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin-tools', adminToolsRoutes);
+app.use('/api', bracketRoutes);
 
 // Socket.IO for real-time features (draft system, notifications)
 io.on('connection', (socket) => {

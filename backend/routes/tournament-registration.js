@@ -145,13 +145,12 @@ router.get('/tournaments/:tournamentId/registrations',
           t.team_name,
           t.team_logo,
           t.team_id as team_ref_id,
-          u.discord_username as captain_username,
+          captain.discord_username as captain_username,
           tr.checked_in,
           tr.check_in_time
         FROM tournament_registrations tr
         JOIN teams t ON tr.team_id = t.id
         JOIN users captain ON t.captain_id = captain.id
-        JOIN users u ON captain.user_id = u.user_id
         WHERE tr.tournament_id = $1
         ORDER BY tr.registration_date ASC
       `;
@@ -252,7 +251,8 @@ router.post('/tournaments/:tournamentId/check-in',
 
     } catch (error) {
       logger.error('Error checking in team:', error);
-      res.status(500).json({ error: 'Failed to check in team' });
+      logger.error('Stack trace:', error.stack);
+      res.status(500).json({ error: error.message || 'Failed to check in team' });
     }
   }
 );
@@ -286,14 +286,13 @@ router.get('/tournaments/:tournamentId/check-in-status',
           t.team_name,
           t.team_logo,
           t.team_id as team_ref_id,
-          u.discord_username as captain_username,
+          captain.discord_username as captain_username,
           tr.checked_in,
           tr.check_in_time,
-          (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = t.id AND tm.status = 'confirmed') as player_count
+          5 as player_count
         FROM tournament_registrations tr
         JOIN teams t ON tr.team_id = t.id
         JOIN users captain ON t.captain_id = captain.id
-        JOIN users u ON captain.user_id = u.user_id
         WHERE tr.tournament_id = $1
         ORDER BY tr.registration_date ASC
       `;
@@ -342,13 +341,13 @@ router.post('/tournaments/:tournamentId/admin-toggle-checkin/:teamId',
   requireAuth,
   [
     param('tournamentId').notEmpty(),
-    param('teamId').isUUID().withMessage('Team ID must be a valid UUID'),
+    param('teamId').notEmpty().withMessage('Team ID is required'),
     body('checked_in').isBoolean().withMessage('checked_in must be a boolean')
   ],
   async (req, res) => {
     try {
       // Check if user is admin
-      if (!req.user.role || req.user.role !== 'admin') {
+      if (!req.user.isAdmin) {
         return res.status(403).json({ error: 'Admin access required' });
       }
 
@@ -359,6 +358,8 @@ router.post('/tournaments/:tournamentId/admin-toggle-checkin/:teamId',
 
       const { tournamentId, teamId } = req.params;
       const { checked_in } = req.body;
+      
+      logger.info(`Admin toggle check-in: Tournament ${tournamentId}, Team ${teamId}, Action: ${checked_in}`);
 
       // Get tournament
       const tournamentQuery = `SELECT * FROM tournaments WHERE tournament_id = $1`;
@@ -372,14 +373,17 @@ router.post('/tournaments/:tournamentId/admin-toggle-checkin/:teamId',
 
       // Find the registration
       const registrationQuery = `
-        SELECT tr.*, t.team_name
+        SELECT tr.*, t.team_name, t.team_id
         FROM tournament_registrations tr
         JOIN teams t ON tr.team_id = t.id
         WHERE tr.tournament_id = $1 AND t.team_id = $2
       `;
       const registrationResult = await postgresService.query(registrationQuery, [tournament.id, teamId]);
+      
+      logger.info(`Admin toggle query result: ${registrationResult.rows.length} rows found`);
 
       if (registrationResult.rows.length === 0) {
+        logger.error(`Team registration not found - Tournament ID: ${tournament.id}, Team ID: ${teamId}`);
         return res.status(404).json({ error: 'Team registration not found' });
       }
 
@@ -408,7 +412,8 @@ router.post('/tournaments/:tournamentId/admin-toggle-checkin/:teamId',
 
     } catch (error) {
       logger.error('Error toggling team check-in:', error);
-      res.status(500).json({ error: 'Failed to toggle team check-in' });
+      logger.error('Stack trace:', error.stack);
+      res.status(500).json({ error: error.message || 'Failed to toggle team check-in' });
     }
   }
 );

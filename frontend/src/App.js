@@ -15,6 +15,9 @@ import Feedback from './pages/Feedback';
 import Admin from './pages/Admin';
 import AdminDashboard from './pages/AdminDashboard';
 
+// Draft Components
+import DraftContainer from './components/Draft/DraftContainer';
+
 // Auth Components
 import DiscordLogin from './components/Auth/DiscordLogin';
 
@@ -52,6 +55,14 @@ function App() {
                 <AdminDashboard />
               </ProtectedRoute>
             } />
+            
+            {/* Draft Routes */}
+            <Route path="/draft/:draftId" element={
+              <ProtectedRoute>
+                <DraftContainer />
+              </ProtectedRoute>
+            } />
+            <Route path="/draft/:draftId/spectate" element={<DraftContainer spectatorMode={true} />} />
           </Routes>
         </main>
         <Footer />

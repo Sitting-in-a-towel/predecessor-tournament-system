@@ -214,14 +214,20 @@ class PostgreSQLService {
     }
 
     async getTeamsByUser(userId) {
+        // Get teams where user is captain OR player
         const query = `
-            SELECT t.*, tour.name as tournament_name, tour.tournament_id as tournament_ref_id,
-                   tp.role as player_role
+            SELECT DISTINCT t.*, 
+                   tour.name as tournament_name, 
+                   tour.tournament_id as tournament_ref_id,
+                   CASE 
+                     WHEN t.captain_id = u.id THEN 'captain'
+                     ELSE COALESCE(tp.role, 'captain')
+                   END as player_role,
+                   (SELECT COUNT(*) FROM team_players tp2 WHERE tp2.team_id = t.id AND tp2.accepted = true) + 1 as player_count
             FROM teams t
-            JOIN team_players tp ON t.id = tp.team_id
+            LEFT JOIN team_players tp ON t.id = tp.team_id AND tp.accepted = true
             LEFT JOIN tournaments tour ON t.tournament_id = tour.id
-            JOIN users u ON tp.player_id = u.id
-            WHERE u.user_id = $1 AND tp.accepted = true
+            JOIN users u ON (u.user_id = $1 AND (t.captain_id = u.id OR tp.player_id = u.id))
             ORDER BY t.created_at DESC
         `;
         const result = await this.query(query, [userId]);

@@ -9,22 +9,36 @@ const router = express.Router();
 // Get all draft sessions
 router.get('/', async (req, res) => {
   try {
-    const drafts = await airtableService.getDraftSessions();
-    logger.info(`Retrieved ${drafts.length} draft sessions`);
-    res.json(drafts);
+    const result = await postgresService.query(`
+      SELECT 
+        ds.*,
+        t1.team_id as team1_name,
+        t2.team_id as team2_name,
+        u1.user_id as team1_captain_name,
+        u2.user_id as team2_captain_name
+      FROM draft_sessions ds
+      LEFT JOIN teams t1 ON ds.team1_captain_id = t1.captain_id
+      LEFT JOIN teams t2 ON ds.team2_captain_id = t2.captain_id
+      LEFT JOIN users u1 ON ds.team1_captain_id = u1.id
+      LEFT JOIN users u2 ON ds.team2_captain_id = u2.id
+      ORDER BY ds.created_at DESC
+    `);
+    
+    logger.info(`Retrieved ${result.rows.length} draft sessions`);
+    res.json(result.rows);
   } catch (error) {
     logger.error('Error getting draft sessions:', error);
     res.status(500).json({ error: 'Failed to retrieve draft sessions' });
   }
 });
 
-// Create new draft session for a match
+// Create new draft session for tournament teams
 router.post('/',
   requireAdmin,
   [
-    body('matchId').isLength({ min: 1 }).trim(),
-    body('team1CaptainId').isLength({ min: 1 }).trim(),
-    body('team2CaptainId').isLength({ min: 1 }).trim()
+    body('tournamentId').isUUID(),
+    body('team1Id').isUUID(),
+    body('team2Id').isUUID()
   ],
   async (req, res) => {
     try {
@@ -33,52 +47,78 @@ router.post('/',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { matchId, team1CaptainId, team2CaptainId } = req.body;
+      const { tournamentId, team1Id, team2Id } = req.body;
 
-      // Validate match exists
-      const matches = await airtableService.getMatches();
-      const match = matches.find(m => m.MatchID === matchId);
-      if (!match) {
-        return res.status(404).json({ error: 'Match not found' });
+      // Validate tournament exists
+      const tournamentResult = await postgresService.query(
+        'SELECT * FROM tournaments WHERE id = $1', 
+        [tournamentId]
+      );
+      if (tournamentResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Tournament not found' });
       }
 
-      // Validate captains exist
-      const team1Captain = await airtableService.getUserByID(team1CaptainId);
-      const team2Captain = await airtableService.getUserByID(team2CaptainId);
+      // Validate teams exist and get captain IDs
+      const team1Result = await postgresService.query(
+        'SELECT * FROM teams WHERE id = $1', 
+        [team1Id]
+      );
+      const team2Result = await postgresService.query(
+        'SELECT * FROM teams WHERE id = $1', 
+        [team2Id]
+      );
       
-      if (!team1Captain || !team2Captain) {
-        return res.status(404).json({ error: 'One or both captains not found' });
+      if (team1Result.rows.length === 0 || team2Result.rows.length === 0) {
+        return res.status(404).json({ error: 'One or both teams not found' });
       }
 
-      const draftData = {
-        DraftID: `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        Match: [match.recordId],
-        Team1Captain: [team1Captain.recordId],
-        Team2Captain: [team2Captain.recordId],
-        Status: 'Waiting',
-        CreatedAt: new Date().toISOString(),
-        CreatedBy: req.user.userID,
-        PickOrder: JSON.stringify([]), // Will be set during coin toss
-        BanOrder: JSON.stringify([]),
-        Team1Picks: JSON.stringify([]),
-        Team2Picks: JSON.stringify([]),
-        Team1Bans: JSON.stringify([]),
-        Team2Bans: JSON.stringify([]),
-        CurrentPhase: 'Coin Toss',
-        CurrentTurn: 'team1'
-      };
+      const team1 = team1Result.rows[0];
+      const team2 = team2Result.rows[0];
 
-      const draft = await airtableService.createDraftSession(draftData);
+      // Check if a draft already exists for these teams
+      const existingDraftResult = await postgresService.query(`
+        SELECT * FROM draft_sessions 
+        WHERE (team1_captain_id = $1 AND team2_captain_id = $2) 
+           OR (team1_captain_id = $2 AND team2_captain_id = $1)
+           AND status IN ('active', 'waiting', 'in progress')
+      `, [team1.captain_id, team2.captain_id]);
+
+      if (existingDraftResult.rows.length > 0) {
+        return res.status(400).json({ error: 'Draft already exists for these teams' });
+      }
+
+      // Create draft session using existing schema
+      const draftId = `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const result = await postgresService.query(`
+        INSERT INTO draft_sessions (
+          draft_id, team1_captain_id, team2_captain_id, 
+          status, current_phase, current_turn, created_by
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *
+      `, [
+        draftId,
+        team1.captain_id,
+        team2.captain_id,
+        'Waiting',
+        'Coin Toss',
+        'team1',
+        req.user.userID
+      ]);
+
+      const draft = result.rows[0];
       
       // Generate access links
-      const team1Link = `${process.env.FRONTEND_URL}/draft/${draft.DraftID}?captain=1&token=${generateCaptainToken(draft.DraftID, '1')}`;
-      const team2Link = `${process.env.FRONTEND_URL}/draft/${draft.DraftID}?captain=2&token=${generateCaptainToken(draft.DraftID, '2')}`;
-      const spectatorLink = `${process.env.FRONTEND_URL}/draft/${draft.DraftID}/spectate`;
+      const team1Link = `${process.env.FRONTEND_URL}/draft/${draftId}?captain=1&token=${generateCaptainToken(draftId, '1')}`;
+      const team2Link = `${process.env.FRONTEND_URL}/draft/${draftId}?captain=2&token=${generateCaptainToken(draftId, '2')}`;
+      const spectatorLink = `${process.env.FRONTEND_URL}/draft/${draftId}/spectate`;
 
-      logger.info(`Draft session created: ${draft.DraftID} for match ${matchId}`);
+      logger.info(`Draft session created: ${draftId} for teams ${team1.team_id} vs ${team2.team_id}`);
       
       res.status(201).json({
         ...draft,
+        team1_name: team1.team_id,
+        team2_name: team2.team_id,
         team1Link,
         team2Link,
         spectatorLink
@@ -100,12 +140,34 @@ router.get('/:id',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const drafts = await airtableService.getDraftSessions();
-      const draft = drafts.find(d => d.DraftID === req.params.id);
+      const result = await postgresService.query(`
+        SELECT 
+          ds.*,
+          t1.team_id as team1_name,
+          t2.team_id as team2_name,
+          u1.user_id as team1_captain_name,
+          u2.user_id as team2_captain_name
+        FROM draft_sessions ds
+        LEFT JOIN teams t1 ON ds.team1_captain_id = t1.captain_id
+        LEFT JOIN teams t2 ON ds.team2_captain_id = t2.captain_id
+        LEFT JOIN users u1 ON ds.team1_captain_id = u1.id
+        LEFT JOIN users u2 ON ds.team2_captain_id = u2.id
+        WHERE ds.draft_id = $1
+      `, [req.params.id]);
 
-      if (!draft) {
+      if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Draft session not found' });
       }
+
+      const draft = result.rows[0];
+      
+      // Parse JSON fields if they exist
+      if (draft.team1_picks) draft.team1_picks = JSON.parse(draft.team1_picks);
+      if (draft.team2_picks) draft.team2_picks = JSON.parse(draft.team2_picks);
+      if (draft.team1_bans) draft.team1_bans = JSON.parse(draft.team1_bans);
+      if (draft.team2_bans) draft.team2_bans = JSON.parse(draft.team2_bans);
+      if (draft.pick_order) draft.pick_order = JSON.parse(draft.pick_order);
+      if (draft.ban_order) draft.ban_order = JSON.parse(draft.ban_order);
 
       res.json(draft);
     } catch (error) {
@@ -380,23 +442,32 @@ router.post('/:id/action',
 );
 
 // Get available heroes for draft
-router.get('/:id/heroes',
-  [param('id').isLength({ min: 1 }).trim()],
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+router.get('/heroes', async (req, res) => {
+  try {
+    const result = await postgresService.query(`
+      SELECT id, name, role, image_url
+      FROM heroes 
+      ORDER BY role, name
+    `);
+    
+    // Group heroes by role for easier frontend consumption
+    const herosByRole = result.rows.reduce((acc, hero) => {
+      if (!acc[hero.role]) {
+        acc[hero.role] = [];
       }
-
-      const heroes = await airtableService.getHeroes();
-      res.json(heroes);
-    } catch (error) {
-      logger.error('Error getting heroes:', error);
-      res.status(500).json({ error: 'Failed to retrieve heroes' });
-    }
+      acc[hero.role].push(hero);
+      return acc;
+    }, {});
+    
+    res.json({
+      heroes: result.rows,
+      herosByRole
+    });
+  } catch (error) {
+    logger.error('Error getting heroes:', error);
+    res.status(500).json({ error: 'Failed to retrieve heroes' });
   }
-);
+});
 
 // Admin: Emergency stop/reset draft
 router.post('/:id/emergency-stop',

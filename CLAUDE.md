@@ -12,6 +12,14 @@ This is the Predecessor Tournament Management System - a web-based platform for 
 - Service file: `backend/services/postgresql.js`
 - **Omeda.city Migration**: Auto-runs on server startup (August 1, 2025)
 
+## CRITICAL: ID Format Inconsistencies
+**⚠️ MIXED ID FORMATS CAUSING BUGS ⚠️**
+- Database uses dual ID system: UUID primary keys + string legacy IDs
+- Frontend/backend sometimes mix team.id (UUID) vs team.team_id (string)
+- API validation expects UUIDs but receives strings (causes 400 errors)
+- Tournament registration failing due to team ID format mismatches
+- User authentication mixing user.id vs user.userID inconsistently
+
 ## CRITICAL: Admin Issues Identified
 **⚠️ ADMIN FUNCTIONALITY HAS ISSUES ⚠️**
 - Admin dashboard showing all 0s for statistics in production
@@ -334,6 +342,86 @@ Before deploying to production, always check:
 - [ ] NocoDB has been synced to show all tables
 - [ ] Test data endpoints work with new schema
 
+## ID Format Reference Guide
+
+### **CRITICAL: Understanding the Dual ID System**
+The database uses BOTH UUID primary keys AND legacy string IDs:
+
+**Teams Table Structure:**
+- `id` (UUID): Primary key, used for database relationships
+- `team_id` (string): Legacy identifier like "team_123_abc", used for frontend display
+- `captain_id` (UUID): Foreign key to users.id
+
+**Users Table Structure:**
+- `id` (UUID): Primary key, used for database relationships  
+- `user_id` (string): Legacy identifier like "user_123_abc", used for authentication
+- `discord_id` (string): Discord's user ID
+
+**Tournaments Table Structure:**
+- `id` (UUID): Primary key, used for database relationships
+- `tournament_id` (UUID): Public identifier, used in URLs and API calls
+
+### **ID Usage Patterns:**
+
+**✅ CORRECT Usage:**
+```javascript
+// Database joins - always use UUID
+JOIN teams t ON tr.team_id = t.id  // tr.team_id references teams.id UUID
+JOIN users u ON t.captain_id = u.id  // captain_id references users.id UUID
+
+// API responses - map to display IDs
+team_id: reg.team_ref_id,  // Where team_ref_id = t.team_id (string)
+user_id: user.user_id,     // Use string ID for frontend
+
+// Frontend API calls
+`/api/teams/${team.team_id}`  // Use string team_id for URLs
+`/api/users/${user.user_id}`  // Use string user_id for URLs
+```
+
+**❌ INCORRECT Usage:**
+```javascript
+// Wrong database joins
+JOIN teams t ON tr.team_id = t.team_id  // Mixing UUID with string
+
+// Wrong API validation
+param('teamId').isUUID()  // When receiving string team_id format
+
+// Wrong frontend mapping
+onClick={() => handleClick(team.id)}  // Should use team.team_id
+```
+
+### **Common ID Patterns by Entity:**
+
+**Teams:**
+- Database PK: `teams.id` (UUID)
+- Frontend display: `team.team_id` (string like "team_123_abc")
+- API endpoints: Use string `team_id` in URLs
+- Database relationships: Use UUID `id` for foreign keys
+
+**Users:**
+- Database PK: `users.id` (UUID)  
+- Authentication: `user.user_id` (string like "user_123_abc")
+- API endpoints: Use string `user_id` in URLs
+- Database relationships: Use UUID `id` for foreign keys
+
+**Tournaments:**
+- Database PK: `tournaments.id` (UUID)
+- Frontend display: `tournament.tournament_id` (UUID)
+- API endpoints: Use `tournament_id` (UUID) in URLs
+- Database relationships: Use UUID `id` for foreign keys
+
+### **Validation Patterns:**
+```javascript
+// Team endpoints - expect string format
+param('teamId').notEmpty()  // Not .isUUID()
+
+// Tournament endpoints - expect UUID format  
+param('tournamentId').isUUID()
+
+// User endpoints - expect string format
+param('userId').notEmpty()  // Not .isUUID()
+```
+
 ## Notes for Claude
 - NEVER add Airtable code - migration is complete
 - Always check ALL .env files when debugging
@@ -345,5 +433,6 @@ Before deploying to production, always check:
 - Tournament registration endpoints are functional - test with existing teams
 - **CRITICAL**: Admin functionality has authentication issues - investigate requireAdmin middleware
 - **CRITICAL**: For adding test data, ALWAYS use API endpoints or proper scripts - NEVER manual database entry
+- **CRITICAL**: Always check ID format usage - see ID Format Reference Guide above
 - **DO NOT** claim things are "working perfectly" - always acknowledge issues exist
 - **TROUBLESHOOTING**: When encountering errors, follow the TROUBLESHOOTING_CHECKLIST.md

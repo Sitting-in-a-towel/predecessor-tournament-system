@@ -6,7 +6,7 @@ import TeamSignup from '../components/Team/TeamSignup';
 import TeamManagement from '../components/Team/TeamManagement';
 import { toast } from 'react-toastify';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const Teams = () => {
   const navigate = useNavigate();
@@ -234,7 +234,7 @@ const Teams = () => {
                       <div className="team-stats">
                         <div className="stat-item">
                           <label>Players</label>
-                          <span>1/5</span>
+                          <span>{team.player_count || 1}/5</span>
                         </div>
                         <div className="stat-item">
                           <label>Substitutes</label>
@@ -270,7 +270,7 @@ const Teams = () => {
                           <div 
                             className="progress-fill"
                             style={{ 
-                              width: '20%', // 1/5 players
+                              width: `${((team.player_count || 1) / 5) * 100}%`,
                               backgroundColor: status.color
                             }}
                           />

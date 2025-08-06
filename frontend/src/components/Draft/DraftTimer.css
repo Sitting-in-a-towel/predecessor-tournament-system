@@ -1,0 +1,75 @@
+.draft-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.timer-circle {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.timer-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+
+.timer-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: rotate(-90deg);
+  transition: stroke-dashoffset 1s linear;
+}
+
+.draft-timer.active .timer-text {
+  color: #5865f2;
+}
+
+.draft-timer.active .timer-ring {
+  stroke: #5865f2;
+}
+
+.draft-timer.warning .timer-text {
+  color: #faa61a;
+}
+
+.draft-timer.warning .timer-ring {
+  stroke: #faa61a;
+}
+
+.draft-timer.critical .timer-text {
+  color: #ed4245;
+  animation: blink 0.5s infinite alternate;
+}
+
+.draft-timer.critical .timer-ring {
+  stroke: #ed4245;
+}
+
+.draft-timer.inactive .timer-text {
+  color: #72767d;
+}
+
+@keyframes blink {
+  from { opacity: 1; }
+  to { opacity: 0.5; }
+}
+
+.timer-label {
+  font-size: 0.9rem;
+  color: #b3b3b3;
+  text-align: center;
+}
+
+.draft-timer.critical .timer-label {
+  color: #ed4245;
+  font-weight: bold;
+}
