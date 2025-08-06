@@ -1555,7 +1555,7 @@ const CompactTeamSlot = ({ matchId, position, team, teams, locked, onTeamAssign,
           >
             <option value="">TBD</option>
             <option value="bye">BYE</option>
-            {allRegisteredTeams.map(t => (
+            {teams.map(t => (
               <option key={t.team_id} value={t.team_id}>
                 {t.team_name}
               </option>
