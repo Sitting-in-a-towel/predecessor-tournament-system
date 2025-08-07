@@ -6,25 +6,45 @@ const logger = require('../utils/logger');
 
 const router = express.Router();
 
-// Get all draft sessions
+// Get draft sessions (optionally filtered by tournament)
 router.get('/', async (req, res) => {
   try {
-    const result = await postgresService.query(`
-      SELECT 
+    const { tournamentId } = req.query;
+    
+    let query = `
+      SELECT DISTINCT
         ds.*,
-        t1.team_id as team1_name,
-        t2.team_id as team2_name,
-        u1.user_id as team1_captain_name,
-        u2.user_id as team2_captain_name
+        t1.team_name as team1_name,
+        t2.team_name as team2_name,
+        t1.team_id as team1_id,
+        t2.team_id as team2_id,
+        u1.discord_username as team1_captain_name,
+        u2.discord_username as team2_captain_name
       FROM draft_sessions ds
       LEFT JOIN teams t1 ON ds.team1_captain_id = t1.captain_id
       LEFT JOIN teams t2 ON ds.team2_captain_id = t2.captain_id
       LEFT JOIN users u1 ON ds.team1_captain_id = u1.id
       LEFT JOIN users u2 ON ds.team2_captain_id = u2.id
-      ORDER BY ds.created_at DESC
-    `);
+    `;
     
-    logger.info(`Retrieved ${result.rows.length} draft sessions`);
+    // If tournamentId provided, filter by teams in that tournament
+    if (tournamentId) {
+      query += `
+        WHERE EXISTS (
+          SELECT 1 FROM tournament_registrations tr
+          WHERE tr.tournament_id = $1
+          AND (tr.team_id = t1.id OR tr.team_id = t2.id)
+        )
+      `;
+    }
+    
+    query += ` ORDER BY ds.created_at DESC`;
+    
+    const result = tournamentId 
+      ? await postgresService.query(query, [tournamentId])
+      : await postgresService.query(query);
+    
+    logger.info(`Retrieved ${result.rows.length} draft sessions${tournamentId ? ` for tournament ${tournamentId}` : ''}`);
     res.json(result.rows);
   } catch (error) {
     logger.error('Error getting draft sessions:', error);
@@ -34,7 +54,7 @@ router.get('/', async (req, res) => {
 
 // Create new draft session for tournament teams
 router.post('/',
-  requireAdmin,
+  requireAuth,  // Changed from requireAdmin to allow team captains
   [
     body('tournamentId').isUUID(),
     body('team1Id').isUUID(),
@@ -49,42 +69,67 @@ router.post('/',
 
       const { tournamentId, team1Id, team2Id } = req.body;
 
+      logger.info(`Creating draft - Tournament: ${tournamentId}, Team1: ${team1Id}, Team2: ${team2Id}`);
+
       // Validate tournament exists
       const tournamentResult = await postgresService.query(
         'SELECT * FROM tournaments WHERE id = $1', 
         [tournamentId]
       );
       if (tournamentResult.rows.length === 0) {
+        logger.error(`Tournament not found: ${tournamentId}`);
         return res.status(404).json({ error: 'Tournament not found' });
       }
 
-      // Validate teams exist and get captain IDs
-      const team1Result = await postgresService.query(
-        'SELECT * FROM teams WHERE id = $1', 
-        [team1Id]
-      );
-      const team2Result = await postgresService.query(
-        'SELECT * FROM teams WHERE id = $1', 
-        [team2Id]
-      );
+      // Frontend sends registration IDs, not team IDs - handle dual ID system
+      // Query joins tournament_registrations to get the actual team
+      // tr.team_id is UUID referencing teams.id (not teams.team_id which is string)
+      const team1Result = await postgresService.query(`
+        SELECT t.* FROM teams t
+        INNER JOIN tournament_registrations tr ON t.id = tr.team_id
+        WHERE tr.id = $1
+      `, [team1Id]);
+      
+      const team2Result = await postgresService.query(`
+        SELECT t.* FROM teams t
+        INNER JOIN tournament_registrations tr ON t.id = tr.team_id
+        WHERE tr.id = $1
+      `, [team2Id]);
+      
+      logger.info(`Team1 query result: ${team1Result.rows.length} rows`);
+      logger.info(`Team2 query result: ${team2Result.rows.length} rows`);
       
       if (team1Result.rows.length === 0 || team2Result.rows.length === 0) {
+        logger.error(`Teams not found - Team1: ${team1Id} (${team1Result.rows.length}), Team2: ${team2Id} (${team2Result.rows.length})`);
         return res.status(404).json({ error: 'One or both teams not found' });
       }
 
       const team1 = team1Result.rows[0];
       const team2 = team2Result.rows[0];
+      
+      // Check authorization - must be admin or captain of one of the teams
+      const isUserAdmin = req.user.isAdmin || false;
+      const isTeam1Captain = team1.captain_id === req.user.id;
+      const isTeam2Captain = team2.captain_id === req.user.id;
+      
+      if (!isUserAdmin && !isTeam1Captain && !isTeam2Captain) {
+        return res.status(403).json({ error: 'Only admins or team captains can create drafts' });
+      }
 
-      // Check if a draft already exists for these teams
-      const existingDraftResult = await postgresService.query(`
+      // Check if a draft already exists for these teams (only active drafts)
+      const existingDraft = await postgresService.query(`
         SELECT * FROM draft_sessions 
-        WHERE (team1_captain_id = $1 AND team2_captain_id = $2) 
-           OR (team1_captain_id = $2 AND team2_captain_id = $1)
-           AND status IN ('active', 'waiting', 'in progress')
+        WHERE ((team1_captain_id = $1 AND team2_captain_id = $2) 
+           OR (team1_captain_id = $2 AND team2_captain_id = $1))
+           AND status IN ('Waiting', 'In Progress')
       `, [team1.captain_id, team2.captain_id]);
-
-      if (existingDraftResult.rows.length > 0) {
-        return res.status(400).json({ error: 'Draft already exists for these teams' });
+      
+      if (existingDraft.rows.length > 0) {
+        logger.warn(`Active draft already exists for teams ${team1.team_name} vs ${team2.team_name}`);
+        return res.status(409).json({ 
+          error: 'A draft session already exists for this match',
+          existingDraft: existingDraft.rows[0].draft_id
+        });
       }
 
       // Create draft session using existing schema
@@ -103,7 +148,7 @@ router.post('/',
         'Waiting',
         'Coin Toss',
         'team1',
-        req.user.userID
+        req.user.id || req.user.userID
       ]);
 
       const draft = result.rows[0];
@@ -117,8 +162,8 @@ router.post('/',
       
       res.status(201).json({
         ...draft,
-        team1_name: team1.team_id,
-        team2_name: team2.team_id,
+        team1_name: team1.team_name,
+        team2_name: team2.team_name,
         team1Link,
         team2Link,
         spectatorLink
@@ -512,3 +557,5 @@ function generateCaptainToken(draftId, captainNumber) {
 }
 
 module.exports = router;
+
+

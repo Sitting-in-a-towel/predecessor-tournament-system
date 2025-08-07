@@ -2,7 +2,17 @@ const logger = require('../utils/logger');
 
 // Middleware to check if user is authenticated
 const requireAuth = (req, res, next) => {
-  if (req.isAuthenticated && req.isAuthenticated()) {
+  // Check Passport.js authentication OR test admin session
+  const isPassportAuth = req.isAuthenticated && req.isAuthenticated();
+  const isTestAdminAuth = req.session && req.session.user && req.session.userId;
+  
+  if (isPassportAuth) {
+    return next();
+  }
+  
+  if (isTestAdminAuth) {
+    // Set up req.user for test admin session compatibility
+    req.user = req.session.user;
     return next();
   }
   
@@ -12,9 +22,18 @@ const requireAuth = (req, res, next) => {
 
 // Middleware to check if user is admin
 const requireAdmin = (req, res, next) => {
-  if (!req.isAuthenticated || !req.isAuthenticated()) {
+  // Check Passport.js authentication OR test admin session
+  const isPassportAuth = req.isAuthenticated && req.isAuthenticated();
+  const isTestAdminAuth = req.session && req.session.user && req.session.userId;
+  
+  if (!isPassportAuth && !isTestAdminAuth) {
     logger.warn(`Unauthenticated admin access attempt to ${req.path}`);
     return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  // Set up req.user for test admin session if needed
+  if (isTestAdminAuth && !req.user) {
+    req.user = req.session.user;
   }
   
   if (!req.user || !req.user.isAdmin) {

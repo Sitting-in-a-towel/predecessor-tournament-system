@@ -391,24 +391,41 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
   };
 
   // Auto-save bracket data to backend
-  const saveBracketData = async (dataToSave = null) => {
+  const saveBracketData = async (dataToSave = null, publishedState = null, showErrors = false) => {
     try {
       const saveData = {
         bracketData: dataToSave || bracketData,
         lockedSlots: Array.from(lockedSlots),
-        isPublished,
+        isPublished: publishedState !== null ? publishedState : isPublished,
         seedingMode,
         seriesLength
       };
 
+      console.log('Saving bracket data:', { 
+        isPublished: saveData.isPublished, 
+        tournamentId 
+      });
+      
       await axios.post(`${API_BASE_URL}/tournaments/${tournamentId}/bracket`, saveData, {
         withCredentials: true
       });
       
-      console.log('Bracket data auto-saved');
+      console.log('Bracket data saved successfully');
+      return true;
     } catch (error) {
-      console.error('Error auto-saving bracket data:', error);
-      // Don't show error toast for auto-save failures to avoid spam
+      console.error('Error saving bracket data:', error);
+      
+      if (showErrors) {
+        if (error.response?.status === 401) {
+          toast.error('Authentication required. Please log in again and try publishing.');
+        } else if (error.response?.status === 403) {
+          toast.error('Admin access required to publish brackets.');
+        } else {
+          toast.error('Failed to save bracket data. Please try again.');
+        }
+      }
+      
+      return false;
     }
   };
 
@@ -835,6 +852,9 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       const match = findMatchInBracket(newBracketData, scoreData.matchId);
       
       if (match && scoreData.winner) {
+        console.log('Publishing match results:', match);
+        console.log('Match advancement paths:', { winnerTo: match.winnerTo, loserTo: match.loserTo });
+        
         // Get team IDs safely        
         const team1Id = getTeamId(match.team1);
         const team2Id = getTeamId(match.team2);
@@ -861,29 +881,65 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
         });
         
         // Auto-advance teams using existing logic
-        if (match.winnerTo) {
-          const nextMatch = findMatchInBracket(newBracketData, match.winnerTo);
+        // Handle both single elimination (nextMatch) and double elimination (winnerTo) formats
+        const nextMatchId = match.winnerTo || match.nextMatch;
+        const nextMatchPosition = match.nextPosition;
+        
+        if (nextMatchId) {
+          const nextMatch = findMatchInBracket(newBracketData, nextMatchId);
+          console.log('Advancing winner to:', nextMatchId, 'Position:', nextMatchPosition, 'Found match:', nextMatch);
           if (nextMatch) {
-            if (!nextMatch.team1) {
+            if (nextMatchPosition === 'team1') {
               nextMatch.team1 = winnerTeam;
-            } else if (!nextMatch.team2) {
+              console.log('Placed winner in team1 slot as specified');
+            } else if (nextMatchPosition === 'team2') {
               nextMatch.team2 = winnerTeam;
+              console.log('Placed winner in team2 slot as specified');
+            } else {
+              // Fallback for double elimination without position
+              if (!nextMatch.team1) {
+                nextMatch.team1 = winnerTeam;
+                console.log('Placed winner in team1 slot (first available)');
+              } else if (!nextMatch.team2) {
+                nextMatch.team2 = winnerTeam;
+                console.log('Placed winner in team2 slot (second available)');
+              } else {
+                console.log('Next match already full!');
+              }
             }
+          } else {
+            console.log('Could not find next match for winner!');
           }
+        } else {
+          console.log('No advancement path defined for this match');
         }
         
         if (match.loserTo && loserTeam) {
           const loserMatch = findMatchInBracket(newBracketData, match.loserTo);
+          console.log('Advancing loser to:', match.loserTo, 'Found match:', loserMatch);
           if (loserMatch) {
             if (!loserMatch.team1) {
               loserMatch.team1 = loserTeam;
+              console.log('Placed loser in team1 slot');
             } else if (!loserMatch.team2) {
               loserMatch.team2 = loserTeam;
+              console.log('Placed loser in team2 slot');
+            } else {
+              console.log('Loser match already full!');
             }
+          } else {
+            console.log('Could not find loser match!');
           }
+        } else {
+          console.log('No loserTo path defined for this match or no loser team');
         }
         
         setBracketData(newBracketData);
+        
+        // Auto-save bracket data with match results
+        setTimeout(() => {
+          saveBracketData(newBracketData);
+        }, 500);
       }
       
       closeScoreModal();
@@ -1004,16 +1060,17 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
         }
       }
       
-      const unlockedTeams = availableTeams.filter(team => !lockedTeamIds.has(team.team_id));
+      // Don't filter out locked teams - we need all teams available for placement
+      // We'll skip locked positions during assignment, not remove locked teams entirely
       
-      // Sort unlocked teams based on seeding mode
+      // Sort all teams based on seeding mode
       let sortedTeams;
       if (seedingMode === 'manual') {
         // Sort by seed number (teams should have a seed property)
-        sortedTeams = [...unlockedTeams].sort((a, b) => (a.seed || 999) - (b.seed || 999));
+        sortedTeams = [...availableTeams].sort((a, b) => (a.seed || 999) - (b.seed || 999));
       } else {
-        // Random seeding
-        sortedTeams = [...unlockedTeams].sort(() => Math.random() - 0.5);
+        // Random seeding - shuffle all teams
+        sortedTeams = [...availableTeams].sort(() => Math.random() - 0.5);
       }
       
       // Debug logging removed for production
@@ -1066,15 +1123,25 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
             
             // Only assign to unlocked empty slots
             if (!match.team1 && !lockedSlots.has(`${match.id}-team1`) && teamIndex < sortedTeams.length) {
-              match.team1 = sortedTeams[teamIndex];
-              // Team assigned
-              teamIndex++;
+              // Skip teams that are already locked in place elsewhere
+              while (teamIndex < sortedTeams.length && lockedTeamIds.has(sortedTeams[teamIndex].team_id)) {
+                teamIndex++;
+              }
+              if (teamIndex < sortedTeams.length) {
+                match.team1 = sortedTeams[teamIndex];
+                teamIndex++;
+              }
             }
             
             if (!match.team2 && !lockedSlots.has(`${match.id}-team2`) && teamIndex < sortedTeams.length && !match.isBye) {
-              match.team2 = sortedTeams[teamIndex];
-              // Team assigned
-              teamIndex++;
+              // Skip teams that are already locked in place elsewhere
+              while (teamIndex < sortedTeams.length && lockedTeamIds.has(sortedTeams[teamIndex].team_id)) {
+                teamIndex++;
+              }
+              if (teamIndex < sortedTeams.length) {
+                match.team2 = sortedTeams[teamIndex];
+                teamIndex++;
+              }
             }
           }
           
@@ -1117,15 +1184,25 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
             
             // Only assign to unlocked empty slots
             if (!match.team1 && !lockedSlots.has(`${match.id}-team1`) && teamIndex < sortedTeams.length) {
-              match.team1 = sortedTeams[teamIndex];
-              // Team assigned
-              teamIndex++;
+              // Skip teams that are already locked in place elsewhere
+              while (teamIndex < sortedTeams.length && lockedTeamIds.has(sortedTeams[teamIndex].team_id)) {
+                teamIndex++;
+              }
+              if (teamIndex < sortedTeams.length) {
+                match.team1 = sortedTeams[teamIndex];
+                teamIndex++;
+              }
             }
             
             if (!match.team2 && !lockedSlots.has(`${match.id}-team2`) && teamIndex < sortedTeams.length && !match.isBye) {
-              match.team2 = sortedTeams[teamIndex];
-              // Team assigned
-              teamIndex++;
+              // Skip teams that are already locked in place elsewhere
+              while (teamIndex < sortedTeams.length && lockedTeamIds.has(sortedTeams[teamIndex].team_id)) {
+                teamIndex++;
+              }
+              if (teamIndex < sortedTeams.length) {
+                match.team2 = sortedTeams[teamIndex];
+                teamIndex++;
+              }
             }
           }
           
@@ -1205,10 +1282,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
     setIsPublished(true);
     toast.success('Bracket published! All teams are now locked.');
     
-    // Auto-save published state
-    setTimeout(() => {
-      saveBracketData();
-    }, 500);
+    // Auto-save published state immediately with explicit published state
+    saveBracketData(null, true, true);
   };
 
   const unpublishBracket = () => {
@@ -1220,10 +1295,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
     setIsPublished(false);
     toast.info('Bracket unpublished. You can now edit team placements.');
     
-    // Auto-save unpublished state
-    setTimeout(() => {
-      saveBracketData();
-    }, 500);
+    // Auto-save unpublished state immediately with explicit published state
+    saveBracketData(null, false, true);
   };
 
   if (loading) {

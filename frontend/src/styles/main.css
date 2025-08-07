@@ -443,3 +443,111 @@ body {
 .Toastify__progress-bar {
   background: rgba(255, 255, 255, 0.4) !important;
 }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85); /* Less transparent, more solid */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-container {
+  background-color: var(--background-color); /* Dark background instead of white */
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative;
+}
+
+.modal-header {
+  background-color: var(--surface-color); /* Dark header instead of harsh white */
+  color: var(--text-color);
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--primary-color); /* Use primary color for title */
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: color 0.2s;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.modal-close:hover {
+  color: var(--primary-color);
+  background-color: rgba(var(--border-color), 0.3);
+}
+
+.modal-content {
+  padding: 1.5rem;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+/* Ensure all modal text is properly styled */
+.modal-container * {
+  color: var(--text-color);
+}
+
+.modal-container h1,
+.modal-container h2,
+.modal-container h3,
+.modal-container h4,
+.modal-container h5,
+.modal-container h6 {
+  color: var(--primary-color);
+}
+
+.modal-container label {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+/* Responsive modal */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+  
+  .modal-container {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .modal-header,
+  .modal-content {
+    padding: 1rem;
+  }
+}

@@ -11,17 +11,18 @@ import './DraftContainer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-const DraftContainer = () => {
+const DraftContainer = ({ spectatorMode = false }) => {
   const { user } = useAuth();
-  const { matchId } = useParams();
+  const { draftId } = useParams();
   const [socket, setSocket] = useState(null);
   const [draftSession, setDraftSession] = useState(null);
   const [heroes, setHeroes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState('spectator'); // 'team1', 'team2', 'spectator'
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (matchId) {
+    if (draftId) {
       initializeDraft();
     }
 
@@ -30,33 +31,63 @@ const DraftContainer = () => {
         socket.disconnect();
       }
     };
-  }, [matchId]);
+  }, [draftId]);
 
   const initializeDraft = async () => {
     try {
       setLoading(true);
+      setError(null);
+
+      console.log('Initializing draft with ID:', draftId);
 
       // Load heroes data
-      const heroesResponse = await axios.get(`${API_BASE_URL}/draft/heroes`);
-      setHeroes(heroesResponse.data.heroes || []);
-
-      // Load or create draft session
       try {
-        const sessionResponse = await axios.get(`${API_BASE_URL}/draft/sessions/${matchId}`);
-        setDraftSession(sessionResponse.data.draftSession);
-      } catch (error) {
-        if (error.response?.status === 404) {
-          // Draft session doesn't exist, would need to be created by admin/match setup
-          toast.error('Draft session not found. Contact admin to set up the draft.');
-          return;
+        const heroesResponse = await axios.get(`${API_BASE_URL}/draft/heroes`);
+        setHeroes(heroesResponse.data.heroes || []);
+      } catch (heroError) {
+        console.warn('Failed to load heroes:', heroError.message);
+        setHeroes([]); // Continue without heroes for now
+      }
+
+      // Load draft session using the correct endpoint
+      try {
+        console.log('Fetching draft session from:', `${API_BASE_URL}/draft/${draftId}`);
+        const sessionResponse = await axios.get(`${API_BASE_URL}/draft/${draftId}`);
+        const draft = sessionResponse.data;
+        console.log('Loaded draft session:', draft);
+        
+        // Validate draft data structure
+        if (!draft || !draft.draft_id) {
+          throw new Error('Invalid draft session data received');
         }
-        throw error;
+        
+        setDraftSession(draft);
+      } catch (sessionError) {
+        console.error('Error loading draft session:', sessionError);
+        if (sessionError.response?.status === 404) {
+          setError('Draft session not found. This draft may not exist or may have been deleted.');
+        } else if (sessionError.response?.status === 500) {
+          setError('Server error loading draft session. Please try again later.');
+        } else {
+          setError(sessionError.message || 'Failed to load draft session.');
+        }
+        return;
       }
 
       // Determine user's role in the draft
-      if (user) {
-        // This would need to be determined based on user's team membership
-        // For now, set as spectator - this will be improved
+      if (user && !spectatorMode) {
+        // Get URL parameters to check if user is a captain
+        const urlParams = new URLSearchParams(window.location.search);
+        const captainParam = urlParams.get('captain');
+        
+        if (captainParam === '1') {
+          setUserRole('team1');
+        } else if (captainParam === '2') {
+          setUserRole('team2');
+        } else {
+          setUserRole('spectator');
+        }
+      } else {
         setUserRole('spectator');
       }
 
@@ -67,16 +98,22 @@ const DraftContainer = () => {
 
       socketConnection.on('connect', () => {
         console.log('Connected to draft socket');
-        socketConnection.emit('join-draft', matchId);
+        socketConnection.emit('join-draft', draftId);
       });
 
-      socketConnection.on('coin-toss-update', (data) => {
-        console.log('Coin toss update:', data);
+      socketConnection.on('coin-toss-result', (data) => {
+        console.log('Coin toss result:', data);
         loadDraftSession(); // Refresh session data
       });
 
-      socketConnection.on('draft-update', (data) => {
-        console.log('Draft update:', data);
+      socketConnection.on('draft-action', (data) => {
+        console.log('Draft action update:', data);
+        loadDraftSession(); // Refresh session data
+      });
+
+      socketConnection.on('draft-stopped', (data) => {
+        console.log('Draft stopped:', data);
+        toast.warning('Draft has been stopped by an administrator');
         loadDraftSession(); // Refresh session data
       });
 
@@ -84,7 +121,7 @@ const DraftContainer = () => {
 
     } catch (error) {
       console.error('Error initializing draft:', error);
-      toast.error('Failed to initialize draft session');
+      setError(error.response?.data?.error || 'Failed to initialize draft session');
     } finally {
       setLoading(false);
     }
@@ -92,26 +129,27 @@ const DraftContainer = () => {
 
   const loadDraftSession = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/draft/sessions/${matchId}`);
-      setDraftSession(response.data.draftSession);
+      const response = await axios.get(`${API_BASE_URL}/draft/${draftId}`);
+      setDraftSession(response.data);
     } catch (error) {
-      console.error('Error loading draft session:', error);
+      console.error('Error reloading draft session:', error);
     }
   };
 
-  const handleCoinTossChoice = async (choice, teamId) => {
+  const handleCoinTossChoice = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/draft/sessions/${matchId}/coin-toss`, {
-        choice,
-        teamId
-      }, {
+      const response = await axios.post(`${API_BASE_URL}/draft/${draftId}/coin-toss`, {}, {
         withCredentials: true
       });
       
-      toast.success(`Selected ${choice}!`);
+      const { winner, firstPick } = response.data;
+      toast.success(`Coin toss complete! Team ${winner} wins and Team ${firstPick} picks first!`);
+      
+      // Refresh draft session to show new state
+      await loadDraftSession();
     } catch (error) {
-      console.error('Error submitting coin toss choice:', error);
-      toast.error(error.response?.data?.error || 'Failed to submit choice');
+      console.error('Error performing coin toss:', error);
+      toast.error(error.response?.data?.error || 'Failed to perform coin toss');
     }
   };
 
@@ -127,83 +165,107 @@ const DraftContainer = () => {
   if (loading) {
     return (
       <div className="draft-container loading">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading draft session...</p>
+        <div className="loading-content">
+          <div className="loading-spinner">
+            <div className="spinner-ring"></div>
+          </div>
+          <p className="loading-text">Loading draft session...</p>
         </div>
       </div>
     );
   }
 
-  if (!draftSession) {
+  if (error || !draftSession) {
     return (
       <div className="draft-container error">
         <div className="error-message">
-          <h2>Draft Session Not Found</h2>
-          <p>This draft session doesn't exist or hasn't been set up yet.</p>
+          <h2>Draft Session Error</h2>
+          <p>{error || 'This draft session doesn\'t exist or hasn\'t been set up yet.'}</p>
+          <button className="btn btn-primary" onClick={() => window.history.back()}>
+            Go Back
+          </button>
         </div>
       </div>
     );
   }
 
-  // Determine which screen to show based on draft status
+  // Determine which screen to show based on draft status and phase
   const renderDraftScreen = () => {
-    const currentUserRole = determineUserRole();
+    const status = draftSession.status?.toLowerCase() || 'waiting';
+    const phase = draftSession.current_phase?.toLowerCase() || 'coin toss';
+    
+    console.log('Rendering draft screen - Status:', status, 'Phase:', phase, 'UserRole:', userRole);
 
-    switch (draftSession.draft_status) {
-      case 'coin_toss':
-        if (currentUserRole === 'spectator') {
-          return (
-            <SpectatorScreen
-              draftSession={draftSession}
-              heroes={heroes}
-              phase="coin_toss"
-            />
-          );
-        }
-        return (
-          <CoinTossScreen
-            draftSession={draftSession}
-            userRole={currentUserRole}
-            onCoinTossChoice={handleCoinTossChoice}
-          />
-        );
-
-      case 'drafting':
-        if (currentUserRole === 'spectator') {
-          return (
-            <SpectatorScreen
-              draftSession={draftSession}
-              heroes={heroes}
-              phase="drafting"
-            />
-          );
-        }
-        return (
-          <DraftScreen
-            draftSession={draftSession}
-            heroes={heroes}
-            userRole={currentUserRole}
-            matchId={matchId}
-          />
-        );
-
-      case 'completed':
-        return (
-          <SpectatorScreen
-            draftSession={draftSession}
-            heroes={heroes}
-            phase="completed"
-          />
-        );
-
-      default:
-        return (
-          <div className="draft-error">
-            <p>Unknown draft status: {draftSession.draft_status}</p>
+    // Handle coin toss phase
+    if (phase === 'coin toss' && status === 'waiting') {
+      return (
+        <div className="coin-toss-container">
+          <div className="coin-toss-header">
+            <h2>Coin Toss</h2>
+            <p>Determining first pick...</p>
           </div>
-        );
+          <div className="coin-toss-content">
+            <p>Teams: <strong>{draftSession.team1_name}</strong> vs <strong>{draftSession.team2_name}</strong></p>
+            {userRole !== 'spectator' && (
+              <button 
+                className="btn btn-primary coin-toss-btn"
+                onClick={handleCoinTossChoice}
+              >
+                Perform Coin Toss
+              </button>
+            )}
+            {userRole === 'spectator' && (
+              <p className="spectator-message">Waiting for captains to perform coin toss...</p>
+            )}
+          </div>
+        </div>
+      );
     }
+
+    // Handle draft phases
+    if (phase === 'ban phase' || phase === 'pick phase') {
+      return (
+        <div className="draft-active">
+          <div className="draft-header-info">
+            <h2>Draft in Progress</h2>
+            <div className="draft-phase-info">
+              <span className="phase">{draftSession.current_phase}</span>
+              <span className="turn">Turn: {draftSession.current_turn}</span>
+            </div>
+          </div>
+          <p>Draft system is currently under development. Please check back later.</p>
+        </div>
+      );
+    }
+
+    // Handle completed drafts
+    if (status === 'completed') {
+      return (
+        <div className="draft-completed">
+          <h2>Draft Completed</h2>
+          <p>This draft session has been completed.</p>
+        </div>
+      );
+    }
+
+    // Handle stopped drafts
+    if (status === 'stopped') {
+      return (
+        <div className="draft-stopped">
+          <h2>Draft Stopped</h2>
+          <p>This draft session has been stopped by an administrator.</p>
+        </div>
+      );
+    }
+
+    // Default state
+    return (
+      <div className="draft-waiting">
+        <h2>Draft Session Ready</h2>
+        <p>Status: {draftSession.status}</p>
+        <p>Phase: {draftSession.current_phase}</p>
+      </div>
+    );
   };
 
   return (
@@ -215,8 +277,12 @@ const DraftContainer = () => {
           <span className="vs">VS</span>
           <span className="team">{draftSession.team2_name}</span>
         </div>
-        <div className="tournament-info">
-          <span>{draftSession.tournament_name}</span>
+        <div className="draft-meta-info">
+          <span className="status">Status: {draftSession.status}</span>
+          <span className="phase">Phase: {draftSession.current_phase}</span>
+          {userRole !== 'spectator' && (
+            <span className="role">Role: {userRole === 'team1' ? 'Team 1 Captain' : 'Team 2 Captain'}</span>
+          )}
         </div>
       </div>
 

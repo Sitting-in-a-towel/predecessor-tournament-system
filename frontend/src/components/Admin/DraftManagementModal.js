@@ -7,10 +7,22 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
 
 const DraftManagementModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
-  const [drafts, setDrafts] = useState([]);
+  const [allDrafts, setAllDrafts] = useState([]);
+  const [filteredDrafts, setFilteredDrafts] = useState([]);
   const [tournaments, setTournaments] = useState([]);
+  const [teams, setTeams] = useState([]);
   const [matches, setMatches] = useState([]);
   const [showCreateDraft, setShowCreateDraft] = useState(false);
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    tournament: '',
+    status: '',
+    team: '',
+    dateFrom: '',
+    dateTo: '',
+    showFilters: false
+  });
   
   // Create draft form state
   const [selectedTournament, setSelectedTournament] = useState('');
@@ -26,13 +38,18 @@ const DraftManagementModal = ({ isOpen, onClose }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [draftsResponse, tournamentsResponse] = await Promise.all([
+      const [draftsResponse, tournamentsResponse, teamsResponse] = await Promise.all([
         axios.get(`${API_BASE_URL}/draft`, { withCredentials: true }),
-        axios.get(`${API_BASE_URL}/tournaments`, { withCredentials: true })
+        axios.get(`${API_BASE_URL}/tournaments`, { withCredentials: true }),
+        axios.get(`${API_BASE_URL}/teams`, { withCredentials: true })
       ]);
 
-      setDrafts(draftsResponse.data);
+      setAllDrafts(draftsResponse.data);
       setTournaments(tournamentsResponse.data);
+      setTeams(teamsResponse.data);
+      
+      // Initially show no drafts - user must apply filters
+      setFilteredDrafts([]);
     } catch (error) {
       console.error('Error loading draft management data:', error);
       toast.error('Failed to load draft data');
@@ -70,7 +87,7 @@ const DraftManagementModal = ({ isOpen, onClose }) => {
           const allMatches = extractMatchesFromBracket(bracketData);
           
           // Filter out matches that already have drafts or completed results
-          const existingDrafts = drafts.filter(d => 
+          const existingDrafts = allDrafts.filter(d => 
             teamsResponse.data.some(t => t.team_id === d.team1_name || t.team_id === d.team2_name)
           );
           
@@ -144,7 +161,85 @@ const DraftManagementModal = ({ isOpen, onClose }) => {
     if (selectedTournament) {
       loadTournamentMatches(selectedTournament);
     }
-  }, [selectedTournament, drafts]);
+  }, [selectedTournament, allDrafts]);
+
+  // Apply filters to drafts
+  useEffect(() => {
+    applyFilters();
+  }, [filters, allDrafts]);
+
+  const applyFilters = () => {
+    let filtered = allDrafts;
+
+    // Tournament filter
+    if (filters.tournament) {
+      const tournament = tournaments.find(t => t.id === filters.tournament);
+      if (tournament) {
+        // Filter drafts that belong to teams registered in this tournament
+        filtered = filtered.filter(draft => {
+          // This is a simplified check - in practice you'd need tournament registration data
+          return true; // For now, show all drafts when tournament is selected
+        });
+      }
+    }
+
+    // Status filter
+    if (filters.status) {
+      filtered = filtered.filter(draft => 
+        draft.status?.toLowerCase() === filters.status.toLowerCase()
+      );
+    }
+
+    // Team filter
+    if (filters.team) {
+      filtered = filtered.filter(draft => 
+        draft.team1_name?.includes(filters.team) || 
+        draft.team2_name?.includes(filters.team)
+      );
+    }
+
+    // Date range filter
+    if (filters.dateFrom) {
+      const fromDate = new Date(filters.dateFrom);
+      filtered = filtered.filter(draft => 
+        new Date(draft.created_at) >= fromDate
+      );
+    }
+
+    if (filters.dateTo) {
+      const toDate = new Date(filters.dateTo);
+      toDate.setHours(23, 59, 59, 999); // End of day
+      filtered = filtered.filter(draft => 
+        new Date(draft.created_at) <= toDate
+      );
+    }
+
+    // If no filters are applied, show no drafts (admin must explicitly filter)
+    if (!filters.tournament && !filters.status && !filters.team && !filters.dateFrom && !filters.dateTo) {
+      filtered = [];
+    }
+
+    setFilteredDrafts(filtered);
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      tournament: '',
+      status: '',
+      team: '',
+      dateFrom: '',
+      dateTo: '',
+      showFilters: filters.showFilters
+    });
+  };
+
+  const showAllDrafts = () => {
+    setFilteredDrafts(allDrafts);
+  };
 
   const handleCreateDraft = async (e) => {
     e.preventDefault();
@@ -313,10 +408,115 @@ Copy these links and send them to the team captains.
                 </div>
               )}
 
+              {/* Draft Filters */}
+              <div className="draft-filters">
+                <div className="filter-header">
+                  <h3>Draft Sessions</h3>
+                  <div className="filter-controls">
+                    <button 
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => handleFilterChange('showFilters', !filters.showFilters)}
+                    >
+                      {filters.showFilters ? 'Hide' : 'Show'} Filters
+                    </button>
+                    <button 
+                      className="btn btn-outline btn-sm"
+                      onClick={showAllDrafts}
+                    >
+                      Show All ({allDrafts.length})
+                    </button>
+                  </div>
+                </div>
+
+                {filters.showFilters && (
+                  <div className="filters-panel">
+                    <div className="filters-grid">
+                      <div className="filter-group">
+                        <label>Tournament</label>
+                        <select 
+                          value={filters.tournament}
+                          onChange={(e) => handleFilterChange('tournament', e.target.value)}
+                        >
+                          <option value="">All Tournaments</option>
+                          {tournaments.map(tournament => (
+                            <option key={tournament.id} value={tournament.id}>
+                              {tournament.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="filter-group">
+                        <label>Status</label>
+                        <select 
+                          value={filters.status}
+                          onChange={(e) => handleFilterChange('status', e.target.value)}
+                        >
+                          <option value="">All Statuses</option>
+                          <option value="waiting">Waiting</option>
+                          <option value="in progress">In Progress</option>
+                          <option value="completed">Completed</option>
+                          <option value="stopped">Stopped</option>
+                        </select>
+                      </div>
+
+                      <div className="filter-group">
+                        <label>Team Name (contains)</label>
+                        <input 
+                          type="text"
+                          placeholder="Search team name..."
+                          value={filters.team}
+                          onChange={(e) => handleFilterChange('team', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="filter-group">
+                        <label>Date From</label>
+                        <input 
+                          type="date"
+                          value={filters.dateFrom}
+                          onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="filter-group">
+                        <label>Date To</label>
+                        <input 
+                          type="date"
+                          value={filters.dateTo}
+                          onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="filter-actions">
+                        <button 
+                          className="btn btn-outline btn-sm"
+                          onClick={clearFilters}
+                        >
+                          Clear Filters
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="results-summary">
+                  <p>Showing {filteredDrafts.length} of {allDrafts.length} draft sessions</p>
+                  {filteredDrafts.length === 0 && allDrafts.length > 0 && (
+                    <p className="filter-hint">Use the filters above or "Show All" to view draft sessions</p>
+                  )}
+                </div>
+              </div>
+
               <div className="drafts-list">
-                <h3>Existing Draft Sessions</h3>
-                {drafts.length === 0 ? (
-                  <p className="no-data">No draft sessions found</p>
+                {filteredDrafts.length === 0 ? (
+                  <div className="no-data">
+                    {allDrafts.length === 0 ? (
+                      <p>No draft sessions found in the database</p>
+                    ) : (
+                      <p>No drafts match the current filters. Adjust filters or click "Show All" to view drafts.</p>
+                    )}
+                  </div>
                 ) : (
                   <div className="drafts-table">
                     <table>
@@ -332,9 +532,9 @@ Copy these links and send them to the team captains.
                         </tr>
                       </thead>
                       <tbody>
-                        {drafts.map(draft => (
+                        {filteredDrafts.map(draft => (
                           <tr key={draft.id}>
-                            <td>{draft.draft_id}</td>
+                            <td className="draft-id">{draft.draft_id}</td>
                             <td>{draft.team1_name || 'Unknown'}</td>
                             <td>{draft.team2_name || 'Unknown'}</td>
                             <td>
@@ -354,6 +554,16 @@ Copy these links and send them to the team captains.
                                   onClick={() => window.open(`/draft/${draft.draft_id}/spectate`, '_blank')}
                                 >
                                   View
+                                </button>
+                                <button 
+                                  className="btn btn-sm btn-secondary"
+                                  onClick={() => {
+                                    const links = `Draft Links for ${draft.team1_name} vs ${draft.team2_name}:\n\nTeam 1 Captain: ${window.location.origin}/draft/${draft.draft_id}?captain=1\nTeam 2 Captain: ${window.location.origin}/draft/${draft.draft_id}?captain=2\nSpectator: ${window.location.origin}/draft/${draft.draft_id}/spectate`;
+                                    navigator.clipboard.writeText(links);
+                                    toast.info('Draft links copied to clipboard!');
+                                  }}
+                                >
+                                  Copy Links
                                 </button>
                               </div>
                             </td>

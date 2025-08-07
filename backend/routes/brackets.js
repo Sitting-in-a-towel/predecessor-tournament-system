@@ -73,7 +73,10 @@ router.get('/tournaments/:tournamentId/bracket',
 
 // Save bracket data
 router.post('/tournaments/:tournamentId/bracket',
-  requireAuth,
+  (req, res, next) => {
+    logger.info(`Bracket save attempt - Session: ${req.sessionID}, Auth: ${req.isAuthenticated?.()}, User: ${req.user?.discord_username || 'none'}`);
+    requireAuth(req, res, next);
+  },
   [
     param('tournamentId').isUUID(),
     body('bracketData').isObject(),
@@ -97,6 +100,9 @@ router.post('/tournaments/:tournamentId/bracket',
         seedingMode = 'random',
         seriesLength = 1 
       } = req.body;
+
+      // Debug logging
+      logger.info(`Bracket save request - isPublished received: ${isPublished} (type: ${typeof isPublished})`);
 
       // Get tournament info
       const tournamentQuery = `SELECT * FROM tournaments WHERE tournament_id = $1`;

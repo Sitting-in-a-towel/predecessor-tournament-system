@@ -130,8 +130,8 @@
   box-shadow: 0 0 5px rgba(88, 101, 242, 0.3);
 }
 
-/* All Drafts Section */
-.all-drafts-section {
+/* Tournament Drafts Section */
+.tournament-drafts-section {
   background: #2c2f33;
   padding: 25px;
   border-radius: 10px;
@@ -139,10 +139,84 @@
   margin-bottom: 30px;
 }
 
-.all-drafts-section h3 {
+.tournament-drafts-section h3 {
   color: #fff;
   margin-bottom: 20px;
   font-size: 1.5rem;
+}
+
+.drafts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.draft-item {
+  background: #36393f;
+  border: 1px solid #4f545c;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.draft-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #4f545c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.draft-header h4 {
+  color: #fff;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.draft-links {
+  padding: 15px 20px;
+}
+
+.captain-links {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.team-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #2c2f33;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: 1px solid #4f545c;
+  flex: 1;
+  min-width: 200px;
+}
+
+.team-name {
+  color: #fff;
+  font-weight: 500;
+  flex: 1;
+}
+
+.spectator-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.spectator-link span {
+  color: #b3b3b3;
+  min-width: 60px;
+}
+
+.admin-actions {
+  border-top: 1px solid #4f545c;
+  padding-top: 10px;
+  margin-top: 10px;
 }
 
 .no-drafts {
@@ -188,9 +262,20 @@
   align-items: center;
 }
 
-.spectator-link-item span {
+.match-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.match-title {
   color: #fff;
   font-weight: 500;
+}
+
+.status-badge.small {
+  padding: 2px 8px;
+  font-size: 0.7rem;
 }
 
 /* Loading */
@@ -291,5 +376,19 @@
     gap: 10px;
     align-items: stretch;
     text-align: center;
+  }
+  
+  .captain-links {
+    flex-direction: column;
+  }
+  
+  .team-link {
+    min-width: auto;
+  }
+  
+  .draft-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 }

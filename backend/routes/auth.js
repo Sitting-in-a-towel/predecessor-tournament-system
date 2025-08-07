@@ -69,7 +69,12 @@ router.get('/discord/callback', (req, res, next) => {
 
 // Get current user
 router.get('/me', (req, res) => {
-  if (req.isAuthenticated && req.isAuthenticated()) {
+  // Check Passport.js authentication OR test admin session
+  const isPassportAuth = req.isAuthenticated && req.isAuthenticated();
+  const isTestAdminAuth = req.session && req.session.user && req.session.userId;
+  
+  if (isPassportAuth) {
+    // Standard Passport.js authentication
     res.json({
       userID: req.user.userID,
       discordID: req.user.discordID,
@@ -81,6 +86,24 @@ router.get('/me', (req, res) => {
       omeda_player_id: req.user.omeda_player_id,
       omeda_last_sync: req.user.omeda_last_sync,
       omeda_sync_enabled: req.user.omeda_sync_enabled
+    });
+  } else if (isTestAdminAuth) {
+    // Test admin session (for automated testing)
+    const testUser = req.session.user;
+    res.json({
+      userID: testUser.userID,
+      user_id: testUser.user_id,
+      id: testUser.id,
+      discordID: testUser.discord_id,
+      discordUsername: testUser.discord_username,
+      email: testUser.email,
+      isAdmin: testUser.isAdmin,
+      role: testUser.role,
+      createdAt: null,
+      lastActive: null,
+      omeda_player_id: null,
+      omeda_last_sync: null,
+      omeda_sync_enabled: false
     });
   } else {
     res.status(401).json({ error: 'Not authenticated' });

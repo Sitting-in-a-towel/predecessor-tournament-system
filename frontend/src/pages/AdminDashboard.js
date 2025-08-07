@@ -159,6 +159,44 @@ const AdminDashboard = () => {
         </div>
       </div>
 
+      {/* Quick Actions Bar - Moved to top and made compact */}
+      <div className="quick-actions-bar">
+        <div className="actions-compact">
+          <button 
+            className="action-btn tournament"
+            onClick={() => setShowCreateTournament(true)}
+            title="Create Tournament"
+          >
+            <span className="action-icon">🏆</span>
+            <span className="action-text">Create Tournament</span>
+          </button>
+          <button 
+            className="action-btn users"
+            onClick={() => setShowUserManagement(true)}
+            title="Manage Users"
+          >
+            <span className="action-icon">👤</span>
+            <span className="action-text">Manage Users</span>
+          </button>
+          <button 
+            className="action-btn drafts"
+            onClick={() => setShowDraftManagement(true)}
+            title="Manage Drafts"
+          >
+            <span className="action-icon">⚔️</span>
+            <span className="action-text">Manage Drafts</span>
+          </button>
+          <button className="action-btn system" title="System Settings">
+            <span className="action-icon">⚙️</span>
+            <span className="action-text">Settings</span>
+          </button>
+          <button className="action-btn reports" title="Generate Reports">
+            <span className="action-icon">📊</span>
+            <span className="action-text">Reports</span>
+          </button>
+        </div>
+      </div>
+
       {/* Statistics Overview */}
       <div className="stats-grid">
         {/* Tournament Stats */}
@@ -343,41 +381,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="quick-actions">
-        <h2>Quick Actions</h2>
-        <div className="actions-grid">
-          <button 
-            className="action-button tournament"
-            onClick={() => setShowCreateTournament(true)}
-          >
-            <span className="action-icon">🏆</span>
-            <span className="action-label">Create Tournament</span>
-          </button>
-          <button 
-            className="action-button users"
-            onClick={() => setShowUserManagement(true)}
-          >
-            <span className="action-icon">👤</span>
-            <span className="action-label">Manage Users</span>
-          </button>
-          <button 
-            className="action-button drafts"
-            onClick={() => setShowDraftManagement(true)}
-          >
-            <span className="action-icon">⚔️</span>
-            <span className="action-label">Manage Drafts</span>
-          </button>
-          <button className="action-button system">
-            <span className="action-icon">⚙️</span>
-            <span className="action-label">System Settings</span>
-          </button>
-          <button className="action-button reports">
-            <span className="action-icon">📊</span>
-            <span className="action-label">Generate Reports</span>
-          </button>
-        </div>
-      </div>
 
       {/* Modals */}
       <CreateTournamentModal
