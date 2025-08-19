@@ -33,26 +33,46 @@ async function runProductionMigration() {
     client.release();
     console.log('✅ Database connection successful');
     
-    // Check if migration is needed
-    console.log('🔍 Checking if draft tables exist...');
+    // Check what tables are missing
+    console.log('🔍 Checking for missing tables...');
     const tableCheck = await pool.query(`
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_schema = 'public' 
-      AND table_name = 'draft_sessions'
+      AND table_name IN ('draft_sessions', 'tournament_brackets')
+      ORDER BY table_name
     `);
     
-    if (tableCheck.rows.length > 0) {
-      console.log('✅ Draft tables already exist, skipping migration');
+    const existingTables = tableCheck.rows.map(row => row.table_name);
+    const needsDraftTables = !existingTables.includes('draft_sessions');
+    const needsBracketTable = !existingTables.includes('tournament_brackets');
+    
+    if (!needsDraftTables && !needsBracketTable) {
+      console.log('✅ All required tables exist, skipping migration');
       return;
     }
     
-    console.log('📖 Reading migration file...');
-    const migrationPath = path.join(__dirname, 'migrations', 'create_draft_system_tables.sql');
-    const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
+    // Run draft system migration if needed
+    if (needsDraftTables) {
+      console.log('📖 Reading draft system migration file...');
+      const draftMigrationPath = path.join(__dirname, 'migrations', 'create_draft_system_tables.sql');
+      const draftMigrationSQL = fs.readFileSync(draftMigrationPath, 'utf8');
+      
+      console.log('🔄 Running draft system migration...');
+      await pool.query(draftMigrationSQL);
+      console.log('✅ Draft system tables created');
+    }
     
-    console.log('🔄 Running draft system migration...');
-    await pool.query(migrationSQL);
+    // Run tournament brackets migration if needed
+    if (needsBracketTable) {
+      console.log('📖 Reading tournament brackets migration file...');
+      const bracketMigrationPath = path.join(__dirname, 'migrations', 'create_tournament_brackets_table.sql');
+      const bracketMigrationSQL = fs.readFileSync(bracketMigrationPath, 'utf8');
+      
+      console.log('🔄 Running tournament brackets migration...');
+      await pool.query(bracketMigrationSQL);
+      console.log('✅ Tournament brackets table created');
+    }
     
     console.log('✅ Migration completed successfully!');
     
@@ -61,7 +81,7 @@ async function runProductionMigration() {
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_schema = 'public' 
-      AND table_name IN ('draft_sessions', 'draft_participants', 'draft_actions', 'draft_timer_events')
+      AND table_name IN ('draft_sessions', 'draft_participants', 'draft_actions', 'draft_timer_events', 'tournament_brackets')
       ORDER BY table_name
     `);
     
