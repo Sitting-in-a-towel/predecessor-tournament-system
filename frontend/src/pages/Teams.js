@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import TeamSignup from '../components/Team/TeamSignup';
 import TeamManagement from '../components/Team/TeamManagement';
+import LoadingSpinner from '../components/Common/LoadingSpinner';
 import { toast } from 'react-toastify';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -205,9 +206,7 @@ const Teams = () => {
             <h2>My Teams</h2>
             
             {loading ? (
-              <div className="loading-container">
-                <div className="loading-spinner">Loading teams...</div>
-              </div>
+              <LoadingSpinner message="Loading teams..." />
             ) : teams.length > 0 ? (
               <div className="teams-grid">
                 {teams.map(team => {

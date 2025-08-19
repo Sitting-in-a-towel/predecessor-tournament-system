@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import LoadingSpinner from '../Common/LoadingSpinner';
 import './DraftManagementModal.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -28,6 +29,15 @@ const DraftManagementModal = ({ isOpen, onClose }) => {
   const [selectedTournament, setSelectedTournament] = useState('');
   const [selectedMatch, setSelectedMatch] = useState('');
   const [tournamentTeams, setTournamentTeams] = useState([]);
+  
+  // Draft configuration state
+  const [draftConfig, setDraftConfig] = useState({
+    banCount: 4,
+    draftStrategy: 'restricted',
+    timerEnabled: true,
+    bonusTime: 10,
+    timerStrategy: '20s per pick'
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -271,13 +281,28 @@ const DraftManagementModal = ({ isOpen, onClose }) => {
       const response = await axios.post(`${API_BASE_URL}/draft`, {
         tournamentId: selectedTournament,
         team1Id: team1.id,
-        team2Id: team2.id
+        team2Id: team2.id,
+        ban_count: draftConfig.banCount,
+        draft_strategy: draftConfig.draftStrategy,
+        timer_enabled: draftConfig.timerEnabled,
+        bonus_time: draftConfig.bonusTime,
+        timer_strategy: draftConfig.timerStrategy
       }, { withCredentials: true });
 
       toast.success('Draft session created successfully!');
       setShowCreateDraft(false);
       setSelectedTournament('');
       setSelectedMatch('');
+      
+      // Reset draft configuration
+      setDraftConfig({
+        banCount: 4,
+        draftStrategy: 'restricted',
+        timerEnabled: true,
+        bonusTime: 10,
+        timerStrategy: '20s per pick'
+      });
+      
       loadData(); // Refresh the list
       
       // Show the draft links
@@ -331,13 +356,27 @@ Copy these links and send them to the team captains.
 
         <div className="modal-content">
           {loading ? (
-            <div className="loading-spinner">Loading...</div>
+            <LoadingSpinner message="Loading..." />
           ) : (
             <>
               <div className="draft-actions">
                 <button 
                   className="btn btn-primary"
-                  onClick={() => setShowCreateDraft(!showCreateDraft)}
+                  onClick={() => {
+                    if (showCreateDraft) {
+                      // Reset form when cancelling
+                      setSelectedTournament('');
+                      setSelectedMatch('');
+                      setDraftConfig({
+                        banCount: 4,
+                        draftStrategy: 'restricted',
+                        timerEnabled: true,
+                        bonusTime: 10,
+                        timerStrategy: '20s per pick'
+                      });
+                    }
+                    setShowCreateDraft(!showCreateDraft);
+                  }}
                 >
                   {showCreateDraft ? 'Cancel' : 'Create New Draft'}
                 </button>
@@ -393,6 +432,76 @@ Copy these links and send them to the team captains.
                           No matches available. Make sure the bracket is published and has matches without scores.
                         </small>
                       )}
+                    </div>
+
+                    {/* Draft Configuration Section */}
+                    <div className="draft-config-section">
+                      <h4>Draft Configuration</h4>
+                      
+                      <div className="config-grid">
+                        <div className="form-group">
+                          <label>Number of Bans</label>
+                          <select 
+                            value={draftConfig.banCount}
+                            onChange={(e) => setDraftConfig(prev => ({ ...prev, banCount: parseInt(e.target.value) }))}
+                          >
+                            <option value={2}>2</option>
+                            <option value={3}>3</option>
+                            <option value={4}>4</option>
+                          </select>
+                        </div>
+
+                        <div className="form-group">
+                          <label>Draft Strategy</label>
+                          <select 
+                            value={draftConfig.draftStrategy}
+                            onChange={(e) => setDraftConfig(prev => ({ ...prev, draftStrategy: e.target.value }))}
+                          >
+                            <option value="free pick">Free Pick</option>
+                            <option value="restricted">Restricted (No Mirror Picks)</option>
+                          </select>
+                        </div>
+
+                        <div className="form-group">
+                          <label className="checkbox-label">
+                            <input 
+                              type="checkbox"
+                              checked={draftConfig.timerEnabled}
+                              onChange={(e) => setDraftConfig(prev => ({ ...prev, timerEnabled: e.target.checked }))}
+                            />
+                            Enable Timer
+                          </label>
+                        </div>
+
+                        {draftConfig.timerEnabled && (
+                          <>
+                            <div className="form-group">
+                              <label>Bonus Time</label>
+                              <select 
+                                value={draftConfig.bonusTime}
+                                onChange={(e) => setDraftConfig(prev => ({ ...prev, bonusTime: e.target.value === 'disabled' ? 'disabled' : parseInt(e.target.value) }))}
+                              >
+                                <option value="disabled">Disabled</option>
+                                <option value={10}>10 seconds</option>
+                                <option value={15}>15 seconds</option>
+                                <option value={20}>20 seconds</option>
+                                <option value={25}>25 seconds</option>
+                                <option value={30}>30 seconds</option>
+                              </select>
+                            </div>
+
+                            <div className="form-group">
+                              <label>Timer Strategy</label>
+                              <select 
+                                value={draftConfig.timerStrategy}
+                                onChange={(e) => setDraftConfig(prev => ({ ...prev, timerStrategy: e.target.value }))}
+                              >
+                                <option value="20s per pick">20s per pick</option>
+                              </select>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     <div className="form-actions">

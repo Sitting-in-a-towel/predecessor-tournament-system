@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import CreateTournamentModal from '../components/Admin/CreateTournamentModal';
 import UserManagementModal from '../components/Admin/UserManagementModal';
 import DraftManagementModal from '../components/Admin/DraftManagementModal';
+import LoadingSpinner from '../components/Common/LoadingSpinner';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -135,9 +136,7 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="admin-dashboard">
-        <div className="loading-container">
-          <div className="loading-spinner">Loading dashboard...</div>
-        </div>
+        <LoadingSpinner message="Loading dashboard..." />
       </div>
     );
   }

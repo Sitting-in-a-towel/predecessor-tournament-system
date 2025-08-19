@@ -151,7 +151,7 @@ const CoinTossScreen = ({ draftSession, userRole, onCoinTossChoice }) => {
 
         <div className="draft-starting">
           <p>Draft phase starting...</p>
-          <div className="loading-spinner"></div>
+          <div className="coin-toss-spinner"></div>
         </div>
       </div>
     );

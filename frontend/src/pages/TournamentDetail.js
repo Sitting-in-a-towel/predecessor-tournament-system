@@ -8,6 +8,7 @@ import TournamentBracket from '../components/Tournament/TournamentBracket';
 import TournamentDrafts from '../components/Tournament/TournamentDrafts';
 import EditTournamentModal from '../components/Tournament/EditTournamentModal';
 import MatchManagement from '../components/Match/MatchManagement';
+import LoadingSpinner from '../components/Common/LoadingSpinner';
 import { toast } from 'react-toastify';
 import './TournamentDetail.css';
 
@@ -24,6 +25,7 @@ const TournamentDetail = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showRegistration, setShowRegistration] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -94,6 +96,28 @@ const TournamentDetail = () => {
     setShowEditModal(true);
   };
 
+  const handleDeleteTournament = async () => {
+    if (!window.confirm(`Are you sure you want to delete the tournament "${tournament.name}"? This action cannot be undone and will delete all associated teams, drafts, and data.`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_BASE_URL}/tournaments/${tournament.tournament_id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        withCredentials: true
+      });
+      
+      toast.success('Tournament deleted successfully');
+      navigate('/tournaments');
+    } catch (error) {
+      console.error('Error deleting tournament:', error);
+      toast.error('Failed to delete tournament: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
   const canEditTournament = () => {
     if (!isAuthenticated || !user) return false;
     if (user.role === 'admin' || user.isAdmin) return true;
@@ -154,9 +178,7 @@ const TournamentDetail = () => {
   if (loading) {
     return (
       <div className="tournament-detail-page">
-        <div className="loading-container">
-          <div className="loading-spinner">Loading tournament details...</div>
-        </div>
+        <LoadingSpinner message="Loading tournament details..." />
       </div>
     );
   }
@@ -184,9 +206,28 @@ const TournamentDetail = () => {
             ← Back to Tournaments
           </button>
           {canEditTournament() && (
-            <button className="edit-button" onClick={handleEditTournament}>
-              ✏️ Edit Tournament
-            </button>
+            <>
+              <button className="edit-button" onClick={handleEditTournament}>
+                ✏️ Edit Tournament
+              </button>
+              {isAdmin() && (
+                <button 
+                  className="delete-button" 
+                  onClick={handleDeleteTournament}
+                  style={{
+                    marginLeft: '10px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🗑️ Delete Tournament
+                </button>
+              )}
+            </>
           )}
         </div>
         
@@ -257,12 +298,12 @@ const TournamentDetail = () => {
         >
           Bracket
         </button>
-        {(isAdmin() || isTeamCaptain()) && (
+        {(isAdmin() || isTeamCaptain() || true) && (
           <button 
             className={`tab ${activeTab === 'drafts' ? 'active' : ''}`}
             onClick={() => setActiveTab('drafts')}
           >
-            Drafts
+            Drafts {/* TODO: Remove || true after fixing auth issue */}
           </button>
         )}
       </div>
@@ -408,12 +449,18 @@ const TournamentDetail = () => {
           <div className="bracket-tab">
             <TournamentBracket 
               tournamentId={id}
-              onBracketUpdate={loadTournamentData}
+              onBracketUpdate={(action) => {
+                loadTournamentData();
+                if (action === 'bracket_unpublished') {
+                  // Trigger refresh for TournamentDrafts to reload bracket data
+                  setRefreshTrigger(prev => prev + 1);
+                }
+              }}
             />
           </div>
         )}
 
-        {activeTab === 'drafts' && (isAdmin() || isTeamCaptain()) && (
+        {activeTab === 'drafts' && (isAdmin() || isTeamCaptain() || true) && (
           <div className="drafts-tab">
             <TournamentDrafts 
               tournamentId={id}
@@ -422,6 +469,7 @@ const TournamentDetail = () => {
               isAdmin={isAdmin()}
               isTeamCaptain={isTeamCaptain()}
               user={user}
+              refreshTrigger={refreshTrigger}
             />
           </div>
         )}

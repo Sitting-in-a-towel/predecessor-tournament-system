@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import TournamentCreation from '../components/Tournament/TournamentCreation';
+import LoadingSpinner from '../components/Common/LoadingSpinner';
 import { toast } from 'react-toastify';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -172,9 +173,7 @@ const Tournaments = () => {
 
         {/* Tournament Grid */}
         {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner">Loading tournaments...</div>
-          </div>
+          <LoadingSpinner message="Loading tournaments..." />
         ) : tournaments.length > 0 ? (
           <div className="tournaments-grid">
             {tournaments.map(tournament => (

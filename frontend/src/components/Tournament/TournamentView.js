@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { airtableService } from '../../services/airtableService';
+import LoadingSpinner from '../Common/LoadingSpinner';
 import { toast } from 'react-toastify';
 
 const TournamentView = () => {
@@ -95,7 +96,7 @@ const TournamentView = () => {
   if (loading) {
     return (
       <div className="tournament-view loading">
-        <div className="loading-spinner">Loading tournament...</div>
+        <LoadingSpinner message="Loading tournament..." />
       </div>
     );
   }
