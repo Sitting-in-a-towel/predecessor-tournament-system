@@ -1,0 +1,634 @@
+<style>
+  /* Spectator Interface Styles - FULL WIDTH LAYOUT */
+  .spectate-main-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #2c2f33;
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* Top Header Bar */
+  .spectate-header {
+    height: 80px;
+    background: #1a1d21;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0;
+    position: relative;
+    border-bottom: 2px solid #374151;
+  }
+  
+  /* Team Headers */
+  .team-header-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+  
+  .team-name-box {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 30px;
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    min-width: 300px;
+  }
+  
+  .team1-name {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  }
+  
+  .team2-name {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+  
+  /* Timer Display */
+  .timer-box {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #374151;
+    border-radius: 8px;
+    padding: 10px 20px;
+    margin: 0 15px;
+    min-width: 150px;
+  }
+  
+  .timer-label {
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  
+  .timer-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fbbf24;
+    font-family: 'Courier New', monospace;
+  }
+  
+  .timer-value.active {
+    color: #10b981;
+    animation: pulse 1s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  
+  .bonus-time {
+    font-size: 14px;
+    color: #60a5fa;
+    margin-top: 4px;
+  }
+  
+  /* Central Status - Moved Higher */
+  .draft-status-box {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #fbbf24;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 8px 40px 12px;
+    z-index: 100;
+    min-width: 300px;
+    text-align: center;
+  }
+  
+  .status-phase {
+    font-size: 12px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  
+  .status-turn {
+    font-size: 20px;
+    font-weight: bold;
+    color: #fbbf24;
+  }
+  
+  /* Main Draft Area - Full Width */
+  .spectate-draft-area {
+    flex: 1;
+    display: flex;
+    width: 100%;
+    padding: 20px 0;
+    position: relative;
+  }
+  
+  /* Team Panels */
+  .team-panel {
+    width: 200px;
+    background: #2f3136;
+    padding: 20px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .team-panel-left {
+    border-right: 2px solid #374151;
+  }
+  
+  .team-panel-right {
+    border-left: 2px solid #374151;
+  }
+  
+  /* Hero Slots */
+  .hero-slot {
+    height: 100px;
+    background: #1e2124;
+    border: 3px solid #4a4a4a;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  
+  .hero-slot.filled {
+    background: linear-gradient(135deg, #1e5c1e 0%, #2d7a2d 100%);
+    border-color: #10b981;
+  }
+  
+  .hero-slot.active {
+    border-color: #fbbf24;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+    animation: pulse-border 1.5s infinite;
+  }
+  
+  @keyframes pulse-border {
+    0%, 100% { 
+      border-color: #fbbf24; 
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+    }
+    50% { 
+      border-color: #f59e0b; 
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.7);
+    }
+  }
+  
+  .slot-number {
+    position: absolute;
+    top: 5px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #9ca3af;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  
+  .hero-portrait-small {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 12px;
+  }
+  
+  .hero-info {
+    flex: 1;
+  }
+  
+  .hero-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 4px;
+  }
+  
+  .hero-role {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+  
+  .empty-slot-text {
+    color: #6b7280;
+    font-size: 14px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  /* Center Hero Grid Area */
+  .center-area {
+    flex: 1;
+    padding: 0 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  
+  /* Large Hero Display for Current Pick */
+  .current-pick-display {
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid #374151;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 600px;
+    width: 100%;
+  }
+  
+  .current-pick-title {
+    font-size: 18px;
+    color: #9ca3af;
+    text-align: center;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .recent-picks {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+  }
+  
+  .recent-pick-card {
+    background: #2f3136;
+    border: 2px solid #374151;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  .recent-pick-card.team1 {
+    border-color: #2563eb;
+  }
+  
+  .recent-pick-card.team2 {
+    border-color: #f59e0b;
+  }
+  
+  .recent-hero-portrait {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .recent-hero-name {
+    font-size: 12px;
+    color: white;
+    font-weight: bold;
+  }
+  
+  /* Bans Section - Bottom */
+  .bans-section {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 1000px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #374151;
+    border-radius: 8px;
+    padding: 15px;
+  }
+  
+  .bans-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .team-bans {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .ban-slot {
+    width: 70px;
+    height: 90px;
+    background: #2f3136;
+    border: 2px solid #dc2626;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .ban-slot.filled {
+    background: linear-gradient(135deg, #5c1e1e 0%, #7f2929 100%);
+  }
+  
+  .ban-portrait {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    opacity: 0.6;
+  }
+  
+  .ban-x {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40px;
+    color: #dc2626;
+    font-weight: bold;
+    opacity: 0.9;
+    pointer-events: none;
+  }
+  
+  .ban-name {
+    font-size: 10px;
+    color: #ef4444;
+    margin-top: 4px;
+    text-align: center;
+  }
+  
+  .bans-label {
+    font-size: 14px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 0 30px;
+    font-weight: bold;
+  }
+  
+  /* Complete State */
+  .draft-complete-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: 3px solid #10b981;
+    border-radius: 12px;
+    padding: 30px 60px;
+    z-index: 1000;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  }
+  
+  .complete-text {
+    font-size: 42px;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+</style>
+
+<div class="spectate-main-container">
+  <%= if @error do %>
+    <%# Error State %>
+    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #1a1d21;">
+      <div style="background: #dc2626; color: white; padding: 30px; border-radius: 12px; max-width: 500px;">
+        <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">Error</h2>
+        <p style="font-size: 16px;"><%= @error %></p>
+      </div>
+    </div>
+  <% else %>
+    <%# Header Bar with Team Names and Timers %>
+    <div class="spectate-header">
+      <%# Team 1 Section %>
+      <div class="team-header-section">
+        <div class="team-name-box team1-name">
+          <%= @team1.team_name %>
+        </div>
+        <%= if @timer_state.timer_enabled do %>
+          <div class="timer-box">
+            <div class="timer-label">
+              <%= if @timer_state.team1_in_bonus do %>🔥 BONUS TIMER<% else %>Main Timer<% end %>
+            </div>
+            <div class={["timer-value", if(@timer_state.current_team == "team1", do: "active", else: "")]}>
+              <%= if @timer_state.current_team == "team1" do %>
+                <%= if @timer_state.current_phase == :bonus_timer do %>
+                  <%= @timer_remaining || @timer_state.team1_bonus_remaining %>s
+                <% else %>
+                  <%= @timer_remaining || @timer_state.team1_main_timer %>s
+                <% end %>
+              <% else %>
+                <%= @timer_state.team1_main_timer %>s
+              <% end %>
+            </div>
+            <div class="bonus-time">
+              Bonus: <%= @timer_state.team1_bonus_remaining %>s
+            </div>
+          </div>
+        <% end %>
+      </div>
+      
+      <%# Team 2 Section %>
+      <div class="team-header-section" style="justify-content: flex-end;">
+        <%= if @timer_state.timer_enabled do %>
+          <div class="timer-box">
+            <div class="timer-label">
+              <%= if @timer_state.team2_in_bonus do %>🔥 BONUS TIMER<% else %>Main Timer<% end %>
+            </div>
+            <div class={["timer-value", if(@timer_state.current_team == "team2", do: "active", else: "")]}>
+              <%= if @timer_state.current_team == "team2" do %>
+                <%= if @timer_state.current_phase == :bonus_timer do %>
+                  <%= @timer_remaining || @timer_state.team2_bonus_remaining %>s
+                <% else %>
+                  <%= @timer_remaining || @timer_state.team2_main_timer %>s
+                <% end %>
+              <% else %>
+                <%= @timer_state.team2_main_timer %>s
+              <% end %>
+            </div>
+            <div class="bonus-time">
+              Bonus: <%= @timer_state.team2_bonus_remaining %>s
+            </div>
+          </div>
+        <% end %>
+        <div class="team-name-box team2-name">
+          <%= @team2.team_name %>
+        </div>
+      </div>
+      
+      <%# Central Status Display %>
+      <div class="draft-status-box">
+        <div class="status-phase">
+          <%= @draft.current_phase %>
+        </div>
+        <%= if @draft.current_phase in ["Ban Phase", "Pick Phase"] do %>
+          <% current_team = get_current_turn_team(@draft) %>
+          <% action = PredecessorDraft.Drafts.determine_current_action(@draft) %>
+          <div class="status-turn">
+            <%= if current_team == "team1" do %>
+              <%= @team1.team_name %>'s <%= if action == :ban, do: "BAN", else: "PICK" %>
+            <% else %>
+              <%= @team2.team_name %>'s <%= if action == :ban, do: "BAN", else: "PICK" %>
+            <% end %>
+          </div>
+        <% end %>
+        <%= if @draft.current_phase == "Complete" do %>
+          <div class="status-turn" style="color: #10b981;">
+            DRAFT COMPLETE
+          </div>
+        <% end %>
+      </div>
+    </div>
+    
+    <%# Main Draft Area %>
+    <div class="spectate-draft-area">
+      <%# Team 1 Panel (Left) %>
+      <div class="team-panel team-panel-left">
+        <%= for i <- 1..5 do %>
+          <% hero_id = Enum.at(@draft.team1_picks || [], i - 1) %>
+          <% hero = if hero_id && hero_id != "skipped", do: Enum.find(@heroes, &(&1.id == hero_id)), else: nil %>
+          <% team1_pick_count = length(@draft.team1_picks || []) %>
+          <% is_current = @draft.current_turn == "team1" && @draft.current_phase == "Pick Phase" && i == team1_pick_count + 1 %>
+          
+          <div class={["hero-slot", if(hero, do: "filled", else: ""), if(is_current, do: "active", else: "")]}>
+            <div class="slot-number">Pick <%= i %></div>
+            <%= if hero do %>
+              <img src={hero.image} alt={hero.name} class="hero-portrait-small" 
+                   onerror="this.src='/images/heroes/placeholder.jpg'" />
+              <div class="hero-info">
+                <div class="hero-name"><%= hero.name %></div>
+                <div class="hero-role"><%= hero.role %></div>
+              </div>
+            <% else %>
+              <div class="empty-slot-text">Empty</div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+      
+      <%# Center Area %>
+      <div class="center-area">
+        <div class="current-pick-display">
+          <div style="text-align: center; padding: 40px 20px;">
+            <div style="font-size: 24px; color: #60a5fa; font-weight: bold; margin-bottom: 15px;">
+              🚀 Coming Soon
+            </div>
+            <div style="font-size: 18px; color: #9ca3af; margin-bottom: 10px;">
+              Player & Team Statistics
+            </div>
+            <div style="font-size: 14px; color: #6b7280; line-height: 1.6;">
+              • Team rosters with player roles<br/>
+              • Omeda City rankings & MMR<br/>
+              • Hero win rates & preferences<br/>
+              • Recent performance trends
+            </div>
+            <%# DEBUG: Show current draft data %>
+            <div style="color: red; font-size: 12px; margin-top: 10px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 4px;">
+              DEBUG: T1 Picks=<%= length(@draft.team1_picks || []) %>, T1 Bans=<%= length(@draft.team1_bans || []) %><br/>
+              T2 Picks=<%= length(@draft.team2_picks || []) %>, T2 Bans=<%= length(@draft.team2_bans || []) %><br/>
+              Phase: <%= @draft.current_phase %>, Status: <%= @draft.status %>
+            </div>
+          </div>
+        </div>
+        
+        <%# Bans Display %>
+        <div class="bans-section">
+          <div class="bans-container">
+            <%# Team 1 Bans %>
+            <div class="team-bans">
+              <%= for i <- 1..4 do %>
+                <% ban_id = Enum.at(@draft.team1_bans || [], i - 1) %>
+                <% hero = if ban_id && ban_id != "skipped", do: Enum.find(@heroes, &(&1.id == ban_id)), else: nil %>
+                
+                <div class={["ban-slot", if(hero, do: "filled", else: "")]}>
+                  <%= if hero do %>
+                    <img src={hero.image} alt={hero.name} class="ban-portrait" 
+                         onerror="this.src='/images/heroes/placeholder.jpg'" />
+                    <div class="ban-x">✕</div>
+                    <div class="ban-name"><%= hero.name %></div>
+                  <% else %>
+                    <%= if ban_id == "skipped" do %>
+                      <div style="color: #6b7280; font-size: 11px;">Skipped</div>
+                    <% else %>
+                      <div style="color: #6b7280; font-size: 11px;">Ban <%= i %></div>
+                    <% end %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+            
+            <div class="bans-label">BANS</div>
+            
+            <%# Team 2 Bans %>
+            <div class="team-bans">
+              <%= for i <- 1..4 do %>
+                <% ban_id = Enum.at(@draft.team2_bans || [], i - 1) %>
+                <% hero = if ban_id && ban_id != "skipped", do: Enum.find(@heroes, &(&1.id == ban_id)), else: nil %>
+                
+                <div class={["ban-slot", if(hero, do: "filled", else: "")]}>
+                  <%= if hero do %>
+                    <img src={hero.image} alt={hero.name} class="ban-portrait" 
+                         onerror="this.src='/images/heroes/placeholder.jpg'" />
+                    <div class="ban-x">✕</div>
+                    <div class="ban-name"><%= hero.name %></div>
+                  <% else %>
+                    <%= if ban_id == "skipped" do %>
+                      <div style="color: #6b7280; font-size: 11px;">Skipped</div>
+                    <% else %>
+                      <div style="color: #6b7280; font-size: 11px;">Ban <%= i %></div>
+                    <% end %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <%# Team 2 Panel (Right) %>
+      <div class="team-panel team-panel-right">
+        <%= for i <- 1..5 do %>
+          <% hero_id = Enum.at(@draft.team2_picks || [], i - 1) %>
+          <% hero = if hero_id && hero_id != "skipped", do: Enum.find(@heroes, &(&1.id == hero_id)), else: nil %>
+          <% team2_pick_count = length(@draft.team2_picks || []) %>
+          <% is_current = @draft.current_turn == "team2" && @draft.current_phase == "Pick Phase" && i == team2_pick_count + 1 %>
+          
+          <div class={["hero-slot", if(hero, do: "filled", else: ""), if(is_current, do: "active", else: "")]}>
+            <div class="slot-number">Pick <%= i %></div>
+            <%= if hero do %>
+              <img src={hero.image} alt={hero.name} class="hero-portrait-small" 
+                   onerror="this.src='/images/heroes/placeholder.jpg'" />
+              <div class="hero-info">
+                <div class="hero-name"><%= hero.name %></div>
+                <div class="hero-role"><%= hero.role %></div>
+              </div>
+            <% else %>
+              <div class="empty-slot-text">Empty</div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    
+    <%# Draft Complete Overlay %>
+    <%= if @draft.current_phase == "Complete" do %>
+      <div class="draft-complete-overlay">
+        <div class="complete-text">
+          🎉 DRAFT FINISHED! 🎉
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>

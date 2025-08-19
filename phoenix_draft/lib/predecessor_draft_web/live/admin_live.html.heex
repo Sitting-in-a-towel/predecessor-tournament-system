@@ -1,0 +1,257 @@
+<%# Admin Panel for Draft Search %> 
+<div class="min-h-screen bg-gray-900">
+  <%# Header %>
+  <header class="bg-gray-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-white">Draft Administration Panel</h1>
+        <a href="http://localhost:3000" class="text-blue-400 hover:text-blue-300">
+          ← Back to Tournament System
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <%# Search Section %>
+    <div class="bg-gray-800 rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold text-white mb-4">Search Completed Drafts</h2>
+      
+      <form phx-submit="search" class="flex space-x-4">
+        <div class="flex-1">
+          <input
+            type="text"
+            name="search_term"
+            value={@search_term}
+            placeholder="Enter draft ID or tournament ID..."
+            class="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+          />
+        </div>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold"
+        >
+          🔍 Search
+        </button>
+      </form>
+      
+      <%= if @error do %>
+        <div class="mt-4 p-4 bg-red-900 border border-red-600 rounded-lg">
+          <p class="text-red-200"><%= @error %></p>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Search Results %>
+    <%= if length(@drafts) > 0 do %>
+      <div class="bg-gray-800 rounded-lg p-6 mb-8">
+        <h3 class="text-lg font-semibold text-white mb-4">
+          Search Results (<%= length(@drafts) %> found)
+        </h3>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-gray-300">
+            <thead class="text-xs text-gray-400 uppercase bg-gray-700">
+              <tr>
+                <th class="px-4 py-3">Draft ID</th>
+                <th class="px-4 py-3">Tournament</th>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3">Phase</th>
+                <th class="px-4 py-3">Completed</th>
+                <th class="px-4 py-3">Coin Winner</th>
+                <th class="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700">
+              <%= for draft <- @drafts do %>
+                <tr class="hover:bg-gray-700">
+                  <td class="px-4 py-3 font-mono text-blue-400"><%= draft.draft_id %></td>
+                  <td class="px-4 py-3"><%= draft.tournament_id || "N/A" %></td>
+                  <td class="px-4 py-3">
+                    <span class={[
+                      "px-2 py-1 rounded text-xs font-semibold",
+                      if(draft.status == "Completed", do: "bg-green-900 text-green-200", else: "bg-yellow-900 text-yellow-200")
+                    ]}>
+                      <%= draft.status %>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3"><%= get_phase_display(draft.current_phase) %></td>
+                  <td class="px-4 py-3 text-xs"><%= format_datetime(draft.completed_at) %></td>
+                  <td class="px-4 py-3">
+                    <%= if draft.coin_toss_winner do %>
+                      <span class="text-yellow-400">
+                        <%= String.capitalize(draft.coin_toss_winner) %>
+                      </span>
+                    <% else %>
+                      <span class="text-gray-500">N/A</span>
+                    <% end %>
+                  </td>
+                  <td class="px-4 py-3">
+                    <button
+                      phx-click="view_draft"
+                      phx-value-draft_id={draft.draft_id}
+                      class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+                    >
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% end %>
+
+    <%# No Results Message %>
+    <%= if @search_term != "" and length(@drafts) == 0 and !@error do %>
+      <div class="bg-gray-800 rounded-lg p-6 text-center">
+        <p class="text-gray-400">No completed drafts found for "<%= @search_term %>"</p>
+      </div>
+    <% end %>
+
+    <%# Instructions %>
+    <%= if @search_term == "" and length(@drafts) == 0 do %>
+      <div class="bg-gray-800 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-white mb-4">How to Use</h3>
+        <div class="text-gray-300 space-y-2">
+          <p>• Enter a draft ID (e.g., "draft_1755086534188_5tdmx47mv") or tournament ID to search</p>
+          <p>• Only completed drafts will appear in search results</p>
+          <p>• Click "View Details" to see full draft information</p>
+          <p>• Use partial matches to find drafts (e.g., search "1755086" to find all drafts from that timeframe)</p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# Draft Detail Modal %>
+<%= if @selected_draft do %>
+  <div class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+    <div class="bg-gray-800 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-white">Draft Details</h2>
+        <button
+          phx-click="close_draft"
+          class="text-gray-400 hover:text-white text-2xl"
+        >
+          ✕
+        </button>
+      </div>
+      
+      <%# Basic Info %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-gray-700 rounded-lg p-4">
+          <h3 class="text-lg font-semibold text-white mb-3">Basic Information</h3>
+          <div class="space-y-2 text-sm">
+            <div><span class="text-gray-400">Draft ID:</span> <span class="font-mono text-blue-400"><%= @selected_draft.draft_id %></span></div>
+            <div><span class="text-gray-400">Tournament:</span> <span class="text-white"><%= @selected_draft.tournament_id || "N/A" %></span></div>
+            <div><span class="text-gray-400">Status:</span> <span class="text-green-400"><%= @selected_draft.status %></span></div>
+            <div><span class="text-gray-400">Final Phase:</span> <span class="text-white"><%= get_phase_display(@selected_draft.current_phase) %></span></div>
+            <div><span class="text-gray-400">Started:</span> <span class="text-white"><%= format_datetime(@selected_draft.draft_started_at) %></span></div>
+            <div><span class="text-gray-400">Completed:</span> <span class="text-white"><%= format_datetime(@selected_draft.completed_at) %></span></div>
+          </div>
+        </div>
+        
+        <div class="bg-gray-700 rounded-lg p-4">
+          <h3 class="text-lg font-semibold text-white mb-3">Coin Toss Result</h3>
+          <div class="space-y-2 text-sm">
+            <div><span class="text-gray-400">Team 1 Choice:</span> <span class="text-yellow-400"><%= String.capitalize(@selected_draft.team1_coin_choice || "none") %></span></div>
+            <div><span class="text-gray-400">Team 2 Choice:</span> <span class="text-yellow-400"><%= String.capitalize(@selected_draft.team2_coin_choice || "none") %></span></div>
+            <div><span class="text-gray-400">Result:</span> <span class="text-yellow-400"><%= String.capitalize(@selected_draft.coin_toss_result || "none") %></span></div>
+            <div><span class="text-gray-400">Winner:</span> <span class="text-green-400"><%= String.capitalize(@selected_draft.coin_toss_winner || "none") %></span></div>
+            <div><span class="text-gray-400">First Pick:</span> <span class="text-blue-400"><%= String.capitalize(@selected_draft.first_pick_team || "none") %></span></div>
+          </div>
+        </div>
+      </div>
+      
+      <%# Draft Results %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <%# Team 1 %>
+        <div class="bg-gray-700 rounded-lg p-4">
+          <h3 class="text-lg font-semibold text-white mb-3">Team 1 Results</h3>
+          
+          <div class="mb-4">
+            <h4 class="text-sm font-semibold text-red-400 mb-2">Bans</h4>
+            <div class="grid grid-cols-2 gap-2">
+              <%= for {ban, index} <- Enum.with_index(@selected_draft.team1_bans || []) do %>
+                <div class="bg-red-900 text-red-200 px-2 py-1 rounded text-xs">
+                  <%= index + 1 %>. <%= ban %>
+                </div>
+              <% end %>
+              <%= if length(@selected_draft.team1_bans || []) == 0 do %>
+                <div class="text-gray-500 text-xs">No bans</div>
+              <% end %>
+            </div>
+          </div>
+          
+          <div>
+            <h4 class="text-sm font-semibold text-green-400 mb-2">Picks</h4>
+            <div class="grid grid-cols-1 gap-2">
+              <%= for {pick, index} <- Enum.with_index(@selected_draft.team1_picks || []) do %>
+                <div class="bg-green-900 text-green-200 px-2 py-1 rounded text-xs">
+                  <%= index + 1 %>. <%= pick %>
+                </div>
+              <% end %>
+              <%= if length(@selected_draft.team1_picks || []) == 0 do %>
+                <div class="text-gray-500 text-xs">No picks</div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+        
+        <%# Team 2 %>
+        <div class="bg-gray-700 rounded-lg p-4">
+          <h3 class="text-lg font-semibold text-white mb-3">Team 2 Results</h3>
+          
+          <div class="mb-4">
+            <h4 class="text-sm font-semibold text-red-400 mb-2">Bans</h4>
+            <div class="grid grid-cols-2 gap-2">
+              <%= for {ban, index} <- Enum.with_index(@selected_draft.team2_bans || []) do %>
+                <div class="bg-red-900 text-red-200 px-2 py-1 rounded text-xs">
+                  <%= index + 1 %>. <%= ban %>
+                </div>
+              <% end %>
+              <%= if length(@selected_draft.team2_bans || []) == 0 do %>
+                <div class="text-gray-500 text-xs">No bans</div>
+              <% end %>
+            </div>
+          </div>
+          
+          <div>
+            <h4 class="text-sm font-semibold text-green-400 mb-2">Picks</h4>
+            <div class="grid grid-cols-1 gap-2">
+              <%= for {pick, index} <- Enum.with_index(@selected_draft.team2_picks || []) do %>
+                <div class="bg-green-900 text-green-200 px-2 py-1 rounded text-xs">
+                  <%= index + 1 %>. <%= pick %>
+                </div>
+              <% end %>
+              <%= if length(@selected_draft.team2_picks || []) == 0 do %>
+                <div class="text-gray-500 text-xs">No picks</div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <%# Quick Actions %>
+      <div class="mt-6 pt-4 border-t border-gray-600">
+        <div class="flex space-x-4">
+          <a
+            href={"http://localhost:4000/draft/#{@selected_draft.draft_id}"}
+            target="_blank"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
+          >
+            View Live Draft
+          </a>
+          <button
+            phx-click="close_draft"
+            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

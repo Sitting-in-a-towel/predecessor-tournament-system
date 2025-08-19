@@ -1,0 +1,22 @@
+<header class="px-4 sm:px-6 lg:px-8">
+  <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
+    <div class="flex items-center gap-4">
+      <a href="/">
+        <p class="bg-brand/5 text-brand rounded-full px-2 py-1 text-[0.8125rem] font-medium leading-4">
+          Predecessor Draft System v1.0
+        </p>
+      </a>
+    </div>
+    <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900">
+      <a href="http://localhost:3000" class="hover:text-zinc-700">
+        ← Back to Tournament System
+      </a>
+    </div>
+  </div>
+</header>
+<main class="px-4 py-20 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-2xl">
+    <.flash_group flash={@flash} />
+    <%= @inner_content %>
+  </div>
+</main>

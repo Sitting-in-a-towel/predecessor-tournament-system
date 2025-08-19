@@ -1,0 +1,615 @@
+<style>
+  @keyframes blink-yellow {
+    0%, 100% { border-color: #fbbf24; box-shadow: 0 0 10px #fbbf24; }
+    50% { border-color: #f59e0b; box-shadow: 0 0 20px #f59e0b; }
+  }
+  .active-slot {
+    animation: blink-yellow 1s infinite;
+    border: 2px solid #fbbf24 !important;
+  }
+  
+</style>
+
+
+<%# Error state %>
+<div id="page-ready-hook" phx-hook="PageReady">
+
+<%= if @error do %>
+  <div class="min-h-screen flex items-center justify-center bg-gray-900">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-xl p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-gray-800">Draft Error</h3>
+          <div class="mt-2 text-sm text-gray-600">
+            <p><%= @error %></p>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4">
+        <a href="http://localhost:3000" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+          Return to Tournament System
+        </a>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <%# Main Draft Interface %>
+  <div class="draft-container min-h-screen flex flex-col w-full" phx-hook="PresenceUpdate" id="draft-presence">
+    <%# Header - Thinner %>
+    <header class="shadow-lg" style="background-color: #36393f; height: 40px;">
+      <div class="w-full px-4 h-full">
+        <div class="flex justify-between items-center h-full">
+          <div class="flex items-center">
+            <h1 class="text-xl font-bold text-white">
+              Draft <%= @draft.draft_id %>
+            </h1>
+            <div class="ml-4 px-2 py-1 bg-gray-700 rounded text-sm text-white">
+              <%= phase_display_name(@draft.current_phase) %>
+            </div>
+            <div class="ml-6 px-3 py-1 bg-blue-600 rounded text-sm">
+              <span class="text-white font-semibold">Drafting for: <%= if @captain_role == "team1", do: @team1.name, else: @team2.name %></span>
+            </div>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-4 text-xs text-gray-300">
+              <div class="flex items-center">
+                <span class={["inline-block w-2 h-2 rounded-full mr-1", if(@draft.team1_connected, do: "bg-green-400", else: "bg-gray-500")]}></span>
+                <%= @team1.name %> Captain
+              </div>
+              <div class="flex items-center">
+                <span class={["inline-block w-2 h-2 rounded-full mr-1", if(@draft.team2_connected, do: "bg-green-400", else: "bg-gray-500")]}></span>
+                <%= @team2.name %> Captain
+              </div>
+            </div>
+            
+            <a href="http://localhost:3000" class="text-gray-300 hover:text-white text-sm">
+              ← Back
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <%# Main Content Area %>
+    <main class="flex-1" style="height: calc(100vh - 40px); overflow: hidden;">
+      <%= if @waiting_for_captains do %>
+        <%# Waiting for Captains %>
+        <div class="flex items-center justify-center h-full bg-gray-800">
+          <div class="bg-white rounded-lg p-8 max-w-md">
+            <div class="text-center">
+              <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                <svg class="animate-spin h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+              <h3 class="text-lg font-medium text-gray-900">Waiting for Captains</h3>
+              <p class="mt-2 text-sm text-gray-600">
+                Waiting for both team captains to join the draft session.
+              </p>
+              <p class="mt-4 text-xs text-gray-500">
+                Your role: <%= String.capitalize(@captain_role) %> Captain
+              </p>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <%# Draft Active Content %>
+        <%= if @draft.current_phase == "Coin Toss" do %>
+          <%# Coin Toss Phase %>
+          <div class="flex items-center justify-center h-full bg-gray-800">
+            <div class="bg-gray-700 rounded-lg p-8 max-w-2xl w-full mx-4">
+              <h2 class="text-2xl font-bold text-white mb-6 text-center">Coin Toss</h2>
+              
+              <%= if show_coin_result?(@draft) do %>
+                <%# Show Result %>
+                <div class="text-center">
+                  <div class="mb-6">
+                    <div class="inline-block w-24 h-24 bg-yellow-500 rounded-full flex items-center justify-center text-2xl font-bold text-yellow-900">
+                      <%= String.upcase(@draft.coin_toss_result || "?") %>
+                    </div>
+                  </div>
+                  
+                  <div class="text-xl text-white mb-4">
+                    Result: <span class="font-bold text-yellow-400"><%= String.capitalize(@draft.coin_toss_result || "none") %></span>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class={["p-4 rounded-lg", if(@draft.coin_toss_winner == "team1", do: "bg-green-700", else: "bg-gray-600")]}>
+                      <div class="font-semibold text-white"><%= @team1.name %></div>
+                      <div class="text-gray-300">Chose: <%= String.capitalize(@draft.team1_coin_choice || "none") %></div>
+                    </div>
+                    <div class={["p-4 rounded-lg", if(@draft.coin_toss_winner == "team2", do: "bg-green-700", else: "bg-gray-600")]}>
+                      <div class="font-semibold text-white"><%= @team2.name %></div>
+                      <div class="text-gray-300">Chose: <%= String.capitalize(@draft.team2_coin_choice || "none") %></div>
+                    </div>
+                  </div>
+                  
+                  <div class="text-lg text-green-400">
+                    🏆 <strong><%= if @draft.coin_toss_winner == "team1", do: @team1.name, else: @team2.name %></strong> wins the coin toss!
+                  </div>
+                </div>
+              <% else %>
+                <%# Coin Choice %>
+                <div class="text-center">
+                  <%= if not @both_captains_present do %>
+                    <%# Show waiting message when both captains aren't present %>
+                    <div class="mb-8">
+                      <div class="text-yellow-400 text-xl mb-4">⏳ Waiting for other captain to connect...</div>
+                      <p class="text-gray-400">Coin toss will begin when both captains are ready</p>
+                    </div>
+                  <% else %>
+                    <p class="text-gray-300 text-lg mb-6">Choose heads or tails</p>
+                  <% end %>
+                  
+                  <%= if @captain_role in ["team1", "team2"] do %>
+                    <div class="flex justify-center space-x-8 mb-6">
+                      <button 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                        phx-click="coin_choice" 
+                        phx-value-choice="heads"
+                        disabled={coin_choice_disabled?(@draft, @captain_role, @both_captains_present) or other_team_choice(@draft, @captain_role) == "heads"}
+                      >
+                        HEADS
+                      </button>
+                      
+                      <button 
+                        class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-lg text-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                        phx-click="coin_choice" 
+                        phx-value-choice="tails"
+                        disabled={coin_choice_disabled?(@draft, @captain_role, @both_captains_present) or other_team_choice(@draft, @captain_role) == "tails"}
+                      >
+                        TAILS
+                      </button>
+                    </div>
+                    
+                    <%= if coin_choice_disabled?(@draft, @captain_role, @both_captains_present) do %>
+                      <p class="text-green-400">
+                        You chose: <span class="font-bold"><%= String.capitalize(Map.get(@draft, String.to_atom("#{@captain_role}_coin_choice")) || "none") %></span>
+                      </p>
+                      <p class="text-gray-400">Waiting for the other captain...</p>
+                    <% end %>
+                  <% else %>
+                    <p class="text-gray-400">You are observing this draft.</p>
+                  <% end %>
+                  
+                  <div class="grid grid-cols-2 gap-4 mt-6">
+                    <div class="p-3 bg-gray-600 rounded-lg">
+                      <div class="font-semibold text-white"><%= @team1.name %></div>
+                      <div class="text-gray-300">
+                        <%= if @draft.team1_coin_choice, do: "Chose: #{String.capitalize(@draft.team1_coin_choice)}", else: "Choosing..." %>
+                      </div>
+                    </div>
+                    <div class="p-3 bg-gray-600 rounded-lg">
+                      <div class="font-semibold text-white"><%= @team2.name %></div>
+                      <div class="text-gray-300">
+                        <%= if @draft.team2_coin_choice, do: "Chose: #{String.capitalize(@draft.team2_coin_choice)}", else: "Choosing..." %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <%= if @draft.current_phase == "Pick Order Selection" do %>
+          <%# Pick Order Selection %>
+          <div class="flex items-center justify-center h-full bg-gray-800">
+            <div class="bg-gray-700 rounded-lg p-8 max-w-2xl w-full mx-4">
+              <%= if @pick_order_transitioning do %>
+                <h2 class="text-2xl font-bold text-green-400 mb-6 text-center">Draft Order Set!</h2>
+                <div class="text-center">
+                  <div class="text-xl text-white mb-4">
+                    <strong><%= if @draft.first_pick_team == "team1", do: @team1.name, else: @team2.name %></strong> will pick first
+                  </div>
+                  <div class="text-gray-300 mb-4">Preparing draft interface...</div>
+                  <div class="flex justify-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  </div>
+                </div>
+              <% else %>
+                <h2 class="text-2xl font-bold text-white mb-6 text-center">Pick Order Selection</h2>
+                <div class="text-center">
+                  <div class="text-xl text-green-400 mb-6">
+                    🏆 <strong><%= if @draft.coin_toss_winner == "team1", do: @team1.name, else: @team2.name %></strong> won the coin toss!
+                  </div>
+                  
+                  <%= if @draft.coin_toss_winner == @captain_role do %>
+                    <p class="text-white text-lg mb-6">You won! Choose the draft order:</p>
+                    <div class="flex justify-center space-x-8">
+                      <button 
+                        phx-click="choose_pick_order"
+                        phx-value-order="first"
+                        class="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 text-lg font-semibold"
+                      >
+                        Pick First
+                      </button>
+                      <button 
+                        phx-click="choose_pick_order"
+                        phx-value-order="second"
+                        class="bg-purple-600 text-white px-8 py-4 rounded-lg hover:bg-purple-700 text-lg font-semibold"
+                      >
+                        Pick Second
+                      </button>
+                    </div>
+                  <% else %>
+                    <div class="text-white text-lg">
+                      Waiting for <strong><%= if @draft.coin_toss_winner == "team1", do: @team1.name, else: @team2.name %></strong> to choose the draft order...
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <%# Removed waiting modal during Ban/Pick phases to prevent interface disruption %>
+
+        <%= if @draft.current_phase in ["Ban Phase", "Pick Phase", "Complete"] do %>
+          <%# Main Draft Interface - FULL WIDTH WITH BACKGROUND %>
+          <%# Note: Removed @waiting_for_captains check to prevent interface remounting %>
+          <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #2c2f33; display: flex; flex-direction: column; z-index: 1000;">
+            <%# Header Info Bar - Contains phase, draft ID, coin toss info %>
+            <div class="bg-gray-800 flex justify-between items-center px-4" style="height: 40px;">
+              <%# Left: Phase and Draft Info %>
+              <div class="flex items-center space-x-4">
+                <div class="text-white text-sm font-semibold">
+                  Draft <%= @draft.draft_id %>
+                </div>
+                <div class="px-2 py-1 bg-gray-700 rounded text-xs text-white">
+                  <%= phase_display_name(@draft.current_phase) %>
+                </div>
+                <div class="px-2 py-1 bg-blue-600 rounded text-xs">
+                  <span class="text-white">Drafting for: <%= if @captain_role == "team1", do: @team1.name, else: @team2.name %></span>
+                </div>
+              </div>
+              
+              <%# Center: Coin Toss Result (Condensed) %>
+              <div class="flex items-center space-x-2 text-xs text-gray-300">
+                <span>Coin Toss:</span>
+                <span class="text-yellow-400"><%= String.capitalize(@draft.coin_toss_result || "none") %></span>
+                <span>Winner:</span>
+                <span class="text-green-400"><%= if @draft.coin_toss_winner == "team1", do: @team1.name, else: @team2.name %></span>
+              </div>
+              
+              <%# Right: Back Button %>
+              <div>
+                <a href="http://localhost:3000" class="text-gray-300 hover:text-white text-sm">
+                  ← Back
+                </a>
+              </div>
+            </div>
+            
+            <%# Turn Indicator and Hero Selection Bar %>
+            <div class="bg-gray-900 flex flex-col justify-center items-center" style="height: 70px;">
+              <%# Turn Indicator %>
+              <%= if @draft.current_phase == "Complete" do %>
+                <div style="color: #10b981; font-size: 16px; font-weight: bold; margin-bottom: 8px;">
+                  🎉 DRAFT COMPLETE 🎉
+                </div>
+              <% else %>
+                <%= if @draft.current_phase in ["Ban Phase", "Pick Phase"] do %>
+                  <div style="color: #fbbf24; font-size: 16px; font-weight: bold; margin-bottom: 8px;">
+                    <%= case PredecessorDraft.Drafts.Session.next_pick_team(@draft) do %>
+                      <% "team1" -> %>
+                        <%= @team1.name %>'s Turn to <%= if PredecessorDraft.Drafts.determine_current_action(@draft) == :ban, do: "BAN", else: "PICK" %>
+                      <% "team2" -> %>
+                        <%= @team2.name %>'s Turn to <%= if PredecessorDraft.Drafts.determine_current_action(@draft) == :ban, do: "BAN", else: "PICK" %>
+                      <% _ -> %>
+                        Waiting...
+                    <% end %>
+                  </div>
+                <% end %>
+              <% end %>
+              
+              <%# Hero Selection Bar - Hidden when draft complete %>
+              <%= if @draft.current_phase != "Complete" do %>
+                <div style={"margin-top: 8px; background: #{if assigns[:selected_hero] && @captain_role == PredecessorDraft.Drafts.Session.next_pick_team(@draft), do: "#7c2d12", else: "#4a4a4a"}; border: 2px solid #{if assigns[:selected_hero] && @captain_role == PredecessorDraft.Drafts.Session.next_pick_team(@draft), do: "#eab308", else: "#6b7280"}; border-radius: 6px; padding: 4px 12px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease;"}>
+                  <%= if assigns[:selected_hero] && @captain_role == PredecessorDraft.Drafts.Session.next_pick_team(@draft) do %>
+                    <span style="font-weight: bold; color: white; font-size: 12px;">
+                      <%= if PredecessorDraft.Drafts.determine_current_action(@draft) == :ban, do: "Ban", else: "Pick" %>:
+                    </span>
+                    <span style="font-weight: bold; color: #fbbf24; font-size: 13px;"><%= @selected_hero.name %></span>
+                    <span style="color: #d1d5db; font-size: 11px;">(<%= @selected_hero.role %>)</span>
+                    <button
+                      type="button"
+                      phx-click="confirm_hero_selection"
+                      style="background: #16a34a; color: white; padding: 3px 12px; font-size: 12px; border-radius: 4px; font-weight: bold; border: none; cursor: pointer; margin-left: 8px;"
+                      onmouseover="this.style.background='#15803d'"
+                      onmouseout="this.style.background='#16a34a'"
+                    >
+                      🔒 LOCK IN
+                    </button>
+                    <button
+                      type="button"
+                      phx-click="cancel_hero_selection"
+                      style="background: #6b7280; color: white; padding: 3px 8px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer;"
+                      onmouseover="this.style.background='#4b5563'"
+                      onmouseout="this.style.background='#6b7280'"
+                    >
+                      Cancel
+                    </button>
+                  <% else %>
+                    <span style="color: #9ca3af; font-size: 12px;">No hero selected</span>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+            
+            <%# Main Draft Area - FULL VIEWPORT WIDTH %>
+            <div style="flex: 1; display: flex; width: 100%; overflow: hidden;">
+              <%# Team 1 Panel (Left) - Narrow %>
+              <div style="width: 140px; background-color: #2f3136; padding: 8px; overflow-y: auto;">
+                <%# Bonus Timer %>
+                <%= if @draft.timer_config["timer_strategy_enabled"] do %>
+                  <div class="text-center mb-2">
+                    <%= if assigns[:timer_state] && @timer_state.current_team == "team1" && @timer_state.current_phase == :bonus_timer do %>
+                      <div class="bg-red-600 text-white px-2 py-1 rounded text-xs font-mono animate-pulse">
+                        🔥 BONUS: <%= @timer_state.team1_bonus_remaining || 0 %>s
+                      </div>
+                    <% else %>
+                      <div class="bg-blue-600 text-white px-2 py-1 rounded text-xs font-mono">
+                        Bonus: <%= if assigns[:timer_state], do: @timer_state.team1_bonus_remaining || 10, else: 10 %>s
+                      </div>
+                    <% end %>
+                  </div>
+                <% end %>
+                <h3 class="text-center text-white font-bold mb-1 text-sm"><%= @team1.name %></h3>
+                
+                <%# Main Timer for Team 1 - ALWAYS shows main timer, never switches to bonus %>
+                <div class="text-center mb-2">
+                  <%= if assigns[:timer_state] && @timer_state.current_team == "team1" do %>
+                    <div class="bg-yellow-500 text-black px-2 py-2 rounded text-sm font-mono font-bold animate-pulse">
+                      ⏱️ <%= if @timer_state.current_phase == :bonus_timer, do: 0, else: assigns[:timer_remaining] || 20 %>s
+                    </div>
+                  <% else %>
+                    <div class="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs font-mono">
+                      Timer: 20s
+                    </div>
+                  <% end %>
+                </div>
+                
+                <%# Always show bonus bank for Team 1 %>
+                <div class="text-center mb-1">
+                  <div class="text-xs text-gray-300">
+                    Bonus Bank: <%= if assigns[:timer_state], do: @timer_state.team1_bonus_remaining || 10, else: 10 %>s
+                  </div>
+                </div>
+                
+                <%# Coin toss info and captain %>
+                <div class="text-center mb-3 text-xs">
+                  <div class="text-gray-400">Chose: <span class="text-yellow-400"><%= String.capitalize(@draft.team1_coin_choice || "none") %></span></div>
+                  <%= if @draft.coin_toss_winner == "team1" do %>
+                    <div class="text-green-400">🏆 Won Coin Toss</div>
+                  <% end %>
+                  <div class="text-gray-500 mt-1">Captain: Team1</div>
+                </div>
+                
+                <%# Draft Sequence - Team 1 slots %>
+                <div class="text-white text-xs font-semibold mb-2">Draft Order</div>
+                <%= for slot <- get_draft_sequence(@draft) |> Enum.filter(&(&1.team == "team1")) do %>
+                  <div class={if slot.position == get_current_draft_position(@draft) && @draft.current_phase in ["Ban Phase", "Pick Phase"], do: "active-slot", else: ""} 
+                       style={"height: #{if slot.action == :pick, do: "50px", else: "40px"}; background-color: #{if slot.selection, do: (if slot.action == :pick, do: "#1e5c1e", else: "#5c1e1e"), else: "#4a4a4a"}; border-radius: 4px; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; position: relative; border: 2px solid transparent;"}>
+                    <div style="position: absolute; top: 2px; left: 4px; font-size: 10px; color: #9ca3af;"><%= slot.position %></div>
+                    <span class="text-xs">
+                      <%= if slot.selection do %>
+                        <span class={if slot.action == :pick, do: "text-green-400", else: "text-red-400"}><%= get_hero_name(slot.selection) %></span>
+                      <% else %>
+                        <span class="text-gray-500"><%= slot.label %></span>
+                      <% end %>
+                    </span>
+                  </div>
+                <% end %>
+              </div>
+              
+              <%# Center - Hero Grid MAXIMUM WIDTH %>
+              <div style="flex: 1; display: flex; flex-direction: column; padding: 0 8px;">
+                <%# Skip Button - Always present, stable DOM element %>
+                <%= if @draft.current_phase in ["Ban Phase", "Pick Phase"] do %>
+                  <% my_turn = is_my_turn?(@draft, @captain_role) %>
+                  <% current_action = PredecessorDraft.Drafts.determine_current_action(@draft) %>
+                  <% show_skip = current_action == :ban %>
+                  
+                  <div class="text-center mb-2">
+                    <button 
+                      type="button"
+                      phx-click="select_hero"
+                      phx-value-hero="skipped"
+                      class={[
+                        "skip-ban-button px-4 py-1 text-sm rounded transition-all duration-200",
+                        if show_skip && my_turn do
+                          "bg-yellow-600 text-white hover:bg-yellow-700 cursor-pointer hover:scale-105"
+                        else
+                          "bg-gray-500 text-gray-300 cursor-not-allowed opacity-50"
+                        end,
+                        unless show_skip do
+                          "hidden"
+                        end
+                      ]}
+                      disabled={!my_turn || !show_skip}
+                    >
+                      Skip Ban
+                    </button>
+                  </div>
+                <% end %>
+                
+
+                <%# Hero Grid Container - Full Width %>
+                <div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; overflow: hidden;">
+                  <.live_component
+                    module={HeroGrid}
+                    id="hero-grid"
+                    picks={(@draft.team1_picks || []) ++ (@draft.team2_picks || [])}
+                    bans={(@draft.team1_bans || []) ++ (@draft.team2_bans || [])}
+                    current_action={to_string(PredecessorDraft.Drafts.determine_current_action(@draft))}
+                    current_team={PredecessorDraft.Drafts.Session.next_pick_team(@draft)}
+                    can_select={@captain_role == PredecessorDraft.Drafts.Session.next_pick_team(@draft)}
+                    role_filter={@role_filter}
+                    parent_target={nil}
+                  />
+                </div>
+              </div>
+              
+              <%# Team 2 Panel (Right) - Narrow %>
+              <div style="width: 140px; background-color: #2f3136; padding: 8px; overflow-y: auto;">
+                <%# Bonus Timer %>
+                <%= if @draft.timer_config["timer_strategy_enabled"] do %>
+                  <div class="text-center mb-2">
+                    <%= if assigns[:timer_state] && @timer_state.current_team == "team2" && @timer_state.current_phase == :bonus_timer do %>
+                      <div class="bg-red-600 text-white px-2 py-1 rounded text-xs font-mono animate-pulse">
+                        🔥 BONUS: <%= @timer_state.team2_bonus_remaining || 0 %>s
+                      </div>
+                    <% else %>
+                      <div class="bg-blue-600 text-white px-2 py-1 rounded text-xs font-mono">
+                        Bonus: <%= if assigns[:timer_state], do: @timer_state.team2_bonus_remaining || 10, else: 10 %>s
+                      </div>
+                    <% end %>
+                  </div>
+                <% end %>
+                <h3 class="text-center text-white font-bold mb-1 text-sm"><%= @team2.name %></h3>
+                
+                <%# Main Timer for Team 2 - ALWAYS shows main timer, never switches to bonus %>
+                <div class="text-center mb-2">
+                  <%= if assigns[:timer_state] && @timer_state.current_team == "team2" do %>
+                    <div class="bg-yellow-500 text-black px-2 py-2 rounded text-sm font-mono font-bold animate-pulse">
+                      ⏱️ <%= if @timer_state.current_phase == :bonus_timer, do: 0, else: assigns[:timer_remaining] || 20 %>s
+                    </div>
+                  <% else %>
+                    <div class="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs font-mono">
+                      Timer: 20s
+                    </div>
+                  <% end %>
+                </div>
+                
+                <%# Always show bonus bank for Team 2 %>
+                <div class="text-center mb-1">
+                  <div class="text-xs text-gray-300">
+                    Bonus Bank: <%= if assigns[:timer_state], do: @timer_state.team2_bonus_remaining || 10, else: 10 %>s
+                  </div>
+                </div>
+                
+                <%# Coin toss info and captain %>
+                <div class="text-center mb-3 text-xs">
+                  <div class="text-gray-400">Chose: <span class="text-yellow-400"><%= String.capitalize(@draft.team2_coin_choice || "none") %></span></div>
+                  <%= if @draft.coin_toss_winner == "team2" do %>
+                    <div class="text-green-400">🏆 Won Coin Toss</div>
+                  <% end %>
+                  <div class="text-gray-500 mt-1">Captain: Team2</div>
+                </div>
+                
+                <%# Draft Sequence - Team 2 slots %>
+                <div class="text-white text-xs font-semibold mb-2">Draft Order</div>
+                <%= for slot <- get_draft_sequence(@draft) |> Enum.filter(&(&1.team == "team2")) do %>
+                  <div class={if slot.position == get_current_draft_position(@draft) && @draft.current_phase in ["Ban Phase", "Pick Phase"], do: "active-slot", else: ""} 
+                       style={"height: #{if slot.action == :pick, do: "50px", else: "40px"}; background-color: #{if slot.selection, do: (if slot.action == :pick, do: "#1e5c1e", else: "#5c1e1e"), else: "#4a4a4a"}; border-radius: 4px; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; position: relative; border: 2px solid transparent;"}>
+                    <div style="position: absolute; top: 2px; right: 4px; font-size: 10px; color: #9ca3af;"><%= slot.position %></div>
+                    <span class="text-xs">
+                      <%= if slot.selection do %>
+                        <span class={if slot.action == :pick, do: "text-green-400", else: "text-red-400"}><%= get_hero_name(slot.selection) %></span>
+                      <% else %>
+                        <span class="text-gray-500"><%= slot.label %></span>
+                      <% end %>
+                    </span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+      
+      <%# Draft Complete Overlay - Shows over the draft interface %>
+      <%= if @draft.current_phase == "Complete" do %>
+        <div class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div class="bg-green-800 rounded-lg p-8 text-center max-w-lg">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-3xl font-bold text-white mb-4">Draft Complete!</h2>
+            <p class="text-green-100 text-lg mb-6">
+              The draft has been completed successfully.
+            </p>
+            <div class="space-y-3">
+              <div class="text-sm text-green-200">
+                You can still see the final team compositions in the background
+              </div>
+              <a href="http://localhost:3000" class="block bg-white text-green-800 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                Return to Tournament System
+              </a>
+            </div>
+          </div>
+        </div>
+      <% end %>
+      
+      <%# Pick Order Modal %>
+      <%= if show_coin_result?(@draft) && !@draft.pick_order_chosen && @draft.coin_toss_winner == @captain_role do %>
+        <div class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div class="bg-gray-700 rounded-lg p-8 max-w-lg text-center">
+            <div class="bg-green-600 text-white px-4 py-2 rounded mb-4">
+              You won the coin toss!
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-6">Choose the draft order</h2>
+            <div class="flex gap-4 justify-center">
+              <button 
+                phx-click="choose_pick_order"
+                phx-value-order="first"
+                class="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 text-lg font-semibold"
+              >
+                You pick first
+              </button>
+              <button 
+                phx-click="choose_pick_order"
+                phx-value-order="second"
+                class="bg-purple-600 text-white px-8 py-4 rounded-lg hover:bg-purple-700 text-lg font-semibold"
+              >
+                You pick second
+              </button>
+            </div>
+          </div>
+        </div>
+      <% end %>
+      
+      <%= if show_coin_result?(@draft) && !@draft.pick_order_chosen && @draft.coin_toss_winner != @captain_role do %>
+        <div class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div class="bg-gray-700 rounded-lg p-8 max-w-lg text-center">
+            <h2 class="text-xl font-bold text-white mb-4">Your opponent is choosing the draft order...</h2>
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+          </div>
+        </div>
+      <% end %>
+    </main>
+  </div>
+
+  <%# Preparing Draft Overlay - Shows while page is loading and syncing %>
+  <%= if assigns[:preparing_draft] && @preparing_draft do %>
+    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9998]">
+      <div class="bg-gray-800 border-2 border-green-500 rounded-lg p-8 text-center">
+        <h2 class="text-2xl font-bold text-white mb-4">Preparing Draft Phase</h2>
+        <div class="flex justify-center mb-4">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400"></div>
+        </div>
+        <p class="text-lg text-gray-300">Synchronizing with server...</p>
+        <p class="text-sm text-gray-400 mt-2">Please wait while we prepare your draft session</p>
+      </div>
+    </div>
+  <% end %>
+  
+  <%# Waiting for Other Captain Modal (appears over pick/ban interface) %>
+  <%= if assigns[:waiting_for_other_captain] && @waiting_for_other_captain do %>
+    <div class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[9999]">
+      <div class="bg-gray-800 border-2 border-blue-500 rounded-lg p-12 text-center">
+        <h2 class="text-3xl font-bold text-white mb-6">Loading Draft Phase</h2>
+        <div class="text-6xl mb-4 animate-spin">⏳</div>
+        <p class="text-xl text-gray-300">Waiting for other captain to connect...</p>
+        <p class="text-lg text-gray-400 mt-2">Draft will begin when both captains are ready</p>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+</div> <%# Close page-ready-hook wrapper %>
