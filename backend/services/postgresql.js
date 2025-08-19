@@ -6,11 +6,13 @@ require('dotenv').config({ path: require('path').join(__dirname, '../../.env') }
 
 class PostgreSQLService {
     constructor() {
-        // Use production database if USE_PRODUCTION_DB=true, otherwise use local
-        const useProduction = process.env.USE_PRODUCTION_DB === 'true';
+        // In production (when DATABASE_URL exists), always use production database
+        // Otherwise, check USE_PRODUCTION_DB flag for local development
+        const isProduction = process.env.NODE_ENV === 'production' || !!process.env.DATABASE_URL;
+        const useProduction = isProduction || process.env.USE_PRODUCTION_DB === 'true';
         
         const config = useProduction ? {
-            connectionString: process.env.PRODUCTION_DATABASE_URL,
+            connectionString: process.env.DATABASE_URL || process.env.PRODUCTION_DATABASE_URL,
             ssl: { rejectUnauthorized: false },
             max: 20,
             idleTimeoutMillis: 30000,
@@ -30,7 +32,7 @@ class PostgreSQLService {
         
         console.log(`🗄️  Using ${useProduction ? 'PRODUCTION' : 'LOCAL'} database`);
         if (useProduction) {
-            console.log('   → Render PostgreSQL (production data)');
+            console.log('   → Database URL:', config.connectionString ? 'Configured' : 'NOT CONFIGURED');
         } else {
             console.log('   → Local PostgreSQL (localhost)');
         }
