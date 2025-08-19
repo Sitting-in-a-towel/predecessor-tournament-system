@@ -44,10 +44,13 @@ router.get('/:id',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      // This would need to be implemented
-      // const tournament = await airtableService.getTournamentByID(req.params.id);
+      const tournament = await postgresService.getTournamentById(req.params.id);
       
-      res.json({ message: 'Tournament details endpoint - to be implemented' });
+      if (!tournament) {
+        return res.status(404).json({ error: 'Tournament not found' });
+      }
+      
+      res.json(tournament);
     } catch (error) {
       logger.error('Error getting tournament:', error);
       res.status(500).json({ error: 'Failed to retrieve tournament' });

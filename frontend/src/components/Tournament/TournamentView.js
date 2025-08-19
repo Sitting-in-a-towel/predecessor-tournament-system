@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { airtableService } from '../../services/airtableService';
+import { backendService } from '../../services/backendService';
 import LoadingSpinner from '../Common/LoadingSpinner';
 import { toast } from 'react-toastify';
 
@@ -20,11 +20,11 @@ const TournamentView = () => {
         setLoading(true);
         
         // Load tournament details
-        const tournamentData = await airtableService.getTournament(id);
+        const tournamentData = await backendService.getTournament(id);
         setTournament(tournamentData);
         
         // Load tournament teams
-        const teamsData = await airtableService.getTournamentTeams(id);
+        const teamsData = await backendService.getTeamsByTournament(id);
         setTeams(teamsData);
         
       } catch (error) {
