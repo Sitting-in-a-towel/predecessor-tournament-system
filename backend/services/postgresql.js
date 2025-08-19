@@ -12,7 +12,8 @@ class PostgreSQLService {
             ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
             max: 20,
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 2000,
+            connectionTimeoutMillis: 10000, // 10 seconds for production
+            acquireTimeoutMillis: 10000,    // Additional timeout for acquiring connections
         } : {
             host: process.env.POSTGRES_HOST || 'localhost',
             port: parseInt(process.env.POSTGRES_PORT) || 5432,
@@ -21,7 +22,8 @@ class PostgreSQLService {
             password: String(process.env.POSTGRES_PASSWORD || ''),
             max: 20,
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 2000,
+            connectionTimeoutMillis: 10000, // 10 seconds for production
+            acquireTimeoutMillis: 10000,    // Additional timeout for acquiring connections
         };
         
         this.pool = new Pool(config);
@@ -30,15 +32,27 @@ class PostgreSQLService {
         this.testConnection();
     }
 
-    async testConnection() {
-        try {
-            const client = await this.pool.connect();
-            await client.query('SELECT NOW()');
-            client.release();
-            logger.info('✅ PostgreSQL connection successful');
-        } catch (error) {
-            logger.error('❌ PostgreSQL connection failed:', error.message);
-            throw error;
+    async testConnection(retries = 3) {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                logger.info(`Testing PostgreSQL connection (attempt ${attempt}/${retries})`);
+                const client = await this.pool.connect();
+                await client.query('SELECT NOW()');
+                client.release();
+                logger.info('✅ PostgreSQL connection successful');
+                return;
+            } catch (error) {
+                logger.error(`❌ PostgreSQL connection failed (attempt ${attempt}/${retries}):`, error.message);
+                
+                if (attempt === retries) {
+                    logger.error('Final attempt failed, but continuing with startup...');
+                    // Don't throw - let the server start anyway for debugging
+                    return;
+                } else {
+                    // Wait before retry
+                    await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+                }
+            }
         }
     }
 
@@ -211,6 +225,34 @@ class PostgreSQLService {
         `;
         const result = await this.query(query, [tournamentId]);
         return result.rows;
+    }
+
+    async deleteTournament(tournamentId) {
+        // Start a transaction to ensure all related data is deleted
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // First delete all drafts related to this tournament
+            await client.query('DELETE FROM drafts WHERE tournament_id = (SELECT id FROM tournaments WHERE tournament_id = $1)', [tournamentId]);
+            
+            // Delete all team_players entries for teams in this tournament
+            await client.query('DELETE FROM team_players WHERE team_id IN (SELECT id FROM teams WHERE tournament_id = (SELECT id FROM tournaments WHERE tournament_id = $1))', [tournamentId]);
+            
+            // Delete all teams in this tournament
+            await client.query('DELETE FROM teams WHERE tournament_id = (SELECT id FROM tournaments WHERE tournament_id = $1)', [tournamentId]);
+            
+            // Finally delete the tournament itself
+            const result = await client.query('DELETE FROM tournaments WHERE tournament_id = $1 RETURNING *', [tournamentId]);
+            
+            await client.query('COMMIT');
+            return result.rows[0];
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     }
 
     async getTeamsByUser(userId) {
