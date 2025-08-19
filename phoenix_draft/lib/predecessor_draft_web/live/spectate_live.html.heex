@@ -411,112 +411,40 @@
     </div>
   <% else %>
     <%# Header Bar with Team Names and Timers %>
-    <div class="spectate-header">
-      <%# Team 1 Section %>
-      <div class="team-header-section">
-        <div class="team-name-box team1-name">
-          <%= @team1.team_name %>
-        </div>
-        <%= if @timer_state.timer_enabled do %>
-          <div class="timer-box">
-            <div class="timer-label">
-              <%= if @timer_state.team1_in_bonus do %>🔥 BONUS TIMER<% else %>Main Timer<% end %>
-            </div>
-            <div class={["timer-value", if(@timer_state.current_team == "team1", do: "active", else: "")]}>
-              <%= if @timer_state.current_team == "team1" do %>
-                <%= if @timer_state.current_phase == :bonus_timer do %>
-                  <%= @timer_remaining || @timer_state.team1_bonus_remaining %>s
-                <% else %>
-                  <%= @timer_remaining || @timer_state.team1_main_timer %>s
-                <% end %>
-              <% else %>
-                <%= @timer_state.team1_main_timer %>s
-              <% end %>
-            </div>
-            <div class="bonus-time">
-              Bonus: <%= @timer_state.team1_bonus_remaining %>s
-            </div>
-          </div>
-        <% end %>
-      </div>
-      
-      <%# Team 2 Section %>
-      <div class="team-header-section" style="justify-content: flex-end;">
-        <%= if @timer_state.timer_enabled do %>
-          <div class="timer-box">
-            <div class="timer-label">
-              <%= if @timer_state.team2_in_bonus do %>🔥 BONUS TIMER<% else %>Main Timer<% end %>
-            </div>
-            <div class={["timer-value", if(@timer_state.current_team == "team2", do: "active", else: "")]}>
-              <%= if @timer_state.current_team == "team2" do %>
-                <%= if @timer_state.current_phase == :bonus_timer do %>
-                  <%= @timer_remaining || @timer_state.team2_bonus_remaining %>s
-                <% else %>
-                  <%= @timer_remaining || @timer_state.team2_main_timer %>s
-                <% end %>
-              <% else %>
-                <%= @timer_state.team2_main_timer %>s
-              <% end %>
-            </div>
-            <div class="bonus-time">
-              Bonus: <%= @timer_state.team2_bonus_remaining %>s
-            </div>
-          </div>
-        <% end %>
-        <div class="team-name-box team2-name">
-          <%= @team2.team_name %>
-        </div>
-      </div>
-      
-      <%# Central Status Display %>
-      <div class="draft-status-box">
-        <div class="status-phase">
-          <%= @draft.current_phase %>
-        </div>
-        <%= if @draft.current_phase in ["Ban Phase", "Pick Phase"] do %>
-          <% current_team = get_current_turn_team(@draft) %>
-          <% action = PredecessorDraft.Drafts.determine_current_action(@draft) %>
-          <div class="status-turn">
-            <%= if current_team == "team1" do %>
-              <%= @team1.team_name %>'s <%= if action == :ban, do: "BAN", else: "PICK" %>
-            <% else %>
-              <%= @team2.team_name %>'s <%= if action == :ban, do: "BAN", else: "PICK" %>
-            <% end %>
-          </div>
-        <% end %>
-        <%= if @draft.current_phase == "Complete" do %>
-          <div class="status-turn" style="color: #10b981;">
-            DRAFT COMPLETE
-          </div>
-        <% end %>
-      </div>
-    </div>
+    <.live_component
+      module={PredecessorDraftWeb.Components.DraftHeader}
+      id="spectator-header"
+      display_mode={:spectator}
+      draft_id={@draft_id}
+      current_phase={@draft.current_phase}
+      team1={@team1}
+      team2={@team2}
+      team1_connected={@draft.team1_connected}
+      team2_connected={@draft.team2_connected}
+      timer_state={@timer_state}
+      current_turn={get_current_turn_team(@draft)}
+      current_action={PredecessorDraft.Drafts.determine_current_action(@draft)}
+      show_back_link={false}
+    />
     
     <%# Main Draft Area %>
     <div class="spectate-draft-area">
       <%# Team 1 Panel (Left) %>
-      <div class="team-panel team-panel-left">
-        <%= for i <- 1..5 do %>
-          <% hero_id = Enum.at(@draft.team1_picks || [], i - 1) %>
-          <% hero = if hero_id && hero_id != "skipped", do: Enum.find(@heroes, &(&1.id == hero_id)), else: nil %>
-          <% team1_pick_count = length(@draft.team1_picks || []) %>
-          <% is_current = @draft.current_turn == "team1" && @draft.current_phase == "Pick Phase" && i == team1_pick_count + 1 %>
-          
-          <div class={["hero-slot", if(hero, do: "filled", else: ""), if(is_current, do: "active", else: "")]}>
-            <div class="slot-number">Pick <%= i %></div>
-            <%= if hero do %>
-              <img src={hero.image} alt={hero.name} class="hero-portrait-small" 
-                   onerror="this.src='/images/heroes/placeholder.jpg'" />
-              <div class="hero-info">
-                <div class="hero-name"><%= hero.name %></div>
-                <div class="hero-role"><%= hero.role %></div>
-              </div>
-            <% else %>
-              <div class="empty-slot-text">Empty</div>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
+      <.live_component
+        module={PredecessorDraftWeb.Components.TeamPanel}
+        id="team1-panel"
+        display_mode={:spectator}
+        team_position={:left}
+        team_name={@team1.team_name}
+        team_picks={@draft.team1_picks || []}
+        team_bans={@draft.team1_bans || []}
+        heroes={@heroes}
+        current_phase={@draft.current_phase}
+        current_team={get_current_turn_team(@draft)}
+        show_timers={false}
+        show_draft_order={false}
+        show_coin_info={false}
+      />
       
       <%# Center Area %>
       <div class="center-area">
@@ -544,82 +472,34 @@
         </div>
         
         <%# Bans Display %>
-        <div class="bans-section">
-          <div class="bans-container">
-            <%# Team 1 Bans %>
-            <div class="team-bans">
-              <%= for i <- 1..4 do %>
-                <% ban_id = Enum.at(@draft.team1_bans || [], i - 1) %>
-                <% hero = if ban_id && ban_id != "skipped", do: Enum.find(@heroes, &(&1.id == ban_id)), else: nil %>
-                
-                <div class={["ban-slot", if(hero, do: "filled", else: "")]}>
-                  <%= if hero do %>
-                    <img src={hero.image} alt={hero.name} class="ban-portrait" 
-                         onerror="this.src='/images/heroes/placeholder.jpg'" />
-                    <div class="ban-x">✕</div>
-                    <div class="ban-name"><%= hero.name %></div>
-                  <% else %>
-                    <%= if ban_id == "skipped" do %>
-                      <div style="color: #6b7280; font-size: 11px;">Skipped</div>
-                    <% else %>
-                      <div style="color: #6b7280; font-size: 11px;">Ban <%= i %></div>
-                    <% end %>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
-            
-            <div class="bans-label">BANS</div>
-            
-            <%# Team 2 Bans %>
-            <div class="team-bans">
-              <%= for i <- 1..4 do %>
-                <% ban_id = Enum.at(@draft.team2_bans || [], i - 1) %>
-                <% hero = if ban_id && ban_id != "skipped", do: Enum.find(@heroes, &(&1.id == ban_id)), else: nil %>
-                
-                <div class={["ban-slot", if(hero, do: "filled", else: "")]}>
-                  <%= if hero do %>
-                    <img src={hero.image} alt={hero.name} class="ban-portrait" 
-                         onerror="this.src='/images/heroes/placeholder.jpg'" />
-                    <div class="ban-x">✕</div>
-                    <div class="ban-name"><%= hero.name %></div>
-                  <% else %>
-                    <%= if ban_id == "skipped" do %>
-                      <div style="color: #6b7280; font-size: 11px;">Skipped</div>
-                    <% else %>
-                      <div style="color: #6b7280; font-size: 11px;">Ban <%= i %></div>
-                    <% end %>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
-          </div>
-        </div>
+        <.live_component
+          module={PredecessorDraftWeb.Components.BansDisplay}
+          id="spectator-bans"
+          display_mode={:spectator}
+          team1_bans={@draft.team1_bans || []}
+          team2_bans={@draft.team2_bans || []}
+          heroes={@heroes}
+          max_bans_per_team={4}
+          show_labels={true}
+        />
       </div>
       
       <%# Team 2 Panel (Right) %>
-      <div class="team-panel team-panel-right">
-        <%= for i <- 1..5 do %>
-          <% hero_id = Enum.at(@draft.team2_picks || [], i - 1) %>
-          <% hero = if hero_id && hero_id != "skipped", do: Enum.find(@heroes, &(&1.id == hero_id)), else: nil %>
-          <% team2_pick_count = length(@draft.team2_picks || []) %>
-          <% is_current = @draft.current_turn == "team2" && @draft.current_phase == "Pick Phase" && i == team2_pick_count + 1 %>
-          
-          <div class={["hero-slot", if(hero, do: "filled", else: ""), if(is_current, do: "active", else: "")]}>
-            <div class="slot-number">Pick <%= i %></div>
-            <%= if hero do %>
-              <img src={hero.image} alt={hero.name} class="hero-portrait-small" 
-                   onerror="this.src='/images/heroes/placeholder.jpg'" />
-              <div class="hero-info">
-                <div class="hero-name"><%= hero.name %></div>
-                <div class="hero-role"><%= hero.role %></div>
-              </div>
-            <% else %>
-              <div class="empty-slot-text">Empty</div>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
+      <.live_component
+        module={PredecessorDraftWeb.Components.TeamPanel}
+        id="team2-panel"
+        display_mode={:spectator}
+        team_position={:right}
+        team_name={@team2.team_name}
+        team_picks={@draft.team2_picks || []}
+        team_bans={@draft.team2_bans || []}
+        heroes={@heroes}
+        current_phase={@draft.current_phase}
+        current_team={get_current_turn_team(@draft)}
+        show_timers={false}
+        show_draft_order={false}
+        show_coin_info={false}
+      />
     </div>
     
     <%# Draft Complete Overlay %>

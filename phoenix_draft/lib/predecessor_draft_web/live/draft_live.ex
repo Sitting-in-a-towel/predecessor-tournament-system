@@ -5,6 +5,9 @@ defmodule PredecessorDraftWeb.DraftLive do
   alias PredecessorDraft.Accounts
   alias PredecessorDraftWeb.Presence
   alias PredecessorDraftWeb.Components.HeroGrid
+  
+  # Import shared components for refactoring
+  alias PredecessorDraftWeb.Components.{DraftHeader, TeamPanel, BansDisplay, DraftStatus, TimerDisplay}
 
   @impl true
   def mount(%{"draft_id" => draft_id}, session, socket) do

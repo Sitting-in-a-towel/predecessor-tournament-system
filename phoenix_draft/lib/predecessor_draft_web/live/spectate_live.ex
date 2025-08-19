@@ -5,6 +5,9 @@ defmodule PredecessorDraftWeb.SpectateLive do
   alias PredecessorDraft.Teams
   alias Phoenix.PubSub
   
+  # Import shared components
+  alias PredecessorDraftWeb.Components.{DraftHeader, TeamPanel, BansDisplay, DraftStatus, TimerDisplay}
+  
   require Logger
 
   @impl true
