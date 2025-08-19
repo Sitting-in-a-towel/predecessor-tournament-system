@@ -207,13 +207,16 @@ class PostgreSQLService {
         }
         
         // If not found by UUID, try looking up by name pattern (e.g., "Test tournament 101" -> "101")
-        query = `
-            SELECT t.*, u.discord_username as creator_username 
-            FROM tournaments t 
-            LEFT JOIN users u ON t.created_by = u.id 
-            WHERE t.name ILIKE $1
-        `;
-        result = await this.query(query, [`%tournament ${tournamentId}%`]);
+        // Only try if the tournamentId looks like a number
+        if (/^\d+$/.test(tournamentId)) {
+            query = `
+                SELECT t.*, u.discord_username as creator_username 
+                FROM tournaments t 
+                LEFT JOIN users u ON t.created_by = u.id 
+                WHERE t.name ILIKE $1
+            `;
+            result = await this.query(query, [`%tournament ${tournamentId}%`]);
+        }
         
         return result.rows[0];
     }
