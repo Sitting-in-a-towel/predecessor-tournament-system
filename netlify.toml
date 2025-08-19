@@ -5,6 +5,7 @@
 [build.environment]
   NODE_VERSION = "18"
   CI = "false"
+  REACT_APP_PHOENIX_ENABLED = "false"
 
 [[redirects]]
   from = "/*"
