@@ -224,8 +224,8 @@ class PostgreSQLService {
     }
 
     async getTeamsByTournament(tournamentId) {
-        // First try using the tournament_teams junction table (production structure)
         try {
+            // Use tournament_teams junction table (production structure)
             const junctionQuery = `
                 SELECT 
                     t.team_id,
@@ -244,28 +244,31 @@ class PostgreSQLService {
                 ORDER BY t.created_at DESC
             `;
             const result = await this.query(junctionQuery, [tournamentId]);
+            return result.rows || [];
+        } catch (error) {
+            console.error('Error fetching teams for tournament:', error.message);
             
-            // If we got results, return them
-            if (result.rows.length > 0) {
-                return result.rows;
+            // Try fallback query if junction table doesn't exist
+            try {
+                const fallbackQuery = `
+                    SELECT 
+                        team_id,
+                        team_name,
+                        created_at,
+                        5 as max_team_size,
+                        NULL as captain_username,
+                        0 as player_count
+                    FROM teams 
+                    WHERE tournament_id = $1
+                    ORDER BY created_at DESC
+                `;
+                const result = await this.query(fallbackQuery, [tournamentId]);
+                return result.rows || [];
+            } catch (fallbackError) {
+                console.error('Fallback query also failed:', fallbackError.message);
+                return [];
             }
-        } catch (junctionError) {
-            console.log('Junction table query failed, trying legacy structure:', junctionError.message);
         }
-        
-        // Fallback to legacy structure where teams have tournament_id directly
-        const query = `
-            SELECT t.*, u.discord_username as captain_username,
-                   COUNT(CASE WHEN tp.role = 'player' THEN 1 END) + 1 as player_count
-            FROM teams t
-            LEFT JOIN users u ON t.captain_id = u.id
-            LEFT JOIN team_players tp ON t.id = tp.team_id AND tp.accepted = true
-            WHERE t.tournament_id = (SELECT id FROM tournaments WHERE tournament_id = $1)
-            GROUP BY t.id, u.discord_username
-            ORDER BY t.created_at DESC
-        `;
-        const result = await this.query(query, [tournamentId]);
-        return result.rows;
     }
 
     async deleteTournament(tournamentId) {
