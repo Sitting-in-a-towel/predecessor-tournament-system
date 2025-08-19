@@ -182,6 +182,19 @@ async function startServer() {
     // Connect to database
     await connectDatabase();
     
+    // Run database migration in production
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        logger.info('Running production database migration...');
+        const runMigration = require('./migrate');
+        await runMigration();
+        logger.info('✅ Production database migration completed');
+      } catch (migrationError) {
+        logger.error('❌ Migration failed, but continuing with server startup:', migrationError.message);
+        // Don't fail the entire startup - let server start for debugging
+      }
+    }
+    
     server.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
