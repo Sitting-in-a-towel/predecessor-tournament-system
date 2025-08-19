@@ -6,14 +6,16 @@ require('dotenv').config({ path: require('path').join(__dirname, '../../.env') }
 
 class PostgreSQLService {
     constructor() {
-        // Use DATABASE_URL if available (production), otherwise use individual variables (local)
-        const config = process.env.DATABASE_URL ? {
-            connectionString: process.env.DATABASE_URL,
-            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        // Use production database if USE_PRODUCTION_DB=true, otherwise use local
+        const useProduction = process.env.USE_PRODUCTION_DB === 'true';
+        
+        const config = useProduction ? {
+            connectionString: process.env.PRODUCTION_DATABASE_URL,
+            ssl: { rejectUnauthorized: false },
             max: 20,
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 10000, // 10 seconds for production
-            acquireTimeoutMillis: 10000,    // Additional timeout for acquiring connections
+            connectionTimeoutMillis: 10000,
+            acquireTimeoutMillis: 10000,
         } : {
             host: process.env.POSTGRES_HOST || 'localhost',
             port: parseInt(process.env.POSTGRES_PORT) || 5432,
@@ -22,9 +24,16 @@ class PostgreSQLService {
             password: String(process.env.POSTGRES_PASSWORD || ''),
             max: 20,
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 10000, // 10 seconds for production
-            acquireTimeoutMillis: 10000,    // Additional timeout for acquiring connections
+            connectionTimeoutMillis: 10000,
+            acquireTimeoutMillis: 10000,
         };
+        
+        console.log(`🗄️  Using ${useProduction ? 'PRODUCTION' : 'LOCAL'} database`);
+        if (useProduction) {
+            console.log('   → Render PostgreSQL (production data)');
+        } else {
+            console.log('   → Local PostgreSQL (localhost)');
+        }
         
         this.pool = new Pool(config);
 
@@ -213,6 +222,32 @@ class PostgreSQLService {
     }
 
     async getTeamsByTournament(tournamentId) {
+        // First try using the tournament_teams junction table (production structure)
+        try {
+            const junctionQuery = `
+                SELECT t.*, u.discord_username as captain_username,
+                       COUNT(DISTINCT tp.player_id) as player_count,
+                       tt.checked_in, tt.registration_date
+                FROM tournament_teams tt
+                JOIN teams t ON tt.team_id = t.team_id
+                LEFT JOIN users u ON t.captain_id = u.id
+                LEFT JOIN team_players tp ON t.team_id = tp.team_id
+                WHERE tt.tournament_id = $1
+                GROUP BY t.team_id, t.team_name, t.captain_id, t.created_at, t.max_team_size, 
+                         u.discord_username, tt.checked_in, tt.registration_date
+                ORDER BY t.created_at DESC
+            `;
+            const result = await this.query(junctionQuery, [tournamentId]);
+            
+            // If we got results, return them
+            if (result.rows.length > 0) {
+                return result.rows;
+            }
+        } catch (junctionError) {
+            console.log('Junction table query failed, trying legacy structure:', junctionError.message);
+        }
+        
+        // Fallback to legacy structure where teams have tournament_id directly
         const query = `
             SELECT t.*, u.discord_username as captain_username,
                    COUNT(CASE WHEN tp.role = 'player' THEN 1 END) + 1 as player_count
