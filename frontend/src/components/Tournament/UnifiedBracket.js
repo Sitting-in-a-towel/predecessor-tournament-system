@@ -30,6 +30,15 @@ const getTeamId = (team) => {
   return team.team_id || team;
 };
 
+// Helper function to clear match results when teams change
+const clearMatchResults = (match) => {
+  match.winner = null;
+  match.loser = null;
+  match.status = 'pending';
+  match.score = null;
+  match.details = null;
+};
+
 const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -403,25 +412,36 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
 
       console.log('Saving bracket data:', { 
         isPublished: saveData.isPublished, 
-        tournamentId 
+        tournamentId,
+        dataSize: JSON.stringify(saveData.bracketData).length
       });
       
       await axios.post(`${API_BASE_URL}/tournaments/${tournamentId}/bracket`, saveData, {
-        withCredentials: true
+        withCredentials: true,
+        timeout: 10000 // 10 second timeout for production reliability
       });
       
       console.log('Bracket data saved successfully');
       return true;
     } catch (error) {
-      console.error('Error saving bracket data:', error);
+      console.error('Error saving bracket data:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        tournamentId
+      });
       
       if (showErrors) {
         if (error.response?.status === 401) {
           toast.error('Authentication required. Please log in again and try publishing.');
         } else if (error.response?.status === 403) {
           toast.error('Admin access required to publish brackets.');
+        } else if (error.response?.status === 404) {
+          toast.error('Tournament not found. Please refresh the page and try again.');
+        } else if (error.response?.status >= 500) {
+          toast.error('Server error. Please try again in a moment.');
         } else {
-          toast.error('Failed to save bracket data. Please try again.');
+          toast.error(`Failed to save bracket data: ${error.response?.data?.error || error.message}`);
         }
       }
       
@@ -1047,6 +1067,12 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
           for (const match of round.matches) {
             match.team1 = null;
             match.team2 = null;
+            // Clear match results when teams are cleared
+            match.winner = null;
+            match.loser = null;
+            match.status = 'pending';
+            match.score = null;
+            match.details = null;
           }
         }
       }
@@ -1130,6 +1156,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
               if (teamIndex < sortedTeams.length) {
                 match.team1 = sortedTeams[teamIndex];
                 teamIndex++;
+                // Clear match results when new teams are assigned
+                clearMatchResults(match);
               }
             }
             
@@ -1141,6 +1169,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
               if (teamIndex < sortedTeams.length) {
                 match.team2 = sortedTeams[teamIndex];
                 teamIndex++;
+                // Clear match results when new teams are assigned
+                clearMatchResults(match);
               }
             }
           }
@@ -1191,6 +1221,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
               if (teamIndex < sortedTeams.length) {
                 match.team1 = sortedTeams[teamIndex];
                 teamIndex++;
+                // Clear match results when new teams are assigned
+                clearMatchResults(match);
               }
             }
             
@@ -1202,6 +1234,8 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
               if (teamIndex < sortedTeams.length) {
                 match.team2 = sortedTeams[teamIndex];
                 teamIndex++;
+                // Clear match results when new teams are assigned
+                clearMatchResults(match);
               }
             }
           }
@@ -1247,7 +1281,7 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
     return teams.length >= 2 && isAdmin() && !isPublished;
   };
 
-  const publishBracket = () => {
+  const publishBracket = async () => {
     if (!isAdmin()) {
       toast.error('Only admins can publish brackets');
       return;
@@ -1278,12 +1312,25 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       }
     }
     
-    setLockedSlots(newLockedSlots);
-    setIsPublished(true);
-    toast.success('Bracket published! All teams are now locked.');
-    
-    // Auto-save published state immediately with explicit published state
-    saveBracketData(null, true, true);
+    // Save to backend FIRST, then update UI on success
+    try {
+      console.log('🚀 Publishing bracket - saving to backend first...');
+      const saveSuccess = await saveBracketData(null, true, true); // Force show errors
+      
+      if (saveSuccess) {
+        // Only update UI state after successful backend save
+        setLockedSlots(newLockedSlots);
+        setIsPublished(true);
+        toast.success('Bracket published! All teams are now locked.');
+        console.log('✅ Bracket successfully published and saved');
+      } else {
+        console.error('❌ Backend save failed, not updating UI state');
+        // Error message already shown by saveBracketData when showErrors=true
+      }
+    } catch (error) {
+      console.error('❌ Error during bracket publish:', error);
+      toast.error(`Failed to publish bracket: ${error.message}`);
+    }
   };
 
   const unpublishBracket = () => {
@@ -1292,11 +1339,50 @@ const UnifiedBracket = ({ tournamentId, onBracketUpdate }) => {
       return;
     }
 
-    setIsPublished(false);
-    toast.info('Bracket unpublished. You can now edit team placements.');
+    // Reset all match results when unpublishing
+    const resetBracketData = { ...bracketData };
     
-    // Auto-save unpublished state immediately with explicit published state
-    saveBracketData(null, false, true);
+    // Reset single elimination results
+    if (resetBracketData.singleElimination?.rounds) {
+      resetBracketData.singleElimination.rounds.forEach(round => {
+        round.matches.forEach(match => {
+          match.winner = null;
+          match.loser = null;
+          match.status = 'pending';
+          match.score = null;
+          match.details = null;
+        });
+      });
+    }
+    
+    // Reset double elimination results
+    if (resetBracketData.doubleElimination) {
+      ['upper', 'lower', 'finals'].forEach(bracket => {
+        if (resetBracketData.doubleElimination[bracket]?.rounds) {
+          resetBracketData.doubleElimination[bracket].rounds.forEach(round => {
+            round.matches.forEach(match => {
+              match.winner = null;
+              match.loser = null;
+              match.status = 'pending';
+              match.score = null;
+              match.details = null;
+            });
+          });
+        }
+      });
+    }
+
+    setBracketData(resetBracketData);
+    setIsPublished(false);
+    toast.info('Bracket unpublished and all match results reset.');
+    
+    // Auto-save unpublished state with reset data
+    saveBracketData(resetBracketData, false, true);
+    
+    // Notify parent component that bracket was updated
+    if (onBracketUpdate) {
+      onBracketUpdate('bracket_unpublished');
+    }
   };
 
   if (loading) {
