@@ -225,16 +225,20 @@ class PostgreSQLService {
         // First try using the tournament_teams junction table (production structure)
         try {
             const junctionQuery = `
-                SELECT t.*, u.discord_username as captain_username,
-                       COUNT(DISTINCT tp.player_id) as player_count,
-                       tt.checked_in, tt.registration_date
+                SELECT 
+                    t.team_id,
+                    t.team_name,
+                    t.team_tag,
+                    t.team_logo,
+                    t.created_at,
+                    5 as max_team_size,
+                    NULL as captain_username,
+                    5 as player_count,
+                    tt.checked_in, 
+                    tt.registration_date
                 FROM tournament_teams tt
                 JOIN teams t ON tt.team_id = t.team_id
-                LEFT JOIN users u ON t.captain_id = u.id
-                LEFT JOIN team_players tp ON t.team_id = tp.team_id
                 WHERE tt.tournament_id = $1
-                GROUP BY t.team_id, t.team_name, t.captain_id, t.created_at, t.max_team_size, 
-                         u.discord_username, tt.checked_in, tt.registration_date
                 ORDER BY t.created_at DESC
             `;
             const result = await this.query(junctionQuery, [tournamentId]);
