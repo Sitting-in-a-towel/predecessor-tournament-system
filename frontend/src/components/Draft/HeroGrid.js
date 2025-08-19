@@ -68,12 +68,18 @@ const HeroGrid = ({ heroes, bannedHeroes = [], pickedHeroes = [], isUserTurn = f
                     >
                       <div className="hero-image">
                         {hero.hero_image_url ? (
-                          <img src={hero.hero_image_url} alt={hero.hero_name} />
-                        ) : (
-                          <div className="hero-placeholder">
-                            {hero.hero_name.charAt(0)}
-                          </div>
-                        )}
+                          <img 
+                            src={hero.hero_image_url} 
+                            alt={hero.hero_name}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.parentNode.querySelector('.hero-placeholder').style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className="hero-placeholder" style={{ display: hero.hero_image_url ? 'none' : 'flex' }}>
+                          {hero.hero_name.charAt(0)}
+                        </div>
                       </div>
                       
                       <div className="hero-info">

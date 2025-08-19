@@ -1,61 +1,38 @@
-const postgresService = require("./services/postgresql");
+const pg = require('./services/postgresql');
 
 async function checkSchema() {
+  console.log('\n=== CHECKING DATABASE SCHEMA ===\n');
+  
   try {
-    console.log("Checking tournament_registrations schema...");
-    const schemaResult = await postgresService.query(`
-      SELECT column_name, data_type, is_nullable 
+    // Check draft_sessions table schema
+    console.log('1. Checking draft_sessions table schema...');
+    const schemaQuery = `
+      SELECT column_name, data_type, is_nullable, column_default
       FROM information_schema.columns 
-      WHERE table_name = "tournament_registrations" 
-      ORDER BY ordinal_position;
-    `);
+      WHERE table_name = 'draft_sessions' 
+      AND column_name IN ('team1_captain_id', 'team2_captain_id')
+      ORDER BY column_name;
+    `;
     
-    console.log("tournament_registrations columns:");
-    schemaResult.rows.forEach(row => {
+    const result = await pg.query(schemaQuery);
+    console.log('Captain ID columns:');
+    result.rows.forEach(row => {
       console.log(`  ${row.column_name}: ${row.data_type} (nullable: ${row.is_nullable})`);
     });
     
-    console.log("\nChecking teams schema...");
-    const teamsSchema = await postgresService.query(`
-      SELECT column_name, data_type, is_nullable 
-      FROM information_schema.columns 
-      WHERE table_name = "teams" 
-      ORDER BY ordinal_position;
-    `);
-    
-    console.log("teams columns:");
-    teamsSchema.rows.forEach(row => {
-      console.log(`  ${row.column_name}: ${row.data_type} (nullable: ${row.is_nullable})`);
+    // Check what type we need
+    console.log('\n2. Checking what user_id values look like...');
+    const userSample = await pg.query('SELECT user_id FROM users LIMIT 3');
+    console.log('Sample user_id values:');
+    userSample.rows.forEach(row => {
+      console.log(`  ${row.user_id} (length: ${row.user_id.length})`);
     });
     
-    // Sample some actual data
-    console.log("\nSample tournament_registrations data:");
-    const sampleRegs = await postgresService.query(`
-      SELECT id, team_id, tournament_id 
-      FROM tournament_registrations 
-      LIMIT 3;
-    `);
-    
-    sampleRegs.rows.forEach(row => {
-      console.log(`  id: ${row.id} (${typeof row.id}), team_id: ${row.team_id} (${typeof row.team_id})`);
-    });
-    
-    console.log("\nSample teams data:");
-    const sampleTeams = await postgresService.query(`
-      SELECT id, team_id, team_name 
-      FROM teams 
-      LIMIT 3;
-    `);
-    
-    sampleTeams.rows.forEach(row => {
-      console.log(`  id: ${row.id} (${typeof row.id}), team_id: ${row.team_id} (${typeof row.team_id})`);
-    });
-    
-    process.exit(0);
   } catch (error) {
-    console.error("Schema check error:", error.message);
-    process.exit(1);
+    console.error('Error:', error.message);
   }
+  
+  process.exit(0);
 }
 
 checkSchema();

@@ -18,8 +18,8 @@ router.get('/tournaments/:tournamentId/bracket',
 
       const { tournamentId } = req.params;
 
-      // Get tournament info first
-      const tournamentQuery = `SELECT * FROM tournaments WHERE tournament_id = $1`;
+      // Get tournament info first - handle both id and tournament_id with proper casting
+      const tournamentQuery = `SELECT * FROM tournaments WHERE id::text = $1 OR tournament_id::text = $1`;
       const tournamentResult = await postgresService.query(tournamentQuery, [tournamentId]);
       
       if (tournamentResult.rows.length === 0) {
@@ -38,29 +38,117 @@ router.get('/tournaments/:tournamentId/bracket',
       `;
       const bracketResult = await postgresService.query(bracketQuery, [tournament.id]);
 
-      // Get matches
-      const matchesQuery = `
-        SELECT bm.*,
-               t1.team_name as team1_name,
-               t1.team_id as team1_ref_id,
-               t2.team_name as team2_name, 
-               t2.team_id as team2_ref_id,
-               winner.team_name as winner_name,
-               winner.team_id as winner_ref_id
-        FROM bracket_matches bm
-        LEFT JOIN teams t1 ON bm.team1_id = t1.id
-        LEFT JOIN teams t2 ON bm.team2_id = t2.id
-        LEFT JOIN teams winner ON bm.winner_id = winner.id
-        WHERE bm.tournament_id = $1
-        ORDER BY bm.round_number, bm.match_number
-      `;
-      const matchesResult = await postgresService.query(matchesQuery, [tournament.id]);
+      // Extract matches from bracket JSON data instead of empty bracket_matches table
+      let extractedMatches = [];
+      
+      if (bracketResult.rows.length > 0 && bracketResult.rows[0].bracket_data) {
+        const bracketData = bracketResult.rows[0].bracket_data;
+        
+        try {
+          // Extract matches from JSON bracket data (like frontend does)
+          if (bracketData.type === 'Single Elimination' && bracketData.rounds) {
+            bracketData.rounds.forEach((round, roundIndex) => {
+              if (round.matches) {
+                round.matches.forEach((match, matchIndex) => {
+                  if (match.team1 && match.team2 && 
+                      match.team1 !== 'bye' && match.team2 !== 'bye' &&
+                      typeof match.team1 === 'object' && typeof match.team2 === 'object') {
+                    
+                    extractedMatches.push({
+                      id: match.id,
+                      round_number: roundIndex + 1,
+                      match_number: matchIndex + 1,
+                      team1_id: match.team1.id,
+                      team2_id: match.team2.id,
+                      team1_name: match.team1.team_name,
+                      team2_name: match.team2.team_name,
+                      team1_ref_id: match.team1.team_id,
+                      team2_ref_id: match.team2.team_id,
+                      winner_id: match.winner?.id || null,
+                      winner_name: match.winner?.team_name || null,
+                      winner_ref_id: match.winner?.team_id || null,
+                      status: match.status || 'pending',
+                      round_name: round.name,
+                      bracket_type: 'SE'
+                    });
+                  }
+                });
+              }
+            });
+          } else if (bracketData.type === 'Double Elimination') {
+            // Handle Double Elimination brackets
+            if (bracketData.upperBracket?.rounds) {
+              bracketData.upperBracket.rounds.forEach((round, roundIndex) => {
+                if (round.matches) {
+                  round.matches.forEach((match, matchIndex) => {
+                    if (match.team1 && match.team2 && 
+                        typeof match.team1 === 'object' && typeof match.team2 === 'object') {
+                      extractedMatches.push({
+                        id: match.id,
+                        round_number: roundIndex + 1,
+                        match_number: matchIndex + 1,
+                        team1_id: match.team1.id,
+                        team2_id: match.team2.id,
+                        team1_name: match.team1.team_name,
+                        team2_name: match.team2.team_name,
+                        team1_ref_id: match.team1.team_id,
+                        team2_ref_id: match.team2.team_id,
+                        winner_id: match.winner?.id || null,
+                        winner_name: match.winner?.team_name || null,
+                        winner_ref_id: match.winner?.team_id || null,
+                        status: match.status || 'pending',
+                        round_name: round.name,
+                        bracket_type: 'UB'
+                      });
+                    }
+                  });
+                }
+              });
+            }
+            
+            if (bracketData.lowerBracket?.rounds) {
+              bracketData.lowerBracket.rounds.forEach((round, roundIndex) => {
+                if (round.matches) {
+                  round.matches.forEach((match, matchIndex) => {
+                    if (match.team1 && match.team2 && 
+                        typeof match.team1 === 'object' && typeof match.team2 === 'object') {
+                      extractedMatches.push({
+                        id: match.id,
+                        round_number: roundIndex + 1,
+                        match_number: matchIndex + 1,
+                        team1_id: match.team1.id,
+                        team2_id: match.team2.id,
+                        team1_name: match.team1.team_name,
+                        team2_name: match.team2.team_name,
+                        team1_ref_id: match.team1.team_id,
+                        team2_ref_id: match.team2.team_id,
+                        winner_id: match.winner?.id || null,
+                        winner_name: match.winner?.team_name || null,
+                        winner_ref_id: match.winner?.team_id || null,
+                        status: match.status || 'pending',
+                        round_name: round.name,
+                        bracket_type: 'LB'
+                      });
+                    }
+                  });
+                }
+              });
+            }
+          }
+          
+          logger.info(`Extracted ${extractedMatches.length} matches from bracket JSON for tournament ${tournamentId}`);
+          
+        } catch (extractError) {
+          logger.error('Error extracting matches from bracket JSON:', extractError);
+          extractedMatches = [];
+        }
+      }
 
       res.json({
         tournament_id: tournamentId,
         tournament_name: tournament.name,
         bracket: bracketResult.rows[0] || null,
-        matches: matchesResult.rows,
+        matches: extractedMatches,
         has_bracket_data: bracketResult.rows.length > 0
       });
 
@@ -102,20 +190,34 @@ router.post('/tournaments/:tournamentId/bracket',
       } = req.body;
 
       // Debug logging
-      logger.info(`Bracket save request - isPublished received: ${isPublished} (type: ${typeof isPublished})`);
+      logger.info(`Bracket save request - User: ${req.user?.discord_username}, Tournament: ${tournamentId}, Published: ${isPublished} (type: ${typeof isPublished})`);
 
-      // Get tournament info
-      const tournamentQuery = `SELECT * FROM tournaments WHERE tournament_id = $1`;
+      // Validation checks
+      if (!req.user || !req.user.id) {
+        logger.error('Bracket save failed: User not properly authenticated');
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      if (!bracketData || typeof bracketData !== 'object') {
+        logger.error('Bracket save failed: Invalid bracket data format');
+        return res.status(400).json({ error: 'Invalid bracket data format' });
+      }
+
+      // Get tournament info - handle both id and tournament_id
+      const tournamentQuery = `SELECT * FROM tournaments WHERE id::text = $1 OR tournament_id::text = $1`;
       const tournamentResult = await postgresService.query(tournamentQuery, [tournamentId]);
       
       if (tournamentResult.rows.length === 0) {
+        logger.error(`Bracket save failed: Tournament not found: ${tournamentId}`);
         return res.status(404).json({ error: 'Tournament not found' });
       }
 
       const tournament = tournamentResult.rows[0];
+      logger.info(`Bracket save - Tournament found: ${tournament.name}, Created by: ${tournament.created_by}`);
 
       // Get user UUID
       const userUUID = req.user.id;
+      logger.info(`Bracket save - User UUID: ${userUUID}`);
 
       // Upsert bracket data
       const upsertQuery = `
@@ -153,8 +255,28 @@ router.post('/tournaments/:tournamentId/bracket',
       });
 
     } catch (error) {
-      logger.error('Error saving bracket data:', error);
-      res.status(500).json({ error: 'Failed to save bracket data' });
+      logger.error('Error saving bracket data:', {
+        error: error.message,
+        stack: error.stack,
+        tournamentId,
+        userId: req.user?.id,
+        userName: req.user?.discord_username,
+        isPublished,
+        bracketDataSize: JSON.stringify(bracketData).length
+      });
+      
+      // More specific error messages based on error type
+      if (error.code === '23505') { // Unique constraint violation
+        res.status(409).json({ error: 'Bracket data conflict - please refresh and try again' });
+      } else if (error.code === '23503') { // Foreign key violation
+        res.status(400).json({ error: 'Invalid tournament or user reference' });
+      } else if (error.code === '23502') { // Not null violation
+        res.status(400).json({ error: 'Missing required bracket data' });
+      } else if (error.message?.includes('invalid input syntax')) {
+        res.status(400).json({ error: 'Invalid data format' });
+      } else {
+        res.status(500).json({ error: 'Failed to save bracket data', details: error.message });
+      }
     }
   }
 );
@@ -180,8 +302,8 @@ router.post('/tournaments/:tournamentId/bracket/matches/:matchId',
       const { tournamentId, matchId } = req.params;
       const { team1_score, team2_score, winner_id, status } = req.body;
 
-      // Get tournament info
-      const tournamentQuery = `SELECT * FROM tournaments WHERE tournament_id = $1`;
+      // Get tournament info - handle both id and tournament_id
+      const tournamentQuery = `SELECT * FROM tournaments WHERE id::text = $1 OR tournament_id::text = $1`;
       const tournamentResult = await postgresService.query(tournamentQuery, [tournamentId]);
       
       if (tournamentResult.rows.length === 0) {
@@ -253,8 +375,8 @@ router.delete('/tournaments/:tournamentId/bracket',
 
       const { tournamentId } = req.params;
 
-      // Get tournament info
-      const tournamentQuery = `SELECT * FROM tournaments WHERE tournament_id = $1`;
+      // Get tournament info - handle both id and tournament_id
+      const tournamentQuery = `SELECT * FROM tournaments WHERE id::text = $1 OR tournament_id::text = $1`;
       const tournamentResult = await postgresService.query(tournamentQuery, [tournamentId]);
       
       if (tournamentResult.rows.length === 0) {
@@ -265,7 +387,7 @@ router.delete('/tournaments/:tournamentId/bracket',
 
       // Delete bracket data (cascades to matches)
       await postgresService.query(
-        'DELETE FROM tournament_brackets WHERE tournament_id = $1',
+        'DELETE FROM tournament_brackets WHERE id = $1',
         [tournament.id]
       );
 

@@ -11,38 +11,59 @@ router.get('/', async (req, res) => {
   try {
     const { tournamentId } = req.query;
     
-    let query = `
-      SELECT DISTINCT
-        ds.*,
-        t1.team_name as team1_name,
-        t2.team_name as team2_name,
-        t1.team_id as team1_id,
-        t2.team_id as team2_id,
-        u1.discord_username as team1_captain_name,
-        u2.discord_username as team2_captain_name
-      FROM draft_sessions ds
-      LEFT JOIN teams t1 ON ds.team1_captain_id = t1.captain_id
-      LEFT JOIN teams t2 ON ds.team2_captain_id = t2.captain_id
-      LEFT JOIN users u1 ON ds.team1_captain_id = u1.id
-      LEFT JOIN users u2 ON ds.team2_captain_id = u2.id
-    `;
+    let query, params = [];
     
-    // If tournamentId provided, filter by teams in that tournament
     if (tournamentId) {
-      query += `
-        WHERE EXISTS (
-          SELECT 1 FROM tournament_registrations tr
-          WHERE tr.tournament_id = $1
-          AND (tr.team_id = t1.id OR tr.team_id = t2.id)
-        )
+      // Filter drafts by tournament - use specific team IDs when available
+      query = `
+        SELECT 
+          ds.*,
+          t1.team_name as team1_name,
+          t2.team_name as team2_name,
+          t1.team_id as team1_id_display,
+          t2.team_id as team2_id_display,
+          u1.discord_username as team1_captain_name,
+          u2.discord_username as team2_captain_name
+        FROM draft_sessions ds
+        -- Join with tournament registrations (ds.team1_id is registration.id)
+        LEFT JOIN tournament_registrations tr1 ON ds.team1_id = tr1.id
+        LEFT JOIN tournament_registrations tr2 ON ds.team2_id = tr2.id
+        -- Then join with teams to get team names
+        LEFT JOIN teams t1 ON tr1.team_id = t1.id
+        LEFT JOIN teams t2 ON tr2.team_id = t2.id
+        LEFT JOIN users u1 ON ds.team1_captain_id = u1.user_id
+        LEFT JOIN users u2 ON ds.team2_captain_id = u2.user_id
+        WHERE 
+          -- Filter by tournament through registrations
+          (tr1.tournament_id = $1 OR tr2.tournament_id = $1)
+        ORDER BY ds.created_at DESC
+      `;
+      params = [tournamentId];
+    } else {
+      // Get all drafts with team info
+      query = `
+        SELECT 
+          ds.*,
+          t1.team_name as team1_name,
+          t2.team_name as team2_name,
+          t1.team_id as team1_id_display,
+          t2.team_id as team2_id_display,
+          u1.discord_username as team1_captain_name,
+          u2.discord_username as team2_captain_name
+        FROM draft_sessions ds
+        -- Join with tournament registrations (ds.team1_id is registration.id)
+        LEFT JOIN tournament_registrations tr1 ON ds.team1_id = tr1.id
+        LEFT JOIN tournament_registrations tr2 ON ds.team2_id = tr2.id
+        -- Then join with teams to get team names
+        LEFT JOIN teams t1 ON tr1.team_id = t1.id
+        LEFT JOIN teams t2 ON tr2.team_id = t2.id
+        LEFT JOIN users u1 ON ds.team1_captain_id = u1.user_id
+        LEFT JOIN users u2 ON ds.team2_captain_id = u2.user_id
+        ORDER BY ds.created_at DESC
       `;
     }
     
-    query += ` ORDER BY ds.created_at DESC`;
-    
-    const result = tournamentId 
-      ? await postgresService.query(query, [tournamentId])
-      : await postgresService.query(query);
+    const result = await postgresService.query(query, params);
     
     logger.info(`Retrieved ${result.rows.length} draft sessions${tournamentId ? ` for tournament ${tournamentId}` : ''}`);
     res.json(result.rows);
@@ -67,9 +88,9 @@ router.post('/',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { tournamentId, team1Id, team2Id } = req.body;
+      const { tournamentId, team1Id, team2Id, phoenixDraftId, draftConfig } = req.body;
 
-      logger.info(`Creating draft - Tournament: ${tournamentId}, Team1: ${team1Id}, Team2: ${team2Id}`);
+      logger.info(`Creating draft - Tournament: ${tournamentId}, Team1: ${team1Id}, Team2: ${team2Id}, Phoenix: ${phoenixDraftId}`);
 
       // Validate tournament exists
       const tournamentResult = await postgresService.query(
@@ -84,15 +105,18 @@ router.post('/',
       // Frontend sends registration IDs, not team IDs - handle dual ID system
       // Query joins tournament_registrations to get the actual team
       // tr.team_id is UUID referencing teams.id (not teams.team_id which is string)
+      // Also get the user_id string instead of the binary user.id for Phoenix compatibility
       const team1Result = await postgresService.query(`
-        SELECT t.* FROM teams t
+        SELECT t.*, u.user_id as captain_user_id FROM teams t
         INNER JOIN tournament_registrations tr ON t.id = tr.team_id
+        LEFT JOIN users u ON t.captain_id = u.id
         WHERE tr.id = $1
       `, [team1Id]);
       
       const team2Result = await postgresService.query(`
-        SELECT t.* FROM teams t
+        SELECT t.*, u.user_id as captain_user_id FROM teams t
         INNER JOIN tournament_registrations tr ON t.id = tr.team_id
+        LEFT JOIN users u ON t.captain_id = u.id
         WHERE tr.id = $1
       `, [team2Id]);
       
@@ -107,22 +131,27 @@ router.post('/',
       const team1 = team1Result.rows[0];
       const team2 = team2Result.rows[0];
       
+      logger.info(`Team1 captain_user_id: ${team1.captain_user_id}`);
+      logger.info(`Team2 captain_user_id: ${team2.captain_user_id}`);
+      
       // Check authorization - must be admin or captain of one of the teams
       const isUserAdmin = req.user.isAdmin || false;
-      const isTeam1Captain = team1.captain_id === req.user.id;
-      const isTeam2Captain = team2.captain_id === req.user.id;
+      const userIdToCheck = req.user.userID || req.user.id;
+      logger.info(`User ID to check: ${userIdToCheck}, isAdmin: ${isUserAdmin}`);
+      const isTeam1Captain = team1.captain_user_id === userIdToCheck;
+      const isTeam2Captain = team2.captain_user_id === userIdToCheck;
       
       if (!isUserAdmin && !isTeam1Captain && !isTeam2Captain) {
         return res.status(403).json({ error: 'Only admins or team captains can create drafts' });
       }
 
-      // Check if a draft already exists for these teams (only active drafts)
+      // Check if a draft already exists for these registration IDs (only active drafts)
       const existingDraft = await postgresService.query(`
         SELECT * FROM draft_sessions 
-        WHERE ((team1_captain_id = $1 AND team2_captain_id = $2) 
-           OR (team1_captain_id = $2 AND team2_captain_id = $1))
+        WHERE ((team1_id = $1 AND team2_id = $2) 
+           OR (team1_id = $2 AND team2_id = $1))
            AND status IN ('Waiting', 'In Progress')
-      `, [team1.captain_id, team2.captain_id]);
+      `, [team1Id, team2Id]);
       
       if (existingDraft.rows.length > 0) {
         logger.warn(`Active draft already exists for teams ${team1.team_name} vs ${team2.team_name}`);
@@ -133,22 +162,50 @@ router.post('/',
       }
 
       // Create draft session using existing schema
-      const draftId = `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const draftId = phoenixDraftId || `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
+      // Get the user's binary UUID for created_by field
+      let createdBy = null;
+      if (req.user.id) {
+        createdBy = req.user.id;  // Already a UUID
+      } else if (req.user.userID) {
+        // Look up UUID from string userID
+        const userResult = await postgresService.query(
+          'SELECT id FROM users WHERE user_id = $1',
+          [req.user.userID]
+        );
+        createdBy = userResult.rows.length > 0 ? userResult.rows[0].id : null;
+      }
+
+      // Prepare timer configuration based on user settings
+      const bonusTime = draftConfig?.bonusTime || 10;
+      const timerConfig = {
+        base_time: 20,  // Always 20 seconds base timer
+        team1_extra_time: bonusTime,  // Initialize with bonus time
+        team2_extra_time: bonusTime,  // Initialize with bonus time
+        bonus_time_per_team: bonusTime,
+        timer_strategy_enabled: draftConfig?.timerEnabled || false,
+        timer_strategy: draftConfig?.timerStrategy || "20s per pick"
+      };
+
       const result = await postgresService.query(`
         INSERT INTO draft_sessions (
           draft_id, team1_captain_id, team2_captain_id, 
-          status, current_phase, current_turn, created_by
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+          team1_id, team2_id,
+          status, current_phase, current_turn, created_by, timer_config
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
       `, [
         draftId,
-        team1.captain_id,
-        team2.captain_id,
+        team1.captain_user_id,  // Use string user_id instead of binary user.id
+        team2.captain_user_id,  // Use string user_id instead of binary user.id
+        team1Id,  // Store registration IDs, not team UUIDs
+        team2Id,  // Store registration IDs, not team UUIDs
         'Waiting',
         'Coin Toss',
         'team1',
-        req.user.id || req.user.userID
+        createdBy,  // Use proper UUID for created_by
+        JSON.stringify(timerConfig)  // Timer configuration as JSON
       ]);
 
       const draft = result.rows[0];
@@ -185,36 +242,61 @@ router.get('/:id',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const result = await postgresService.query(`
+      logger.info(`Looking up draft: ${req.params.id}`);
+      
+      // Get draft with team information - fixed JOIN to handle registration IDs
+      const draftResult = await postgresService.query(`
         SELECT 
           ds.*,
-          t1.team_id as team1_name,
-          t2.team_id as team2_name,
-          u1.user_id as team1_captain_name,
-          u2.user_id as team2_captain_name
+          t1.team_name as team1_name,
+          t2.team_name as team2_name,
+          t1.team_id as team1_id_display,
+          t2.team_id as team2_id_display,
+          u1.discord_username as team1_captain_name,
+          u2.discord_username as team2_captain_name
         FROM draft_sessions ds
-        LEFT JOIN teams t1 ON ds.team1_captain_id = t1.captain_id
-        LEFT JOIN teams t2 ON ds.team2_captain_id = t2.captain_id
-        LEFT JOIN users u1 ON ds.team1_captain_id = u1.id
-        LEFT JOIN users u2 ON ds.team2_captain_id = u2.id
+        -- Join with tournament registrations (ds.team1_id is registration.id)
+        LEFT JOIN tournament_registrations tr1 ON ds.team1_id = tr1.id
+        LEFT JOIN tournament_registrations tr2 ON ds.team2_id = tr2.id
+        -- Then join with teams to get team names
+        LEFT JOIN teams t1 ON tr1.team_id = t1.id
+        LEFT JOIN teams t2 ON tr2.team_id = t2.id
+        LEFT JOIN users u1 ON ds.team1_captain_id = u1.user_id
+        LEFT JOIN users u2 ON ds.team2_captain_id = u2.user_id
         WHERE ds.draft_id = $1
       `, [req.params.id]);
 
-      if (result.rows.length === 0) {
+      if (draftResult.rows.length === 0) {
         return res.status(404).json({ error: 'Draft session not found' });
       }
-
-      const draft = result.rows[0];
       
-      // Parse JSON fields if they exist
-      if (draft.team1_picks) draft.team1_picks = JSON.parse(draft.team1_picks);
-      if (draft.team2_picks) draft.team2_picks = JSON.parse(draft.team2_picks);
-      if (draft.team1_bans) draft.team1_bans = JSON.parse(draft.team1_bans);
-      if (draft.team2_bans) draft.team2_bans = JSON.parse(draft.team2_bans);
-      if (draft.pick_order) draft.pick_order = JSON.parse(draft.pick_order);
-      if (draft.ban_order) draft.ban_order = JSON.parse(draft.ban_order);
+      const finalResult = draftResult.rows[0];
+      
+      // Parse JSON fields if they exist and are strings
+      try {
+        if (finalResult.team1_picks && typeof finalResult.team1_picks === 'string') {
+          finalResult.team1_picks = JSON.parse(finalResult.team1_picks);
+        }
+        if (finalResult.team2_picks && typeof finalResult.team2_picks === 'string') {
+          finalResult.team2_picks = JSON.parse(finalResult.team2_picks);
+        }
+        if (finalResult.team1_bans && typeof finalResult.team1_bans === 'string') {
+          finalResult.team1_bans = JSON.parse(finalResult.team1_bans);
+        }
+        if (finalResult.team2_bans && typeof finalResult.team2_bans === 'string') {
+          finalResult.team2_bans = JSON.parse(finalResult.team2_bans);
+        }
+        if (finalResult.pick_order && typeof finalResult.pick_order === 'string') {
+          finalResult.pick_order = JSON.parse(finalResult.pick_order);
+        }
+        if (finalResult.ban_order && typeof finalResult.ban_order === 'string') {
+          finalResult.ban_order = JSON.parse(finalResult.ban_order);
+        }
+      } catch (jsonError) {
+        logger.warn('Error parsing JSON fields:', jsonError);
+      }
 
-      res.json(draft);
+      res.json(finalResult);
     } catch (error) {
       logger.error('Error getting draft session:', error);
       res.status(500).json({ error: 'Failed to retrieve draft session' });
@@ -222,7 +304,450 @@ router.get('/:id',
   }
 );
 
-// Perform coin toss
+// Captain connects to draft (for coin toss detection)
+router.post('/:id/connect',
+  requireAuth,
+  [param('id').isLength({ min: 1 }).trim()],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const draftId = req.params.id;
+      const userId = req.user.id || req.user.userID;
+
+      // Get draft session
+      const draftResult = await postgresService.query(`
+        SELECT ds.*, 
+               t1.team_name as team1_name, t2.team_name as team2_name,
+               t1.captain_id as team1_captain_id, t2.captain_id as team2_captain_id
+        FROM draft_sessions ds
+        LEFT JOIN teams t1_specific ON ds.team1_id = t1_specific.id
+        LEFT JOIN teams t2_specific ON ds.team2_id = t2_specific.id
+        LEFT JOIN teams t1 ON ds.team1_captain_id = t1.captain_id
+        LEFT JOIN teams t2 ON ds.team2_captain_id = t2.captain_id
+        WHERE ds.draft_id = $1
+      `, [draftId]);
+
+      if (draftResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Draft session not found' });
+      }
+
+      const draft = draftResult.rows[0];
+      
+      // Check if user is one of the captains
+      const isTeam1Captain = draft.team1_captain_id === userId;
+      const isTeam2Captain = draft.team2_captain_id === userId;
+      
+      if (!isTeam1Captain && !isTeam2Captain) {
+        return res.status(403).json({ error: 'Only team captains can connect' });
+      }
+
+      if (draft.status !== 'Waiting' || draft.current_phase !== 'Coin Toss') {
+        return res.status(400).json({ error: 'Not in coin toss phase' });
+      }
+
+      // Mark captain as connected
+      const updateField = isTeam1Captain ? 'team1_connected' : 'team2_connected';
+      await postgresService.query(`
+        UPDATE draft_sessions 
+        SET ${updateField} = TRUE
+        WHERE draft_id = $1
+      `, [draftId]);
+
+      // Check if both teams are now connected
+      const updatedDraft = await postgresService.query(`
+        SELECT team1_connected, team2_connected, both_teams_connected_at
+        FROM draft_sessions 
+        WHERE draft_id = $1
+      `, [draftId]);
+
+      const { team1_connected, team2_connected, both_teams_connected_at } = updatedDraft.rows[0];
+      
+      // If both teams just connected, set the timestamp and enable coin choices after delay
+      if (team1_connected && team2_connected && !both_teams_connected_at) {
+        await postgresService.query(`
+          UPDATE draft_sessions 
+          SET both_teams_connected_at = NOW(),
+              coin_choices_enabled_at = NOW() + INTERVAL '2 seconds'
+          WHERE draft_id = $1
+        `, [draftId]);
+
+        // Emit to all in draft room
+        const io = req.app.get('io');
+        if (io) {
+          io.to(`draft-${draftId}`).emit('both-teams-connected', {
+            message: 'Both teams connected! Coin choices available in 2 seconds...',
+            enableChoicesAt: new Date(Date.now() + 2000).toISOString()
+          });
+        }
+      }
+
+      // Emit connection update
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`draft-${draftId}`).emit('captain-connected', {
+          team: isTeam1Captain ? 'team1' : 'team2',
+          teamName: isTeam1Captain ? draft.team1_name : draft.team2_name,
+          bothConnected: team1_connected && team2_connected
+        });
+      }
+
+      logger.info(`Captain ${userId} connected to draft ${draftId}`);
+      res.json({ 
+        success: true, 
+        team: isTeam1Captain ? 'team1' : 'team2',
+        bothConnected: team1_connected && team2_connected
+      });
+    } catch (error) {
+      logger.error('Error connecting to draft:', error);
+      res.status(500).json({ error: 'Failed to connect to draft' });
+    }
+  }
+);
+
+// Race-based coin choice (first team to choose wins)
+router.post('/:id/race-coin-choice',
+  requireAuth,
+  [
+    param('id').isLength({ min: 1 }).trim(),
+    body('choice').isIn(['heads', 'tails'])
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const draftId = req.params.id;
+      const userId = req.user.id || req.user.userID;
+      const { choice } = req.body;
+
+      // Get draft session
+      const draftResult = await postgresService.query(`
+        SELECT * FROM draft_sessions WHERE draft_id = $1
+      `, [draftId]);
+
+      if (draftResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Draft session not found' });
+      }
+
+      const draft = draftResult.rows[0];
+
+      // Check if user is a captain
+      const isTeam1Captain = draft.team1_captain_id === userId;
+      const isTeam2Captain = draft.team2_captain_id === userId;
+      
+      if (!isTeam1Captain && !isTeam2Captain) {
+        return res.status(403).json({ error: 'Only team captains can choose' });
+      }
+
+      const team = isTeam1Captain ? 'team1' : 'team2';
+
+      // Check if choice is already taken (race condition protection)
+      if (draft.team1_coin_choice === choice || draft.team2_coin_choice === choice) {
+        return res.json({ success: false, alreadyTaken: true, choice });
+      }
+
+      // Set choice for this team
+      const choiceField = isTeam1Captain ? 'team1_coin_choice' : 'team2_coin_choice';
+      await postgresService.query(`
+        UPDATE draft_sessions 
+        SET ${choiceField} = $1
+        WHERE draft_id = $2
+      `, [choice, draftId]);
+
+      // Assign the other choice to the other team
+      const otherChoice = choice === 'heads' ? 'tails' : 'heads';
+      const otherChoiceField = isTeam1Captain ? 'team2_coin_choice' : 'team1_coin_choice';
+      await postgresService.query(`
+        UPDATE draft_sessions 
+        SET ${otherChoiceField} = $1
+        WHERE draft_id = $2
+      `, [otherChoice, draftId]);
+
+      // Emit the choice to all connected clients
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`draft-${draftId}`).emit('coin-choice-made', {
+          team,
+          choice,
+          fastestTeam: team
+        });
+      }
+
+      // Automatically perform coin flip since both choices are now set
+      setTimeout(async () => {
+        try {
+          const coinResult = Math.random() < 0.5 ? 'heads' : 'tails';
+          const team1Won = draft.team1_coin_choice === coinResult || choice === coinResult && isTeam1Captain;
+          const winner = team1Won ? 'team1' : 'team2';
+
+          await postgresService.query(`
+            UPDATE draft_sessions 
+            SET coin_toss_result = $1, coin_toss_winner = $2
+            WHERE draft_id = $3
+          `, [coinResult, winner, draftId]);
+
+          if (io) {
+            io.to(`draft-${draftId}`).emit('coin-toss-result', {
+              result: coinResult,
+              winner,
+              team1Choice: isTeam1Captain ? choice : otherChoice,
+              team2Choice: isTeam2Captain ? choice : otherChoice
+            });
+          }
+        } catch (error) {
+          console.error('Error performing coin flip:', error);
+        }
+      }, 2000);
+
+      res.json({ success: true, choice, team });
+    } catch (error) {
+      logger.error('Error making race coin choice:', error);
+      res.status(500).json({ error: 'Failed to make coin choice' });
+    }
+  }
+);
+
+// Choose pick order (after winning coin toss)
+router.post('/:id/pick-order',
+  requireAuth,
+  [
+    param('id').isLength({ min: 1 }).trim(),
+    body('order').isIn(['first', 'second'])
+  ],
+  async (req, res) => {
+    try {
+      const draftId = req.params.id;
+      const { order } = req.body;
+      const userId = req.user.id || req.user.userID;
+
+      // Get draft and verify user won coin toss
+      const draftResult = await postgresService.query(`
+        SELECT * FROM draft_sessions WHERE draft_id = $1
+      `, [draftId]);
+
+      if (draftResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Draft not found' });
+      }
+
+      const draft = draftResult.rows[0];
+      const isTeam1Captain = draft.team1_captain_id === userId;
+      const isTeam2Captain = draft.team2_captain_id === userId;
+      const userTeam = isTeam1Captain ? 'team1' : 'team2';
+
+      if (draft.coin_toss_winner !== userTeam) {
+        return res.status(403).json({ error: 'Only coin toss winner can choose pick order' });
+      }
+
+      // Set pick order and advance to ban phase
+      const firstPick = order === 'first' ? userTeam : (userTeam === 'team1' ? 'team2' : 'team1');
+      
+      // Create ban/pick orders based on choice
+      const banOrder = firstPick === 'team1' ? 
+        ['team1', 'team2', 'team1', 'team2'] :
+        ['team2', 'team1', 'team2', 'team1'];
+      
+      const pickOrder = firstPick === 'team1' ? 
+        ['team1', 'team2', 'team2', 'team1', 'team1'] :
+        ['team2', 'team1', 'team1', 'team2', 'team2'];
+
+      await postgresService.query(`
+        UPDATE draft_sessions 
+        SET first_pick = $1,
+            pick_order = $2,
+            ban_order = $3,
+            current_phase = 'Ban Phase',
+            current_turn = $4,
+            status = 'In Progress'
+        WHERE draft_id = $5
+      `, [firstPick, JSON.stringify(pickOrder), JSON.stringify(banOrder), banOrder[0], draftId]);
+
+      // Emit to all clients
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`draft-${draftId}`).emit('pick-order-chosen', {
+          order,
+          firstPick,
+          banOrder,
+          pickOrder,
+          phase: 'Ban Phase'
+        });
+      }
+
+      res.json({ success: true, order, firstPick });
+    } catch (error) {
+      logger.error('Error setting pick order:', error);
+      res.status(500).json({ error: 'Failed to set pick order' });
+    }
+  }
+);
+
+// Choose coin side
+router.post('/:id/coin-choice',
+  requireAuth,
+  [
+    param('id').isLength({ min: 1 }).trim(),
+    body('choice').isIn(['heads', 'tails'])
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const draftId = req.params.id;
+      const userId = req.user.id || req.user.userID;
+      const { choice } = req.body;
+
+      // Get draft session
+      const draftResult = await postgresService.query(`
+        SELECT ds.*, 
+               t1.team_name as team1_name, t2.team_name as team2_name,
+               t1.captain_id as team1_captain_id, t2.captain_id as team2_captain_id
+        FROM draft_sessions ds
+        LEFT JOIN teams t1_specific ON ds.team1_id = t1_specific.id
+        LEFT JOIN teams t2_specific ON ds.team2_id = t2_specific.id  
+        LEFT JOIN teams t1 ON ds.team1_captain_id = t1.captain_id
+        LEFT JOIN teams t2 ON ds.team2_captain_id = t2.captain_id
+        WHERE ds.draft_id = $1
+      `, [draftId]);
+
+      if (draftResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Draft session not found' });
+      }
+
+      const draft = draftResult.rows[0];
+      
+      // Check if user is one of the captains
+      const isTeam1Captain = draft.team1_captain_id === userId;
+      const isTeam2Captain = draft.team2_captain_id === userId;
+      
+      if (!isTeam1Captain && !isTeam2Captain) {
+        return res.status(403).json({ error: 'Only team captains can choose' });
+      }
+
+      // Check if both teams are connected
+      if (!draft.team1_connected || !draft.team2_connected) {
+        return res.status(400).json({ error: 'Both teams must be connected' });
+      }
+
+      // Check if coin choices are enabled (2 second delay after both connected)
+      if (!draft.coin_choices_enabled_at || new Date() < new Date(draft.coin_choices_enabled_at)) {
+        return res.status(400).json({ error: 'Coin choices not yet enabled' });
+      }
+
+      // Check if choice is already taken by other team
+      const otherTeamChoice = isTeam1Captain ? draft.team2_coin_choice : draft.team1_coin_choice;
+      if (otherTeamChoice === choice) {
+        return res.status(400).json({ error: 'That choice is already taken by the other team' });
+      }
+
+      // Set this team's choice
+      const choiceField = isTeam1Captain ? 'team1_coin_choice' : 'team2_coin_choice';
+      await postgresService.query(`
+        UPDATE draft_sessions 
+        SET ${choiceField} = $1
+        WHERE draft_id = $2
+      `, [choice, draftId]);
+
+      // Check if both teams have now chosen
+      const updatedDraft = await postgresService.query(`
+        SELECT team1_coin_choice, team2_coin_choice, team1_name, team2_name
+        FROM draft_sessions ds
+        LEFT JOIN teams t1_specific ON ds.team1_id = t1_specific.id
+        LEFT JOIN teams t2_specific ON ds.team2_id = t2_specific.id
+        LEFT JOIN teams t1 ON ds.team1_captain_id = t1.captain_id  
+        LEFT JOIN teams t2 ON ds.team2_captain_id = t2.captain_id
+        WHERE ds.draft_id = $1
+      `, [draftId]);
+
+      const updated = updatedDraft.rows[0];
+
+      // Emit choice update
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`draft-${draftId}`).emit('coin-choice-made', {
+          team: isTeam1Captain ? 'team1' : 'team2',
+          teamName: isTeam1Captain ? updated.team1_name : updated.team2_name,
+          choice: choice,
+          bothChosen: updated.team1_coin_choice && updated.team2_coin_choice
+        });
+      }
+
+      // If both teams have chosen, perform the coin toss
+      if (updated.team1_coin_choice && updated.team2_coin_choice) {
+        const coinResult = Math.random() < 0.5 ? 'heads' : 'tails';
+        const team1Won = updated.team1_coin_choice === coinResult;
+        const winner = team1Won ? 'team1' : 'team2';
+        const firstPick = winner;
+
+        // Default pick/ban order
+        const pickOrder = firstPick === 'team1' ? 
+          ['team1', 'team2', 'team2', 'team1', 'team1'] :
+          ['team2', 'team1', 'team1', 'team2', 'team2'];
+        
+        const banOrder = firstPick === 'team1' ?
+          ['team1', 'team2', 'team1', 'team2'] :
+          ['team2', 'team1', 'team2', 'team1'];
+
+        // Update draft with results
+        await postgresService.query(`
+          UPDATE draft_sessions 
+          SET coin_toss_result = $1,
+              coin_toss_winner = $2, 
+              first_pick = $3,
+              pick_order = $4, 
+              ban_order = $5,
+              status = 'In Progress',
+              current_phase = 'Ban Phase',
+              current_turn = $6,
+              start_time = NOW()
+          WHERE draft_id = $7
+        `, [
+          coinResult, winner, firstPick, 
+          JSON.stringify(pickOrder), JSON.stringify(banOrder),
+          banOrder[0], draftId
+        ]);
+
+        // Emit final coin toss result
+        if (io) {
+          io.to(`draft-${draftId}`).emit('coin-toss-complete', {
+            result: coinResult,
+            winner: winner,
+            winnerTeamName: team1Won ? updated.team1_name : updated.team2_name,
+            team1Choice: updated.team1_coin_choice,
+            team2Choice: updated.team2_coin_choice,
+            team1Name: updated.team1_name,
+            team2Name: updated.team2_name,
+            firstPick: firstPick,
+            pickOrder: pickOrder,
+            banOrder: banOrder,
+            nextPhase: 'Ban Phase',
+            currentTurn: banOrder[0]
+          });
+        }
+      }
+
+      logger.info(`Captain ${userId} chose ${choice} for draft ${draftId}`);
+      res.json({ 
+        success: true, 
+        choice: choice,
+        bothChosen: updated.team1_coin_choice && updated.team2_coin_choice
+      });
+    } catch (error) {
+      logger.error('Error making coin choice:', error);
+      res.status(500).json({ error: 'Failed to make coin choice' });
+    }
+  }
+);
+
+// Perform coin toss (legacy endpoint - now replaced by coin-choice system)
 router.post('/:id/coin-toss',
   requireAuth,
   [param('id').isLength({ min: 1 }).trim()],
@@ -234,27 +759,35 @@ router.post('/:id/coin-toss',
       }
 
       const draftId = req.params.id;
-      const userID = req.user.userID;
+      const userId = req.user.id || req.user.userID;
 
-      // Get draft session
-      const drafts = await airtableService.getDraftSessions();
-      const draft = drafts.find(d => d.DraftID === draftId);
+      // Get draft session from PostgreSQL
+      const draftResult = await postgresService.query(`
+        SELECT ds.*, 
+               t1.team_name as team1_name, t2.team_name as team2_name,
+               t1.captain_id as team1_captain_id, t2.captain_id as team2_captain_id
+        FROM draft_sessions ds
+        LEFT JOIN teams t1 ON ds.team1_captain_id = t1.captain_id
+        LEFT JOIN teams t2 ON ds.team2_captain_id = t2.captain_id
+        WHERE ds.draft_id = $1
+      `, [draftId]);
 
-      if (!draft) {
+      if (draftResult.rows.length === 0) {
         return res.status(404).json({ error: 'Draft session not found' });
       }
 
-      // Check if user is one of the captains or admin
-      const userRecord = await airtableService.getUserByID(userID);
-      const isCaptain = draft.Team1Captain?.includes(userRecord.recordId) || 
-                       draft.Team2Captain?.includes(userRecord.recordId);
-      const isAdmin = userRecord.IsAdmin;
+      const draft = draftResult.rows[0];
 
-      if (!isCaptain && !isAdmin) {
+      // Check if user is one of the captains or admin
+      const isTeam1Captain = draft.team1_captain_id === userId;
+      const isTeam2Captain = draft.team2_captain_id === userId;
+      const isAdmin = req.user.isAdmin || req.user.role === 'admin';
+
+      if (!isTeam1Captain && !isTeam2Captain && !isAdmin) {
         return res.status(403).json({ error: 'Only captains or admins can perform coin toss' });
       }
 
-      if (draft.Status !== 'Waiting' || draft.CurrentPhase !== 'Coin Toss') {
+      if (draft.status !== 'Waiting' || draft.current_phase !== 'Coin Toss') {
         return res.status(400).json({ error: 'Coin toss not available in current phase' });
       }
 
@@ -272,19 +805,23 @@ router.post('/:id/coin-toss',
         ['team1', 'team2', 'team1', 'team2'] :
         ['team2', 'team1', 'team2', 'team1'];
 
-      // Update draft session
-      const updates = {
-        Status: 'In Progress',
-        CurrentPhase: 'Ban Phase',
-        CurrentTurn: banOrder[0],
-        CoinTossWinner: winner,
-        FirstPick: firstPick,
-        PickOrder: JSON.stringify(pickOrder),
-        BanOrder: JSON.stringify(banOrder),
-        StartTime: new Date().toISOString()
-      };
-
-      await airtableService.updateDraftSession(draftId, updates);
+      // Update draft session in PostgreSQL
+      await postgresService.query(`
+        UPDATE draft_sessions 
+        SET status = $1, current_phase = $2, current_turn = $3,
+            coin_toss_winner = $4, first_pick = $5,
+            pick_order = $6, ban_order = $7, start_time = NOW()
+        WHERE draft_id = $8
+      `, [
+        'In Progress',
+        'Ban Phase', 
+        banOrder[0],
+        winner,
+        firstPick,
+        JSON.stringify(pickOrder),
+        JSON.stringify(banOrder),
+        draftId
+      ]);
 
       // Emit real-time update
       const io = req.app.get('io');
@@ -321,7 +858,7 @@ router.post('/:id/action',
   [
     param('id').isLength({ min: 1 }).trim(),
     body('action').isIn(['pick', 'ban']),
-    body('heroID').isLength({ min: 1 }).trim(),
+    body('heroId').isLength({ min: 1 }).trim(),
     body('team').isIn(['team1', 'team2'])
   ],
   async (req, res) => {
@@ -332,159 +869,215 @@ router.post('/:id/action',
       }
 
       const draftId = req.params.id;
-      const { action, heroID, team } = req.body;
-      const userID = req.user.userID;
+      const { action, heroId, team } = req.body;
+      const userId = req.user.id || req.user.userID;
 
       // Get draft session
-      const drafts = await airtableService.getDraftSessions();
-      const draft = drafts.find(d => d.DraftID === draftId);
+      const draftResult = await postgresService.query(`
+        SELECT * FROM draft_sessions WHERE draft_id = $1
+      `, [draftId]);
 
-      if (!draft) {
+      if (draftResult.rows.length === 0) {
         return res.status(404).json({ error: 'Draft session not found' });
       }
 
-      // Check if user is the correct captain for this team
-      const userRecord = await airtableService.getUserByID(userID);
-      const isCorrectCaptain = (team === 'team1' && draft.Team1Captain?.includes(userRecord.recordId)) ||
-                               (team === 'team2' && draft.Team2Captain?.includes(userRecord.recordId));
-      const isAdmin = userRecord.IsAdmin;
+      const draft = draftResult.rows[0];
 
-      if (!isCorrectCaptain && !isAdmin) {
-        return res.status(403).json({ error: 'Only the team captain can make picks/bans for their team' });
-      }
-
-      // Validate draft state
-      if (draft.Status !== 'In Progress') {
-        return res.status(400).json({ error: 'Draft is not in progress' });
-      }
-
-      // Check if it's this team's turn
-      if (draft.CurrentTurn !== team) {
-        return res.status(400).json({ error: 'It is not your team\'s turn' });
-      }
-
-      // Check if the action matches the current phase
-      const validAction = (draft.CurrentPhase === 'Ban Phase' && action === 'ban') ||
-                          (draft.CurrentPhase === 'Pick Phase' && action === 'pick');
+      // Verify user is authorized (captain of the team making the action)
+      const isTeam1Captain = draft.team1_captain_id === userId;
+      const isTeam2Captain = draft.team2_captain_id === userId;
       
-      if (!validAction) {
-        return res.status(400).json({ error: `Cannot ${action} during ${draft.CurrentPhase}` });
+      if (!isTeam1Captain && !isTeam2Captain && !req.user.isAdmin) {
+        return res.status(403).json({ error: 'Not authorized to make draft actions' });
       }
 
-      // Validate hero hasn't been picked/banned already
-      const currentPicks = [
-        ...JSON.parse(draft.Team1Picks || '[]'),
-        ...JSON.parse(draft.Team2Picks || '[]')
-      ];
-      const currentBans = [
-        ...JSON.parse(draft.Team1Bans || '[]'),
-        ...JSON.parse(draft.Team2Bans || '[]')
-      ];
-
-      if (currentPicks.includes(heroID) || currentBans.includes(heroID)) {
-        return res.status(400).json({ error: 'Hero has already been picked or banned' });
+      // Verify it's the correct team's turn
+      if (draft.current_turn !== team && !req.user.isAdmin) {
+        return res.status(400).json({ error: 'Not your turn' });
       }
 
-      // Add the pick/ban
-      const team1Picks = JSON.parse(draft.Team1Picks || '[]');
-      const team2Picks = JSON.parse(draft.Team2Picks || '[]');
-      const team1Bans = JSON.parse(draft.Team1Bans || '[]');
-      const team2Bans = JSON.parse(draft.Team2Bans || '[]');
-
-      if (action === 'pick') {
-        if (team === 'team1') {
-          team1Picks.push(heroID);
-        } else {
-          team2Picks.push(heroID);
-        }
-      } else {
-        if (team === 'team1') {
-          team1Bans.push(heroID);
-        } else {
-          team2Bans.push(heroID);
-        }
+      // Verify we're in the correct phase
+      const expectedPhase = action === 'ban' ? 'Ban Phase' : 'Pick Phase';
+      if (!draft.current_phase?.includes(expectedPhase.split(' ')[0])) {
+        return res.status(400).json({ error: `Not in ${action} phase` });
       }
 
-      // Determine next turn and phase
-      const pickOrder = JSON.parse(draft.PickOrder || '[]');
-      const banOrder = JSON.parse(draft.BanOrder || '[]');
-      
-      let nextPhase = draft.CurrentPhase;
-      let nextTurn = draft.CurrentTurn;
-      let draftComplete = false;
-
-      if (draft.CurrentPhase === 'Ban Phase') {
-        const totalBans = team1Bans.length + team2Bans.length;
-        if (totalBans >= banOrder.length) {
-          nextPhase = 'Pick Phase';
-          nextTurn = pickOrder[0];
-        } else {
-          nextTurn = banOrder[totalBans];
-        }
-      } else if (draft.CurrentPhase === 'Pick Phase') {
-        const totalPicks = team1Picks.length + team2Picks.length;
-        if (totalPicks >= pickOrder.length) {
-          nextPhase = 'Complete';
-          nextTurn = null;
-          draftComplete = true;
-        } else {
-          nextTurn = pickOrder[totalPicks];
-        }
-      }
-
-      // Update draft session
-      const updates = {
-        Team1Picks: JSON.stringify(team1Picks),
-        Team2Picks: JSON.stringify(team2Picks),
-        Team1Bans: JSON.stringify(team1Bans),
-        Team2Bans: JSON.stringify(team2Bans),
-        CurrentPhase: nextPhase,
-        CurrentTurn: nextTurn
+      // Get hero info from our hero data
+      const heroMap = {
+        'grux': 'Grux',
+        'kwang': 'Kwang', 
+        'sevarog': 'Sevarog',
+        'steel': 'Steel',
+        'terra': 'Terra',
+        'zinx': 'Zinx',
+        'khaimera': 'Khaimera',
+        'rampage': 'Rampage',
+        'kallari': 'Kallari',
+        'feng_mao': 'Feng Mao',
+        'crunch': 'Crunch',
+        'gideon': 'Gideon',
+        'howitzer': 'Howitzer',
+        'the_fey': 'The Fey',
+        'belica': 'Lt. Belica',
+        'gadget': 'Gadget',
+        'countess': 'Countess',
+        'murdock': 'Murdock',
+        'twinblast': 'TwinBlast',
+        'sparrow': 'Sparrow',
+        'revenant': 'Revenant',
+        'muriel': 'Muriel',
+        'dekker': 'Dekker',
+        'narbash': 'Narbash'
       };
+      
+      const heroName = heroMap[heroId] || heroId;
+      const heroImage = `/heroes/${heroId}.jpg`;
 
-      if (draftComplete) {
-        updates.Status = 'Completed';
-        updates.CompletedAt = new Date().toISOString();
+      // Update the appropriate team's picks or bans
+      let updateQuery;
+      if (action === 'ban') {
+        const banField = team === 'team1' ? 'team1_bans' : 'team2_bans';
+        updateQuery = `
+          UPDATE draft_sessions 
+          SET ${banField} = ${banField} || $1::jsonb,
+              updated_at = NOW()
+          WHERE draft_id = $2
+        `;
+      } else {
+        const pickField = team === 'team1' ? 'team1_picks' : 'team2_picks';
+        updateQuery = `
+          UPDATE draft_sessions 
+          SET ${pickField} = ${pickField} || $1::jsonb,
+              updated_at = NOW()
+          WHERE draft_id = $2
+        `;
       }
 
-      await airtableService.updateDraftSession(draftId, updates);
+      await postgresService.query(updateQuery, [
+        JSON.stringify([{ hero_id: heroId, hero_name: heroName, hero_image: heroImage }]),
+        draftId
+      ]);
 
-      // Emit real-time update
+      // Advance to next turn
+      const pickOrder = JSON.parse(draft.pick_order || '["team1", "team2"]');
+      const banOrder = JSON.parse(draft.ban_order || '["team1", "team2"]');
+      
+      // Calculate next turn and phase
+      let nextTurn = draft.current_turn;
+      let nextPhase = draft.current_phase;
+      
+      // Logic to determine next turn based on pick/ban order
+      // This is simplified - you'll need to implement full logic based on your draft format
+      if (team === 'team1') {
+        nextTurn = 'team2';
+      } else {
+        nextTurn = 'team1';
+      }
+
+      // Update draft session with next turn
+      await postgresService.query(`
+        UPDATE draft_sessions 
+        SET current_turn = $1,
+            turn_timer_end = NOW() + INTERVAL '20 seconds'
+        WHERE draft_id = $2
+      `, [nextTurn, draftId]);
+
+      // Emit socket event for real-time update
       const io = req.app.get('io');
       if (io) {
-        io.to(`draft-${draftId}`).emit('draft-action', {
+        io.to(`draft-${draftId}`).emit('draft-update', {
           action,
-          heroID,
+          heroId,
+          heroName,
           team,
-          team1Picks,
-          team2Picks,
-          team1Bans,
-          team2Bans,
-          currentPhase: nextPhase,
-          currentTurn: nextTurn,
-          draftComplete
+          nextTurn,
+          draft: await getDraftData(draftId)
         });
       }
 
-      logger.info(`Draft action in ${draftId}: ${team} ${action}ed ${heroID}`);
-      res.json({
+      logger.info(`Draft action: ${action} ${heroName} by ${team} in draft ${draftId}`);
+      res.json({ 
+        success: true,
         action,
-        heroID,
-        team,
-        team1Picks,
-        team2Picks,
-        team1Bans,
-        team2Bans,
-        currentPhase: nextPhase,
-        currentTurn: nextTurn,
-        draftComplete
+        heroId,
+        nextTurn
       });
+
     } catch (error) {
       logger.error('Error performing draft action:', error);
       res.status(500).json({ error: 'Failed to perform draft action' });
     }
   }
 );
+
+// Skip turn
+router.post('/:id/skip',
+  requireAuth,
+  [
+    param('id').isLength({ min: 1 }).trim(),
+    body('team').isIn(['team1', 'team2'])
+  ],
+  async (req, res) => {
+    try {
+      const draftId = req.params.id;
+      const { team } = req.body;
+
+      // Get draft and verify turn
+      const draftResult = await postgresService.query(`
+        SELECT * FROM draft_sessions WHERE draft_id = $1
+      `, [draftId]);
+
+      if (draftResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Draft not found' });
+      }
+
+      const draft = draftResult.rows[0];
+
+      if (draft.current_turn !== team) {
+        return res.status(400).json({ error: 'Not your turn' });
+      }
+
+      // Advance turn
+      const nextTurn = team === 'team1' ? 'team2' : 'team1';
+      
+      await postgresService.query(`
+        UPDATE draft_sessions 
+        SET current_turn = $1,
+            turn_timer_end = NOW() + INTERVAL '20 seconds'
+        WHERE draft_id = $2
+      `, [nextTurn, draftId]);
+
+      // Emit socket update
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`draft-${draftId}`).emit('turn-skipped', {
+          team,
+          nextTurn
+        });
+      }
+
+      res.json({ success: true, nextTurn });
+    } catch (error) {
+      logger.error('Error skipping turn:', error);
+      res.status(500).json({ error: 'Failed to skip turn' });
+    }
+  }
+);
+
+// Helper function to get complete draft data
+async function getDraftData(draftId) {
+  const result = await postgresService.query(`
+    SELECT ds.*, 
+           t1.team_name as team1_name, 
+           t2.team_name as team2_name
+    FROM draft_sessions ds
+    LEFT JOIN teams t1 ON ds.team1_id = t1.id
+    LEFT JOIN teams t2 ON ds.team2_id = t2.id
+    WHERE ds.draft_id = $1
+  `, [draftId]);
+  
+  return result.rows[0];
+}
 
 // Get available heroes for draft
 router.get('/heroes', async (req, res) => {
@@ -527,11 +1120,12 @@ router.post('/:id/emergency-stop',
 
       const draftId = req.params.id;
 
-      await airtableService.updateDraftSession(draftId, {
-        Status: 'Stopped',
-        StoppedAt: new Date().toISOString(),
-        StoppedBy: req.user.userID
-      });
+      // Update draft session status in PostgreSQL
+      await postgresService.query(`
+        UPDATE draft_sessions 
+        SET status = $1, stopped_at = NOW(), stopped_by = $2
+        WHERE draft_id = $3
+      `, ['Stopped', req.user.id || req.user.userID, draftId]);
 
       // Emit real-time update
       const io = req.app.get('io');
@@ -541,11 +1135,227 @@ router.post('/:id/emergency-stop',
         });
       }
 
-      logger.info(`Draft ${draftId} emergency stopped by admin ${req.user.userID}`);
+      logger.info(`Draft ${draftId} emergency stopped by admin ${req.user.id || req.user.userID}`);
       res.json({ message: 'Draft stopped successfully' });
     } catch (error) {
       logger.error('Error stopping draft:', error);
       res.status(500).json({ error: 'Failed to stop draft' });
+    }
+  }
+);
+
+// Admin: Reset draft to initial state (for testing)
+router.post('/:id/reset',
+  requireAdmin,
+  [param('id').isLength({ min: 1 }).trim()],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const draftId = req.params.id;
+
+      // Check if draft exists
+      const draftResult = await postgresService.query(`
+        SELECT draft_id FROM draft_sessions WHERE draft_id = $1
+      `, [draftId]);
+
+      if (draftResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Draft session not found' });
+      }
+
+      // Reset draft to initial state
+      await postgresService.query(`
+        UPDATE draft_sessions 
+        SET status = 'Waiting',
+            current_phase = 'Coin Toss',
+            current_turn = 'team1',
+            team1_connected = FALSE,
+            team2_connected = FALSE,
+            team1_coin_choice = NULL,
+            team2_coin_choice = NULL,
+            coin_toss_result = NULL,
+            coin_toss_winner = NULL,
+            first_pick = NULL,
+            both_teams_connected_at = NULL,
+            coin_choices_enabled_at = NULL,
+            team1_picks = '[]'::jsonb,
+            team2_picks = '[]'::jsonb,
+            team1_bans = '[]'::jsonb,
+            team2_bans = '[]'::jsonb,
+            pick_order = NULL,
+            ban_order = NULL,
+            start_time = NULL,
+            end_time = NULL,
+            stopped_at = NULL,
+            stopped_by = NULL,
+            updated_at = NOW()
+        WHERE draft_id = $1
+      `, [draftId]);
+
+      // Emit real-time update to all connected clients
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`draft-${draftId}`).emit('draft-reset', {
+          message: 'Draft has been reset by an administrator',
+          status: 'Waiting',
+          phase: 'Coin Toss'
+        });
+      }
+
+      logger.info(`Draft ${draftId} reset by admin ${req.user.id || req.user.userID}`);
+      res.json({ 
+        message: 'Draft reset successfully',
+        status: 'Waiting',
+        phase: 'Coin Toss'
+      });
+    } catch (error) {
+      logger.error('Error resetting draft:', error);
+      res.status(500).json({ error: 'Failed to reset draft' });
+    }
+  }
+);
+
+// Sync draft status from Phoenix
+router.put('/:id/sync',
+  requireAuth,
+  [param('id').isLength({ min: 1 }).trim()],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const draftId = req.params.id;
+      const { phoenixStatus, status, currentPhase, results } = req.body;
+
+      // Verify draft exists
+      const draftResult = await postgresService.query(`
+        SELECT * FROM draft_sessions WHERE draft_id = $1
+      `, [draftId]);
+
+      if (draftResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Draft session not found' });
+      }
+
+      // Update React backend with Phoenix data
+      let updateFields = ['status = $1', 'current_phase = $2', 'updated_at = NOW()'];
+      let updateValues = [status, currentPhase];
+      let paramCount = 2;
+
+      // Update picks and bans if provided
+      if (results) {
+        if (results.team1) {
+          paramCount++;
+          updateFields.push(`team1_picks = $${paramCount}::jsonb`);
+          updateValues.push(JSON.stringify(results.team1.picks || []));
+          
+          paramCount++;
+          updateFields.push(`team1_bans = $${paramCount}::jsonb`);
+          updateValues.push(JSON.stringify(results.team1.bans || []));
+        }
+        
+        if (results.team2) {
+          paramCount++;
+          updateFields.push(`team2_picks = $${paramCount}::jsonb`);
+          updateValues.push(JSON.stringify(results.team2.picks || []));
+          
+          paramCount++;
+          updateFields.push(`team2_bans = $${paramCount}::jsonb`);
+          updateValues.push(JSON.stringify(results.team2.bans || []));
+        }
+      }
+
+      // Add coin toss results if provided
+      if (phoenixStatus && phoenixStatus.coin_toss) {
+        const coinToss = phoenixStatus.coin_toss;
+        if (coinToss.result) {
+          paramCount++;
+          updateFields.push(`coin_toss_result = $${paramCount}`);
+          updateValues.push(coinToss.result);
+        }
+        if (coinToss.winner) {
+          paramCount++;
+          updateFields.push(`coin_toss_winner = $${paramCount}`);
+          updateValues.push(coinToss.winner);
+        }
+        if (coinToss.first_pick_team) {
+          paramCount++;
+          updateFields.push(`first_pick = $${paramCount}`);
+          updateValues.push(coinToss.first_pick_team);
+        }
+      }
+
+      // Mark as completed if needed
+      if (status === 'completed') {
+        paramCount++;
+        updateFields.push(`end_time = NOW()`);
+      }
+
+      // Build final query
+      paramCount++;
+      updateValues.push(draftId);
+      
+      const query = `
+        UPDATE draft_sessions 
+        SET ${updateFields.join(', ')}
+        WHERE draft_id = $${paramCount}
+        RETURNING *
+      `;
+
+      await postgresService.query(query, updateValues);
+
+      logger.info(`Draft ${draftId} synced from Phoenix: ${status} - ${currentPhase}`);
+      res.json({ success: true, message: 'Draft synced successfully' });
+
+    } catch (error) {
+      logger.error('Error syncing draft from Phoenix:', error);
+      res.status(500).json({ error: 'Failed to sync draft status' });
+    }
+  }
+);
+
+// Admin: Delete draft session
+router.delete('/:id',
+  requireAdmin,
+  [param('id').isLength({ min: 1 }).trim()],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const draftId = req.params.id;
+      
+      // Check if draft exists
+      const existingDraft = await postgresService.query(
+        'SELECT * FROM draft_sessions WHERE draft_id = $1',
+        [draftId]
+      );
+      
+      if (existingDraft.rows.length === 0) {
+        return res.status(404).json({ error: 'Draft session not found' });
+      }
+
+      // Delete the draft
+      await postgresService.query(
+        'DELETE FROM draft_sessions WHERE draft_id = $1',
+        [draftId]
+      );
+      
+      logger.info(`Draft ${draftId} deleted by admin ${req.user.id || req.user.userID}`);
+      res.json({ 
+        message: 'Draft deleted successfully',
+        draftId: draftId
+      });
+      
+    } catch (error) {
+      logger.error('Error deleting draft:', error);
+      res.status(500).json({ error: 'Failed to delete draft' });
     }
   }
 );
@@ -559,3 +1369,4 @@ function generateCaptainToken(draftId, captainNumber) {
 module.exports = router;
 
 
+// trigger restart

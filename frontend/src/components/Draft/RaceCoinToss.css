@@ -1,0 +1,237 @@
+/* Race-based Coin Toss - Exfang Style */
+
+.race-coin-toss-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #2a2a3e 0%, #16213e 100%);
+  border-radius: 12px;
+  color: #fff;
+}
+
+.race-coin-selection {
+  text-align: center;
+  max-width: 600px;
+}
+
+.race-coin-selection h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.race-coin-selection p {
+  font-size: 1.2rem;
+  margin-bottom: 3rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.coin-choices {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+
+.coin-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.coin-button:hover:not(.disabled) {
+  transform: scale(1.05);
+}
+
+.coin-button.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
+.coin-button.selected {
+  transform: scale(1.1);
+}
+
+.coin-face {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  border: 3px solid;
+  transition: all 0.3s ease;
+}
+
+.heads-face {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  color: #333;
+  border-color: #ffb000;
+}
+
+.tails-face {
+  background: linear-gradient(45deg, #c0c0c0, #e8e8e8);
+  color: #333;
+  border-color: #999;
+}
+
+.coin-button.selected .coin-face {
+  box-shadow: 0 0 25px rgba(88, 101, 242, 0.8);
+  border-color: #5865f2;
+}
+
+.choice-confirmation {
+  font-size: 1.1rem;
+  margin-top: 2rem;
+  color: #57f287;
+}
+
+/* Result Display */
+.coin-result-display {
+  text-align: center;
+}
+
+.coin-animation {
+  margin-bottom: 2rem;
+}
+
+.coin-3d {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0 auto;
+  animation: flipResult 2s ease-out;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  border: 3px solid;
+}
+
+.coin-animation.heads .coin-3d {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  color: #333;
+  border-color: #ffb000;
+}
+
+.coin-animation.tails .coin-3d {
+  background: linear-gradient(45deg, #c0c0c0, #e8e8e8);
+  color: #333;
+  border-color: #999;
+}
+
+@keyframes flipResult {
+  0% { transform: rotateY(0deg) scale(0.5); }
+  25% { transform: rotateY(180deg) scale(1.2); }
+  50% { transform: rotateY(360deg) scale(0.8); }
+  75% { transform: rotateY(540deg) scale(1.1); }
+  100% { transform: rotateY(720deg) scale(1); }
+}
+
+.coin-result-display h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.winner-text {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #57f287;
+}
+
+/* Order Choice */
+.order-choice {
+  text-align: center;
+}
+
+.order-choice h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #57f287;
+}
+
+.order-choice p {
+  font-size: 1.2rem;
+  margin-bottom: 3rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.order-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.order-button {
+  background: linear-gradient(135deg, #5865f2, #4752c4);
+  color: #fff;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3);
+}
+
+.order-button:hover {
+  background: linear-gradient(135deg, #4752c4, #3642b4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.5);
+}
+
+/* Waiting States */
+.waiting-for-order,
+.coin-toss-complete {
+  text-align: center;
+}
+
+.waiting-for-order h2,
+.coin-toss-complete h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.waiting-for-order p,
+.coin-toss-complete p {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .coin-choices {
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+  }
+  
+  .order-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .coin-face {
+    width: 120px;
+    height: 120px;
+    font-size: 1rem;
+  }
+  
+  .race-coin-selection h2 {
+    font-size: 2rem;
+  }
+}

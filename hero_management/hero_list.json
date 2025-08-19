@@ -1,0 +1,272 @@
+[
+  {
+    "id": "argus",
+    "name": "Argus",
+    "roles": "Midlane/Support",
+    "filename": "argus.jpg"
+  },
+  {
+    "id": "aurora",
+    "name": "Aurora",
+    "roles": "Offlane/Jungle",
+    "filename": "aurora.jpg"
+  },
+  {
+    "id": "boris",
+    "name": "Boris",
+    "roles": "Jungle",
+    "filename": "boris.jpg"
+  },
+  {
+    "id": "countess",
+    "name": "Countess",
+    "roles": "Midlane/Offlane/Jungle",
+    "filename": "countess.jpg"
+  },
+  {
+    "id": "crunch",
+    "name": "Crunch",
+    "roles": "Offlane/Jungle",
+    "filename": "crunch.jpg"
+  },
+  {
+    "id": "dekker",
+    "name": "Dekker",
+    "roles": "Support",
+    "filename": "dekker.jpg"
+  },
+  {
+    "id": "drongo",
+    "name": "Drongo",
+    "roles": "Carry",
+    "filename": "drongo.jpg"
+  },
+  {
+    "id": "feng_mao",
+    "name": "Feng Mao",
+    "roles": "Jungle/Offlane",
+    "filename": "feng_mao.jpg"
+  },
+  {
+    "id": "grim_exe",
+    "name": "GRIM.exe",
+    "roles": "Carry",
+    "filename": "grim_exe.jpg"
+  },
+  {
+    "id": "gadget",
+    "name": "Gadget",
+    "roles": "Midlane",
+    "filename": "gadget.jpg"
+  },
+  {
+    "id": "gideon",
+    "name": "Gideon",
+    "roles": "Midlane",
+    "filename": "gideon.jpg"
+  },
+  {
+    "id": "greystone",
+    "name": "Greystone",
+    "roles": "Offlane/Jungle",
+    "filename": "greystone.jpg"
+  },
+  {
+    "id": "grux",
+    "name": "Grux",
+    "roles": "Offlane/Jungle",
+    "filename": "grux.jpg"
+  },
+  {
+    "id": "howitzer",
+    "name": "Howitzer",
+    "roles": "Midlane",
+    "filename": "howitzer.jpg"
+  },
+  {
+    "id": "iggy_scorch",
+    "name": "Iggy & Scorch",
+    "roles": "Midlane",
+    "filename": "iggy_scorch.jpg"
+  },
+  {
+    "id": "kallari",
+    "name": "Kallari",
+    "roles": "Jungle",
+    "filename": "kallari.jpg"
+  },
+  {
+    "id": "khaimera",
+    "name": "Khaimera",
+    "roles": "Jungle",
+    "filename": "khaimera.jpg"
+  },
+  {
+    "id": "kira",
+    "name": "Kira",
+    "roles": "Carry",
+    "filename": "kira.jpg"
+  },
+  {
+    "id": "kwang",
+    "name": "Kwang",
+    "roles": "Jungle/Offlane",
+    "filename": "kwang.jpg"
+  },
+  {
+    "id": "lt_belica",
+    "name": "Lt. Belica",
+    "roles": "Midlane/Support",
+    "filename": "lt_belica.jpg"
+  },
+  {
+    "id": "morigesh",
+    "name": "Morigesh",
+    "roles": "Midlane",
+    "filename": "morigesh.jpg"
+  },
+  {
+    "id": "mourn",
+    "name": "Mourn",
+    "roles": "Support",
+    "filename": "mourn.jpg"
+  },
+  {
+    "id": "murdock",
+    "name": "Murdock",
+    "roles": "Carry",
+    "filename": "murdock.jpg"
+  },
+  {
+    "id": "muriel",
+    "name": "Muriel",
+    "roles": "Support",
+    "filename": "muriel.jpg"
+  },
+  {
+    "id": "narbash",
+    "name": "Narbash",
+    "roles": "Support",
+    "filename": "narbash.jpg"
+  },
+  {
+    "id": "phase",
+    "name": "Phase",
+    "roles": "Support",
+    "filename": "phase.jpg"
+  },
+  {
+    "id": "rampage",
+    "name": "Rampage",
+    "roles": "Jungle",
+    "filename": "rampage.jpg"
+  },
+  {
+    "id": "renna",
+    "name": "Renna",
+    "roles": "Midlane",
+    "filename": "renna.jpg"
+  },
+  {
+    "id": "revenant",
+    "name": "Revenant",
+    "roles": "Carry",
+    "filename": "revenant.jpg"
+  },
+  {
+    "id": "riktor",
+    "name": "Riktor",
+    "roles": "Support/Jungle",
+    "filename": "riktor.jpg"
+  },
+  {
+    "id": "serath",
+    "name": "Serath",
+    "roles": "Jungle/Offlane",
+    "filename": "serath.jpg"
+  },
+  {
+    "id": "sevarog",
+    "name": "Sevarog",
+    "roles": "Offlane/Jungle",
+    "filename": "sevarog.jpg"
+  },
+  {
+    "id": "shinbi",
+    "name": "Shinbi",
+    "roles": "Offlane/Jungle",
+    "filename": "shinbi.jpg"
+  },
+  {
+    "id": "skylar",
+    "name": "Skylar",
+    "roles": "Carry",
+    "filename": "skylar.jpg"
+  },
+  {
+    "id": "sparrow",
+    "name": "Sparrow",
+    "roles": "Carry",
+    "filename": "sparrow.jpg"
+  },
+  {
+    "id": "steel",
+    "name": "Steel",
+    "roles": "Offlane/Support",
+    "filename": "steel.jpg"
+  },
+  {
+    "id": "terra",
+    "name": "Terra",
+    "roles": "Offlane/Jungle",
+    "filename": "terra.jpg"
+  },
+  {
+    "id": "the_fey",
+    "name": "The Fey",
+    "roles": "Midlane",
+    "filename": "the_fey.jpg"
+  },
+  {
+    "id": "twinblast",
+    "name": "TwinBlast",
+    "roles": "Carry",
+    "filename": "twinblast.jpg"
+  },
+  {
+    "id": "wraith",
+    "name": "Wraith",
+    "roles": "Carry/Midlane",
+    "filename": "wraith.jpg"
+  },
+  {
+    "id": "wukong",
+    "name": "Wukong",
+    "roles": "Jungle",
+    "filename": "wukong.jpg"
+  },
+  {
+    "id": "yin",
+    "name": "Yin",
+    "roles": "Jungle",
+    "filename": "yin.jpg"
+  },
+  {
+    "id": "yurei",
+    "name": "Yurei",
+    "roles": "Jungle",
+    "filename": "yurei.jpg"
+  },
+  {
+    "id": "zarus",
+    "name": "Zarus",
+    "roles": "Offlane/Jungle",
+    "filename": "zarus.jpg"
+  },
+  {
+    "id": "zinx",
+    "name": "Zinx",
+    "roles": "Support",
+    "filename": "zinx.jpg"
+  }
+]

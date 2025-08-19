@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Test Drafts - Quick Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        
+        .tournament-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .tournament-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .tournament-name {
+            font-weight: bold;
+        }
+        
+        .tournament-id {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Quick Fix: Create Test Draft Sessions</h1>
+        
+        <p><strong>Problem:</strong> Your production shows "no drafts found" because there are no draft sessions created yet.</p>
+        <p><strong>Solution:</strong> Use this tool to create test draft sessions for your tournaments.</p>
+        
+        <div class="section">
+            <h3>Step 1: Load Available Tournaments</h3>
+            <button onclick="loadTournaments()">Load Tournaments</button>
+            <div id="tournamentsResult" class="result" style="display: none;"></div>
+            <div id="tournamentsList" class="tournament-list"></div>
+        </div>
+        
+        <div class="section">
+            <h3>Step 2: Create Test Drafts</h3>
+            <p>Click "Create Test Draft" next to any tournament to generate a test draft session.</p>
+            <div id="createResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="section">
+            <h3>Step 3: Verify Fix</h3>
+            <p>After creating drafts, go back to your tournament page and check the "Drafts" tab - it should now show the created draft sessions instead of "no drafts found"!</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://predecessor-tournament-api.onrender.com/api';
+        
+        let tournaments = [];
+        
+        async function loadTournaments() {
+            const button = document.querySelector('button');
+            const resultDiv = document.getElementById('tournamentsResult');
+            const listDiv = document.getElementById('tournamentsList');
+            
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Loading tournaments from production...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/tournaments`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                tournaments = await response.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ Found ${tournaments.length} tournaments!`;
+                
+                // Display tournaments
+                listDiv.innerHTML = '';
+                tournaments.forEach(tournament => {
+                    const div = document.createElement('div');
+                    div.className = 'tournament-item';
+                    div.innerHTML = `
+                        <div>
+                            <div class="tournament-name">${tournament.name}</div>
+                            <div class="tournament-id">ID: ${tournament.id}</div>
+                        </div>
+                        <button onclick="createTestDraft('${tournament.id}', '${tournament.name.replace(/'/g, '\\\'')}')")>
+                            Create Test Draft
+                        </button>
+                    `;
+                    listDiv.appendChild(div);
+                });
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error loading tournaments: ${error.message}`;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Load Tournaments';
+            }
+        }
+        
+        async function createTestDraft(tournamentId, tournamentName) {
+            const button = event.target;
+            const resultDiv = document.getElementById('createResult');
+            
+            button.disabled = true;
+            button.textContent = 'Creating...';
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = `Creating test draft for "${tournamentName}"...`;
+            
+            try {
+                const response = await fetch(`${API_BASE}/test/create-test-draft/${tournamentId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ SUCCESS! Created draft session:
+Tournament: ${data.draft.tournament_name}
+Teams: ${data.draft.team1_name} vs ${data.draft.team2_name}
+Status: ${data.draft.status}
+Draft ID: ${data.draft.id}
+
+🎉 Go check your tournament's draft tab - it should now show this draft instead of "no drafts found"!`;
+                
+                button.textContent = '✅ Created!';
+                button.style.background = '#28a745';
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error creating test draft: ${error.message}
+                
+This might be because:
+- No teams exist in the database
+- Database connection issues
+- API endpoint not deployed yet (wait a few minutes for deployment)`;
+                
+                button.disabled = false;
+                button.textContent = 'Create Test Draft';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -31,6 +31,7 @@
     "reset": "npm run clean && npm run install-all"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "concurrently": "^7.6.0",
     "rimraf": "^4.1.0"
   },

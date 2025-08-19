@@ -4,9 +4,9 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import io from 'socket.io-client';
-import CoinTossScreen from './CoinTossScreen';
-import DraftScreen from './DraftScreen';
-import SpectatorScreen from './SpectatorScreen';
+import NewDraftInterface from './NewDraftInterface';
+import RaceCoinToss from './RaceCoinToss';
+import WaitingModal from './WaitingModal';
 import './DraftContainer.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -20,6 +20,12 @@ const DraftContainer = ({ spectatorMode = false }) => {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState('spectator'); // 'team1', 'team2', 'spectator'
   const [error, setError] = useState(null);
+  const [showWaitingModal, setShowWaitingModal] = useState(false);
+  const [captainStatus, setCaptainStatus] = useState({
+    team1Connected: false,
+    team2Connected: false,
+    presentCount: 0
+  });
 
   useEffect(() => {
     if (draftId) {
@@ -42,8 +48,8 @@ const DraftContainer = ({ spectatorMode = false }) => {
 
       // Load heroes data
       try {
-        const heroesResponse = await axios.get(`${API_BASE_URL}/draft/heroes`);
-        setHeroes(heroesResponse.data.heroes || []);
+        const heroesResponse = await axios.get(`${API_BASE_URL}/heroes`);
+        setHeroes(heroesResponse.data || []);
       } catch (heroError) {
         console.warn('Failed to load heroes:', heroError.message);
         setHeroes([]); // Continue without heroes for now
@@ -91,21 +97,91 @@ const DraftContainer = ({ spectatorMode = false }) => {
         setUserRole('spectator');
       }
 
-      // Initialize socket connection
+      // Initialize socket connection with enhanced events
       const socketConnection = io(process.env.REACT_APP_API_URL || 'http://localhost:3001', {
         withCredentials: true
       });
 
       socketConnection.on('connect', () => {
         console.log('Connected to draft socket');
-        socketConnection.emit('join-draft', draftId);
+        
+        // Join the draft session using the new event structure
+        if (userRole !== 'spectator') {
+          const teamNumber = userRole === 'team1' ? 1 : 2;
+          socketConnection.emit('join-draft-session', {
+            sessionId: draftId,
+            userId: user?.id || `browser_${Date.now()}_team${teamNumber}`,
+            teamNumber: teamNumber
+          });
+          console.log(`Joining as captain for team ${teamNumber}`);
+        } else {
+          // Spectators join without captain privileges
+          socketConnection.emit('join-draft', draftId);
+          console.log('Joining as spectator');
+        }
       });
 
-      socketConnection.on('coin-toss-result', (data) => {
-        console.log('Coin toss result:', data);
+      // New event: Waiting for other captain
+      socketConnection.on('waiting-for-captain', (data) => {
+        console.log('Waiting for captain:', data);
+        setShowWaitingModal(true);
+        setCaptainStatus({
+          team1Connected: data.team1Connected || false,
+          team2Connected: data.team2Connected || false,
+          presentCount: data.presentCount || 0
+        });
+      });
+
+      // New event: Both captains present
+      socketConnection.on('both-captains-present', (data) => {
+        console.log('Both captains present:', data);
+        setShowWaitingModal(false);
+        setCaptainStatus({
+          team1Connected: true,
+          team2Connected: true,
+          presentCount: 2
+        });
+        toast.success('Both captains connected! Starting draft...');
         loadDraftSession(); // Refresh session data
       });
 
+      // Enhanced coin toss events
+      socketConnection.on('coin-toss-phase-start', (data) => {
+        console.log('Coin toss phase started:', data);
+        toast.info(data.message);
+      });
+
+      socketConnection.on('coin-toss-choice-made', (data) => {
+        console.log('Coin toss choice made:', data);
+        toast.info(`${data.choice} has been chosen by Team ${data.teamNumber}`);
+        loadDraftSession(); // Refresh to show updated choices
+      });
+
+      socketConnection.on('coin-toss-complete', (data) => {
+        console.log('Coin toss completed:', data);
+        toast.success(`Coin toss result: ${data.result}! Team ${data.winner} gets first pick.`);
+        loadDraftSession(); // Refresh session data
+      });
+
+      socketConnection.on('coin-toss-error', (data) => {
+        console.error('Coin toss error:', data);
+        toast.error(data.message);
+      });
+
+      // Captain connection status events
+      socketConnection.on('captain-left', (data) => {
+        console.log('Captain left:', data);
+        toast.warning(data.message);
+        setShowWaitingModal(true);
+        loadDraftSession();
+      });
+
+      socketConnection.on('captain-disconnected', (data) => {
+        console.log('Captain disconnected:', data);
+        toast.warning(`Team ${data.teamNumber} captain disconnected`);
+      });
+
+      // Existing events
       socketConnection.on('draft-action', (data) => {
         console.log('Draft action update:', data);
         loadDraftSession(); // Refresh session data
@@ -115,6 +191,30 @@ const DraftContainer = ({ spectatorMode = false }) => {
         console.log('Draft stopped:', data);
         toast.warning('Draft has been stopped by an administrator');
         loadDraftSession(); // Refresh session data
+      });
+
+      // Get current session state
+      socketConnection.on('draft-session-state', (sessionData) => {
+        console.log('Received session state:', sessionData);
+        setDraftSession(sessionData);
+        
+        // Update captain status based on session data
+        const team1Connected = sessionData.team1_connected || false;
+        const team2Connected = sessionData.team2_connected || false;
+        const presentCount = (team1Connected ? 1 : 0) + (team2Connected ? 1 : 0);
+        
+        setCaptainStatus({
+          team1Connected,
+          team2Connected,
+          presentCount
+        });
+        
+        // Show waiting modal if both captains aren't present
+        if (userRole !== 'spectator' && presentCount < 2) {
+          setShowWaitingModal(true);
+        } else {
+          setShowWaitingModal(false);
+        }
       });
 
       setSocket(socketConnection);
@@ -136,22 +236,6 @@ const DraftContainer = ({ spectatorMode = false }) => {
     }
   };
 
-  const handleCoinTossChoice = async () => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/draft/${draftId}/coin-toss`, {}, {
-        withCredentials: true
-      });
-      
-      const { winner, firstPick } = response.data;
-      toast.success(`Coin toss complete! Team ${winner} wins and Team ${firstPick} picks first!`);
-      
-      // Refresh draft session to show new state
-      await loadDraftSession();
-    } catch (error) {
-      console.error('Error performing coin toss:', error);
-      toast.error(error.response?.data?.error || 'Failed to perform coin toss');
-    }
-  };
 
   const determineUserRole = () => {
     if (!user || !draftSession) return 'spectator';
@@ -197,44 +281,24 @@ const DraftContainer = ({ spectatorMode = false }) => {
     console.log('Rendering draft screen - Status:', status, 'Phase:', phase, 'UserRole:', userRole);
 
     // Handle coin toss phase
-    if (phase === 'coin toss' && status === 'waiting') {
+    if (phase === 'coin toss' || phase === 'Coin Toss') {
       return (
-        <div className="coin-toss-container">
-          <div className="coin-toss-header">
-            <h2>Coin Toss</h2>
-            <p>Determining first pick...</p>
-          </div>
-          <div className="coin-toss-content">
-            <p>Teams: <strong>{draftSession.team1_name}</strong> vs <strong>{draftSession.team2_name}</strong></p>
-            {userRole !== 'spectator' && (
-              <button 
-                className="btn btn-primary coin-toss-btn"
-                onClick={handleCoinTossChoice}
-              >
-                Perform Coin Toss
-              </button>
-            )}
-            {userRole === 'spectator' && (
-              <p className="spectator-message">Waiting for captains to perform coin toss...</p>
-            )}
-          </div>
-        </div>
+        <RaceCoinToss
+          draftSession={draftSession}
+          userRole={userRole}
+          draftId={draftId}
+        />
       );
     }
 
     // Handle draft phases
     if (phase === 'ban phase' || phase === 'pick phase') {
       return (
-        <div className="draft-active">
-          <div className="draft-header-info">
-            <h2>Draft in Progress</h2>
-            <div className="draft-phase-info">
-              <span className="phase">{draftSession.current_phase}</span>
-              <span className="turn">Turn: {draftSession.current_turn}</span>
-            </div>
-          </div>
-          <p>Draft system is currently under development. Please check back later.</p>
-        </div>
+        <NewDraftInterface
+          mode={userRole}
+          draftSession={draftSession}
+          draftId={draftId}
+        />
       );
     }
 
@@ -270,6 +334,17 @@ const DraftContainer = ({ spectatorMode = false }) => {
 
   return (
     <div className="draft-container">
+      {/* Waiting Modal - appears over everything when waiting for captains */}
+      <WaitingModal 
+        isVisible={showWaitingModal}
+        presentCount={captainStatus.presentCount}
+        totalNeeded={2}
+        team1Connected={captainStatus.team1Connected}
+        team2Connected={captainStatus.team2Connected}
+        message="Waiting for other captain to join the draft session..."
+        sessionId={draftId}
+      />
+      
       <div className="draft-header">
         <h1>Draft Session</h1>
         <div className="match-info">
@@ -283,6 +358,13 @@ const DraftContainer = ({ spectatorMode = false }) => {
           {userRole !== 'spectator' && (
             <span className="role">Role: {userRole === 'team1' ? 'Team 1 Captain' : 'Team 2 Captain'}</span>
           )}
+          {/* Captain connection indicators */}
+          <div className="captain-connections">
+            <span className={`captain-dot ${captainStatus.team1Connected ? 'connected' : 'disconnected'}`} 
+                  title="Team 1 Captain"></span>
+            <span className={`captain-dot ${captainStatus.team2Connected ? 'connected' : 'disconnected'}`} 
+                  title="Team 2 Captain"></span>
+          </div>
         </div>
       </div>
 

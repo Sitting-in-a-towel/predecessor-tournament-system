@@ -12,7 +12,9 @@ class AuthService {
 
   async getCurrentUser() {
     try {
-      const response = await this.axios.get('/auth/me');
+      const response = await this.axios.get('/auth/me', {
+        withCredentials: true
+      });
       return response.data;
     } catch (error) {
       if (error.response?.status === 401) {

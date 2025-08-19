@@ -2,6 +2,13 @@
 
 A comprehensive web-based tournament management system for Predecessor esports tournaments, featuring real-time draft capabilities, team management, and administrative tools.
 
+## 🚨 ACTIVE DEVELOPMENT NOTICE
+**Phoenix LiveView Migration in Progress (January 2025)**
+- Migrating draft system from React/Socket.io to Phoenix LiveView for improved reliability
+- See [PHOENIX_MIGRATION_GUIDE.md](documentation/PHOENIX_MIGRATION_GUIDE.md) for details
+- Timeline: 6-8 weeks
+- All tournament features remain functional during migration
+
 ## 🚀 Features
 
 - **Tournament Management**: Create and manage single/double elimination, round robin, and Swiss format tournaments
@@ -28,15 +35,17 @@ A comprehensive web-based tournament management system for Predecessor esports t
 - **Express-validator** for input validation
 
 ### Database
-- **Airtable** for data storage
+- **PostgreSQL** for primary data storage
+- **NocoDB** for database UI management
 - Session storage (configurable: memory, file, Redis, PostgreSQL)
 
 ## 📋 Prerequisites
 
 - **Node.js** 18.x or higher
 - **npm** 8.x or higher
-- **Airtable** account and API key
+- **PostgreSQL** 15.x or higher
 - **Discord** application for OAuth
+- **Elixir** 1.14+ and **Phoenix** 1.7+ (for draft system migration)
 
 ## 🚀 Quick Start
 

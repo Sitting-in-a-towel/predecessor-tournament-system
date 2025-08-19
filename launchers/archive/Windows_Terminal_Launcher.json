@@ -1,0 +1,42 @@
+{
+  "name": "Predecessor Development Environment",
+  "description": "Unified development environment with all services in Windows Terminal tabs",
+  "profiles": {
+    "list": [
+      {
+        "name": "Backend API",
+        "commandline": "cmd.exe /k \"cd /d \\\"H:\\Project Folder\\Predecessor website\\backend\\\" && npm run dev\"",
+        "icon": "🔧",
+        "colorScheme": "Campbell",
+        "startingDirectory": "H:\\Project Folder\\Predecessor website\\backend"
+      },
+      {
+        "name": "Phoenix Draft System", 
+        "commandline": "cmd.exe /k \"set PATH=C:\\Program Files\\Erlang OTP\\bin;C:\\Program Files\\Elixir\\bin;%PATH% && cd /d \\\"H:\\Project Folder\\Predecessor website\\phoenix_draft\\\" && mix phx.server\"",
+        "icon": "🎯",
+        "colorScheme": "One Half Dark",
+        "startingDirectory": "H:\\Project Folder\\Predecessor website\\phoenix_draft"
+      },
+      {
+        "name": "React Frontend",
+        "commandline": "cmd.exe /k \"cd /d \\\"H:\\Project Folder\\Predecessor website\\frontend\\\" && npm start\"",
+        "icon": "🌐", 
+        "colorScheme": "Solarized Dark",
+        "startingDirectory": "H:\\Project Folder\\Predecessor website\\frontend"
+      },
+      {
+        "name": "NocoDB Database UI",
+        "commandline": "cmd.exe /k \"cd /d \\\"H:\\Project Folder\\NocoDB\\\" && Noco-win-x64.exe\"",
+        "icon": "📊",
+        "colorScheme": "Vintage",
+        "startingDirectory": "H:\\Project Folder\\NocoDB"
+      }
+    ]
+  },
+  "actions": [
+    {
+      "command": "newTab",
+      "keys": "ctrl+shift+t"
+    }
+  ]
+}

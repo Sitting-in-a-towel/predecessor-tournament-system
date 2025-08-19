@@ -356,3 +356,72 @@
     flex-direction: column;
   }
 }
+
+/* Draft Configuration Styles */
+.draft-config-section {
+  margin-top: 20px;
+  padding: 20px;
+  border: 2px solid #faa61a;
+  border-radius: 8px;
+  background: #2f3136;
+}
+
+.draft-config-section h4 {
+  color: #faa61a;
+  margin-bottom: 15px;
+  font-size: 1.1em;
+  border-bottom: 1px solid #4f545c;
+  padding-bottom: 8px;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #fff;
+  font-weight: bold;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #faa61a;
+}
+
+/* Override the existing form-group styles for config section */
+.draft-config-section .form-group select,
+.draft-config-section .form-group input {
+  background: #1a1a1a;
+  border: 1px solid #4f545c;
+  color: #fff;
+}
+
+.draft-config-section .form-group select:focus,
+.draft-config-section .form-group input:focus {
+  border-color: #faa61a;
+  box-shadow: 0 0 5px rgba(250, 166, 26, 0.3);
+}
+
+.draft-config-section .form-group label {
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Timer conditional styling */
+.draft-config-section .config-grid > .form-group:nth-child(n+4) {
+  transition: opacity 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const Header = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -13,6 +13,10 @@ export const Header = () => {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  const handleLogin = () => {
+    login(true); // Remember user for 30 days
   };
 
   return (
@@ -46,9 +50,9 @@ export const Header = () => {
               </button>
             </div>
           ) : (
-            <Link to="/login" className="login-btn">
+            <button className="login-btn" onClick={handleLogin}>
               Login with Discord
-            </Link>
+            </button>
           )}
         </div>
       </div>

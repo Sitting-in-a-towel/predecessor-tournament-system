@@ -327,69 +327,25 @@
             
             <%# Main Draft Area - FULL VIEWPORT WIDTH %>
             <div style="flex: 1; display: flex; width: 100%; overflow: hidden;">
-              <%# Team 1 Panel (Left) - Narrow %>
-              <div style="width: 140px; background-color: #2f3136; padding: 8px; overflow-y: auto;">
-                <%# Bonus Timer %>
-                <%= if @draft.timer_config["timer_strategy_enabled"] do %>
-                  <div class="text-center mb-2">
-                    <%= if assigns[:timer_state] && @timer_state.current_team == "team1" && @timer_state.current_phase == :bonus_timer do %>
-                      <div class="bg-red-600 text-white px-2 py-1 rounded text-xs font-mono animate-pulse">
-                        🔥 BONUS: <%= @timer_state.team1_bonus_remaining || 0 %>s
-                      </div>
-                    <% else %>
-                      <div class="bg-blue-600 text-white px-2 py-1 rounded text-xs font-mono">
-                        Bonus: <%= if assigns[:timer_state], do: @timer_state.team1_bonus_remaining || 10, else: 10 %>s
-                      </div>
-                    <% end %>
-                  </div>
-                <% end %>
-                <h3 class="text-center text-white font-bold mb-1 text-sm"><%= @team1.name %></h3>
-                
-                <%# Main Timer for Team 1 - ALWAYS shows main timer, never switches to bonus %>
-                <div class="text-center mb-2">
-                  <%= if assigns[:timer_state] && @timer_state.current_team == "team1" do %>
-                    <div class="bg-yellow-500 text-black px-2 py-2 rounded text-sm font-mono font-bold animate-pulse">
-                      ⏱️ <%= if @timer_state.current_phase == :bonus_timer, do: 0, else: assigns[:timer_remaining] || 20 %>s
-                    </div>
-                  <% else %>
-                    <div class="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs font-mono">
-                      Timer: 20s
-                    </div>
-                  <% end %>
-                </div>
-                
-                <%# Always show bonus bank for Team 1 %>
-                <div class="text-center mb-1">
-                  <div class="text-xs text-gray-300">
-                    Bonus Bank: <%= if assigns[:timer_state], do: @timer_state.team1_bonus_remaining || 10, else: 10 %>s
-                  </div>
-                </div>
-                
-                <%# Coin toss info and captain %>
-                <div class="text-center mb-3 text-xs">
-                  <div class="text-gray-400">Chose: <span class="text-yellow-400"><%= String.capitalize(@draft.team1_coin_choice || "none") %></span></div>
-                  <%= if @draft.coin_toss_winner == "team1" do %>
-                    <div class="text-green-400">🏆 Won Coin Toss</div>
-                  <% end %>
-                  <div class="text-gray-500 mt-1">Captain: Team1</div>
-                </div>
-                
-                <%# Draft Sequence - Team 1 slots %>
-                <div class="text-white text-xs font-semibold mb-2">Draft Order</div>
-                <%= for slot <- get_draft_sequence(@draft) |> Enum.filter(&(&1.team == "team1")) do %>
-                  <div class={if slot.position == get_current_draft_position(@draft) && @draft.current_phase in ["Ban Phase", "Pick Phase"], do: "active-slot", else: ""} 
-                       style={"height: #{if slot.action == :pick, do: "50px", else: "40px"}; background-color: #{if slot.selection, do: (if slot.action == :pick, do: "#1e5c1e", else: "#5c1e1e"), else: "#4a4a4a"}; border-radius: 4px; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; position: relative; border: 2px solid transparent;"}>
-                    <div style="position: absolute; top: 2px; left: 4px; font-size: 10px; color: #9ca3af;"><%= slot.position %></div>
-                    <span class="text-xs">
-                      <%= if slot.selection do %>
-                        <span class={if slot.action == :pick, do: "text-green-400", else: "text-red-400"}><%= get_hero_name(slot.selection) %></span>
-                      <% else %>
-                        <span class="text-gray-500"><%= slot.label %></span>
-                      <% end %>
-                    </span>
-                  </div>
-                <% end %>
-              </div>
+              <%# Team 1 Panel (Left) - Using Shared Component %>
+              <.live_component
+                module={TeamPanel}
+                id="captain-team1-panel"
+                display_mode={:captain_side}
+                team_role="team1"
+                team={@team1}
+                team_connected={@draft.team1_connected}
+                timer_enabled={@draft.timer_config["timer_strategy_enabled"]}
+                timer_state={@timer_state}
+                timer_remaining={assigns[:timer_remaining]}
+                bonus_remaining={if assigns[:timer_state], do: @timer_state.team1_bonus_remaining || 10, else: 10}
+                coin_choice={@draft.team1_coin_choice}
+                coin_winner={@draft.coin_toss_winner == "team1"}
+                draft_sequence={get_draft_sequence(@draft) |> Enum.filter(&(&1.team == "team1"))}
+                current_position={get_current_draft_position(@draft)}
+                current_phase={@draft.current_phase}
+                is_narrow={true}
+              />
               
               <%# Center - Hero Grid MAXIMUM WIDTH %>
               <div style="flex: 1; display: flex; flex-direction: column; padding: 0 8px;">
@@ -439,69 +395,25 @@
                 </div>
               </div>
               
-              <%# Team 2 Panel (Right) - Narrow %>
-              <div style="width: 140px; background-color: #2f3136; padding: 8px; overflow-y: auto;">
-                <%# Bonus Timer %>
-                <%= if @draft.timer_config["timer_strategy_enabled"] do %>
-                  <div class="text-center mb-2">
-                    <%= if assigns[:timer_state] && @timer_state.current_team == "team2" && @timer_state.current_phase == :bonus_timer do %>
-                      <div class="bg-red-600 text-white px-2 py-1 rounded text-xs font-mono animate-pulse">
-                        🔥 BONUS: <%= @timer_state.team2_bonus_remaining || 0 %>s
-                      </div>
-                    <% else %>
-                      <div class="bg-blue-600 text-white px-2 py-1 rounded text-xs font-mono">
-                        Bonus: <%= if assigns[:timer_state], do: @timer_state.team2_bonus_remaining || 10, else: 10 %>s
-                      </div>
-                    <% end %>
-                  </div>
-                <% end %>
-                <h3 class="text-center text-white font-bold mb-1 text-sm"><%= @team2.name %></h3>
-                
-                <%# Main Timer for Team 2 - ALWAYS shows main timer, never switches to bonus %>
-                <div class="text-center mb-2">
-                  <%= if assigns[:timer_state] && @timer_state.current_team == "team2" do %>
-                    <div class="bg-yellow-500 text-black px-2 py-2 rounded text-sm font-mono font-bold animate-pulse">
-                      ⏱️ <%= if @timer_state.current_phase == :bonus_timer, do: 0, else: assigns[:timer_remaining] || 20 %>s
-                    </div>
-                  <% else %>
-                    <div class="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs font-mono">
-                      Timer: 20s
-                    </div>
-                  <% end %>
-                </div>
-                
-                <%# Always show bonus bank for Team 2 %>
-                <div class="text-center mb-1">
-                  <div class="text-xs text-gray-300">
-                    Bonus Bank: <%= if assigns[:timer_state], do: @timer_state.team2_bonus_remaining || 10, else: 10 %>s
-                  </div>
-                </div>
-                
-                <%# Coin toss info and captain %>
-                <div class="text-center mb-3 text-xs">
-                  <div class="text-gray-400">Chose: <span class="text-yellow-400"><%= String.capitalize(@draft.team2_coin_choice || "none") %></span></div>
-                  <%= if @draft.coin_toss_winner == "team2" do %>
-                    <div class="text-green-400">🏆 Won Coin Toss</div>
-                  <% end %>
-                  <div class="text-gray-500 mt-1">Captain: Team2</div>
-                </div>
-                
-                <%# Draft Sequence - Team 2 slots %>
-                <div class="text-white text-xs font-semibold mb-2">Draft Order</div>
-                <%= for slot <- get_draft_sequence(@draft) |> Enum.filter(&(&1.team == "team2")) do %>
-                  <div class={if slot.position == get_current_draft_position(@draft) && @draft.current_phase in ["Ban Phase", "Pick Phase"], do: "active-slot", else: ""} 
-                       style={"height: #{if slot.action == :pick, do: "50px", else: "40px"}; background-color: #{if slot.selection, do: (if slot.action == :pick, do: "#1e5c1e", else: "#5c1e1e"), else: "#4a4a4a"}; border-radius: 4px; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; position: relative; border: 2px solid transparent;"}>
-                    <div style="position: absolute; top: 2px; right: 4px; font-size: 10px; color: #9ca3af;"><%= slot.position %></div>
-                    <span class="text-xs">
-                      <%= if slot.selection do %>
-                        <span class={if slot.action == :pick, do: "text-green-400", else: "text-red-400"}><%= get_hero_name(slot.selection) %></span>
-                      <% else %>
-                        <span class="text-gray-500"><%= slot.label %></span>
-                      <% end %>
-                    </span>
-                  </div>
-                <% end %>
-              </div>
+              <%# Team 2 Panel (Right) - Using Shared Component %>
+              <.live_component
+                module={TeamPanel}
+                id="captain-team2-panel"
+                display_mode={:captain_side}
+                team_role="team2"
+                team={@team2}
+                team_connected={@draft.team2_connected}
+                timer_enabled={@draft.timer_config["timer_strategy_enabled"]}
+                timer_state={@timer_state}
+                timer_remaining={assigns[:timer_remaining]}
+                bonus_remaining={if assigns[:timer_state], do: @timer_state.team2_bonus_remaining || 10, else: 10}
+                coin_choice={@draft.team2_coin_choice}
+                coin_winner={@draft.coin_toss_winner == "team2"}
+                draft_sequence={get_draft_sequence(@draft) |> Enum.filter(&(&1.team == "team2"))}
+                current_position={get_current_draft_position(@draft)}
+                current_phase={@draft.current_phase}
+                is_narrow={true}
+              />
             </div>
           </div>
         <% end %>

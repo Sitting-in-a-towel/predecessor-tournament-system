@@ -164,9 +164,20 @@ router.delete('/:id',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      // TODO: Implement tournament deletion logic
+      // Check if tournament exists first
+      const tournament = await postgresService.getTournamentById(req.params.id);
+      if (!tournament) {
+        return res.status(404).json({ error: 'Tournament not found' });
+      }
+
+      // Delete the tournament and all related data
+      const deletedTournament = await postgresService.deleteTournament(req.params.id);
       
-      res.json({ message: 'Tournament deletion endpoint - to be implemented' });
+      logger.info(`Tournament ${req.params.id} deleted by admin ${req.user.id}`);
+      res.json({ 
+        message: 'Tournament deleted successfully',
+        tournament: deletedTournament 
+      });
     } catch (error) {
       logger.error('Error deleting tournament:', error);
       res.status(500).json({ error: 'Failed to delete tournament' });
@@ -184,7 +195,7 @@ router.get('/:id/teams',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const teams = await airtableService.getTeamsByTournament(req.params.id);
+      const teams = await postgresService.getTeamsByTournament(req.params.id);
       
       logger.info(`Retrieved ${teams.length} teams for tournament ${req.params.id}`);
       res.json(teams);
@@ -367,5 +378,223 @@ router.put('/:id/teams/:teamId/checkin',
     }
   }
 );
+
+// Get tournament check-in status (for Check-In tab)
+router.get('/:tournamentId/check-in-status', async (req, res) => {
+  try {
+    const { tournamentId } = req.params;
+
+    // Get tournament info
+    const tournamentQuery = `
+      SELECT name, status, check_in_enabled, check_in_start, start_date 
+      FROM tournaments 
+      WHERE tournament_id = $1
+    `;
+    const tournamentResult = await postgresService.query(tournamentQuery, [tournamentId]);
+    
+    if (tournamentResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+
+    const tournament = tournamentResult.rows[0];
+
+    // Get all registered teams with check-in status
+    // Need to get tournament's primary key (id) to query registrations
+    const tournamentPK = await postgresService.query(
+      'SELECT id FROM tournaments WHERE tournament_id = $1',
+      [tournamentId]
+    );
+    
+    if (tournamentPK.rows.length === 0) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+    
+    const teamsQuery = `
+      SELECT 
+        t.team_id,
+        t.team_name,
+        tr.status,
+        tr.check_in_time,
+        tr.checked_in,
+        u.discord_username as captain_username,
+        5 as player_count
+      FROM tournament_registrations tr
+      JOIN teams t ON tr.team_id = t.id
+      JOIN users u ON t.captain_id = u.id
+      WHERE tr.tournament_id = $1
+      ORDER BY t.team_name
+    `;
+    const teamsResult = await postgresService.query(teamsQuery, [tournamentPK.rows[0].id]);
+
+    // Calculate summary statistics
+    const totalTeams = teamsResult.rows.length;
+    const confirmedTeams = teamsResult.rows.filter(team => team.status === 'registered').length;
+    const checkedInTeams = teamsResult.rows.filter(team => team.checked_in).length;
+    const readyToStart = checkedInTeams >= 2; // Minimum teams for tournament
+
+    const teams = teamsResult.rows.map(team => ({
+      team_id: team.team_id,
+      team_name: team.team_name,
+      captain_username: team.captain_username,
+      status: team.status,
+      checked_in: team.checked_in,
+      check_in_time: team.check_in_time,
+      player_count: team.player_count,
+      confirmed: team.status === 'registered'
+    }));
+
+    res.json({
+      tournament: {
+        name: tournament.name,
+        status: tournament.status,
+        check_in_enabled: tournament.check_in_enabled,
+        check_in_start: tournament.check_in_start,
+        start_date: tournament.start_date
+      },
+      summary: {
+        totalTeams,
+        confirmedTeams,
+        checkedInTeams,
+        readyToStart
+      },
+      teams
+    });
+
+  } catch (error) {
+    logger.error('Error getting check-in status:', error);
+    res.status(500).json({ error: 'Failed to get check-in status' });
+  }
+});
+
+// Team check-in endpoint (for team captains)
+router.post('/:tournamentId/check-in', requireAuth, async (req, res) => {
+  try {
+    const { tournamentId } = req.params;
+    const userId = req.user.id;
+
+    // Get tournament primary key first
+    const tournamentPK = await postgresService.query(
+      'SELECT id FROM tournaments WHERE tournament_id = $1',
+      [tournamentId]
+    );
+    
+    if (tournamentPK.rows.length === 0) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+    
+    // Find user's team for this tournament
+    const teamQuery = `
+      SELECT t.id, t.team_id, t.team_name, tr.status, tr.checked_in
+      FROM teams t
+      JOIN tournament_registrations tr ON tr.team_id = t.id
+      WHERE t.captain_id = $1 AND tr.tournament_id = $2
+    `;
+    const teamResult = await postgresService.query(teamQuery, [userId, tournamentPK.rows[0].id]);
+
+    if (teamResult.rows.length === 0) {
+      return res.status(404).json({ error: 'No team found for this tournament' });
+    }
+
+    const team = teamResult.rows[0];
+
+    // Check if team is confirmed/registered
+    if (team.status !== 'registered') {
+      return res.status(400).json({ error: 'Team must be confirmed before checking in' });
+    }
+
+    // Check if already checked in
+    if (team.checked_in) {
+      return res.status(400).json({ error: 'Team is already checked in' });
+    }
+
+    // Update check-in status
+    const updateQuery = `
+      UPDATE tournament_registrations 
+      SET checked_in = true, check_in_time = NOW()
+      WHERE tournament_id = $1 AND team_id = $2
+      RETURNING check_in_time
+    `;
+    const updateResult = await postgresService.query(updateQuery, [tournamentPK.rows[0].id, team.id]);
+
+    logger.info(`Team ${team.team_name} checked in for tournament ${tournamentId} by captain ${req.user.discord_username}`);
+
+    res.json({
+      message: 'Successfully checked in for tournament',
+      team: {
+        team_id: team.team_id,
+        team_name: team.team_name,
+        checked_in: true,
+        check_in_time: updateResult.rows[0].check_in_time
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error checking in team:', error);
+    res.status(500).json({ error: 'Failed to check in team' });
+  }
+});
+
+// Admin toggle check-in (for admins to manually check in/out teams)
+router.post('/:tournamentId/admin-toggle-checkin/:teamId', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { tournamentId, teamId } = req.params;
+    const { checked_in } = req.body;
+
+    // Get tournament primary key first
+    const tournamentPK = await postgresService.query(
+      'SELECT id FROM tournaments WHERE tournament_id = $1',
+      [tournamentId]
+    );
+    
+    if (tournamentPK.rows.length === 0) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+
+    // Get team info
+    const teamQuery = `
+      SELECT t.team_id, t.team_name, tr.status, tr.checked_in
+      FROM teams t
+      JOIN tournament_registrations tr ON tr.team_id = t.id
+      WHERE t.team_id = $1 AND tr.tournament_id = $2
+    `;
+    const teamResult = await postgresService.query(teamQuery, [teamId, tournamentPK.rows[0].id]);
+
+    if (teamResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Team not found in this tournament' });
+    }
+
+    const team = teamResult.rows[0];
+
+    // Check if team is confirmed/registered
+    if (team.status !== 'registered') {
+      return res.status(400).json({ error: 'Team must be confirmed before checking in' });
+    }
+
+    // Update check-in status
+    const updateQuery = `
+      UPDATE tournament_registrations 
+      SET checked_in = $1, check_in_time = ${checked_in ? 'NOW()' : 'NULL'}
+      WHERE tournament_id = $2 AND team_id = (SELECT id FROM teams WHERE team_id = $3)
+      RETURNING check_in_time
+    `;
+    const updateResult = await postgresService.query(updateQuery, [checked_in, tournamentPK.rows[0].id, teamId]);
+
+    logger.info(`Admin ${req.user.discord_username} ${checked_in ? 'checked in' : 'unchecked'} team ${team.team_name} for tournament ${tournamentId}`);
+
+    res.json({
+      message: `Team ${checked_in ? 'checked in' : 'check-in removed'} successfully`,
+      team: {
+        team_id: team.team_id,
+        team_name: team.team_name,
+        checked_in: checked_in,
+        check_in_time: updateResult.rows[0]?.check_in_time || null
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error updating team check-in status:', error);
+    res.status(500).json({ error: 'Failed to update check-in status' });
+  }
+});
 
 module.exports = router;

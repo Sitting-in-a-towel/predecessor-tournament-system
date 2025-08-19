@@ -1,0 +1,34 @@
+=== MANUAL PHOENIX STARTUP COMMANDS ===
+
+Since batch files keep closing, copy and paste these commands one by one into Command Prompt:
+
+1. Open Command Prompt (Windows + R, type "cmd", press Enter)
+
+2. Navigate to Phoenix directory:
+cd "H:\Project Folder\Predecessor website\phoenix_draft"
+
+3. Set the PATH:
+set PATH=C:\Program Files\Erlang OTP\bin;C:\Program Files\Elixir\bin;%PATH%
+
+4. Clean problematic dependency:
+mix deps.clean bcrypt_elixir
+
+5. Get dependencies:
+mix deps.get
+
+6. Compile project:
+mix compile
+
+7. Start Phoenix server:
+mix phx.server
+
+=== EXPECTED RESULT ===
+You should see:
+[info] Running PredecessorDraftWeb.Endpoint with cowboy
+[info] Access PredecessorDraftWeb.Endpoint at http://localhost:4000
+
+Then test: http://localhost:4000
+
+=== IF STILL ERRORS ===
+The Command Prompt will show the exact error message.
+Take a screenshot or copy the error text.

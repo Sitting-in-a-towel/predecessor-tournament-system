@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import HeroGrid from './HeroGrid';
 import DraftTimer from './DraftTimer';
+import CoinToss from './CoinToss';
 import './DraftScreen.css';
 
-const DraftScreen = ({ draftSession, heroes, userRole, matchId }) => {
+const DraftScreen = ({ draftSession, heroes, userRole, matchId, draftId }) => {
   const [timeRemaining, setTimeRemaining] = useState(0);
 
   useEffect(() => {
@@ -52,6 +53,28 @@ const DraftScreen = ({ draftSession, heroes, userRole, matchId }) => {
     }
     return phase;
   };
+
+  // Show coin toss interface if in coin toss phase
+  if (draftSession.current_phase === 'Coin Toss') {
+    return (
+      <div className="draft-screen">
+        <div className="draft-status">
+          <div className="phase-info">
+            <h2>Coin Toss Phase</h2>
+            <p className="phase-description">
+              Determining which team gets first pick
+            </p>
+          </div>
+        </div>
+
+        <CoinToss 
+          draftSession={draftSession}
+          userRole={userRole}
+          draftId={draftId}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="draft-screen">

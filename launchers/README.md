@@ -1,17 +1,23 @@
 # Predecessor Tournament Management - Launchers
 
-## Daily Use Launchers (Main Directory)
+## 🚀 Main Launchers (Choose Your Database)
 
-### 🚀 Primary Development
-- **`Start_Development_Environment.bat`** - Main launcher for daily development
-  - Starts PostgreSQL, NocoDB, UI Launcher, Backend, Frontend
-  - Optional pgAdmin 4 startup
-  - Opens all browser windows
-  - **Use this for daily development work**
+### **`Local_Development_Launcher.bat`** - LOCAL DATABASE
+- **Use this for daily development work**
+- Connects to your local PostgreSQL database
+- Your original tournament data (6 tournaments, 38 teams)
+- All services: Frontend (3000), Backend (3001), Phoenix (4000), NocoDB (8080)
+- **Best for: Normal development and testing**
 
-- **`Start_UI_Launcher_Real.bat`** - UI Launcher only
-  - Starts just the UI launcher application
-  - Good for quick testing or when other services are already running
+### **`Production_Testing_Launcher.bat`** - PRODUCTION DATABASE  
+- **Use this for production testing only**
+- Connects to Render PostgreSQL (live production data)
+- Test data we created (Test tournament 101 with 4 teams)
+- Same services but connected to production database
+- **⚠️ WARNING: Changes affect live production data!**
+
+### Legacy Launchers
+- **`Enhanced_Launcher.bat`** - Old general launcher (still works)
 
 ### 🔧 Database & Setup
 - **`setup_airtable_database.bat`** - Set up Airtable tables
