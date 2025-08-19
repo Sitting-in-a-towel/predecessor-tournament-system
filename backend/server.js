@@ -23,7 +23,9 @@ const invitationRoutes = require('./routes/invitations');
 const tournamentRegistrationRoutes = require('./routes/tournament-registration');
 const profileRoutes = require('./routes/profile');
 const bracketRoutes = require('./routes/brackets');
+const heroesRoutes = require('./routes/heroes');
 const testAuthRoutes = require('./routes/test-auth');
+const logsRoutes = require('./routes/logs');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -31,6 +33,7 @@ const authMiddleware = require('./middleware/auth');
 // Import services
 const logger = require('./utils/logger');
 const { connectDatabase } = require('./utils/database');
+const DraftSocketService = require('./services/draftSocketService');
 
 const app = express();
 const server = createServer(app);
@@ -117,7 +120,8 @@ app.get('/', (req, res) => {
   res.json({ 
     message: 'Predecessor Tournament Management API',
     status: 'running',
-    version: '1.0.0'
+    version: '1.0.0',
+    lastUpdated: new Date().toISOString()
   });
 });
 
@@ -138,37 +142,17 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin-tools', adminToolsRoutes);
 app.use('/api', bracketRoutes);
+app.use('/api/heroes', heroesRoutes);
 app.use('/api/test-auth', testAuthRoutes);
+app.use('/api/logs', logsRoutes);
 
-// Socket.IO for real-time features (draft system, notifications)
-io.on('connection', (socket) => {
-  logger.info(`User connected: ${socket.id}`);
+// Initialize enhanced draft socket service
+const draftSocketService = new DraftSocketService(io);
+draftSocketService.initialize();
 
-  // Join draft room
-  socket.on('join-draft', (draftId) => {
-    socket.join(`draft-${draftId}`);
-    logger.info(`User ${socket.id} joined draft ${draftId}`);
-  });
-
-  // Leave draft room
-  socket.on('leave-draft', (draftId) => {
-    socket.leave(`draft-${draftId}`);
-    logger.info(`User ${socket.id} left draft ${draftId}`);
-  });
-
-  // Handle draft actions (pick/ban)
-  socket.on('draft-action', (data) => {
-    // Broadcast to all users in the draft room
-    socket.to(`draft-${data.draftId}`).emit('draft-update', data);
-  });
-
-  socket.on('disconnect', () => {
-    logger.info(`User disconnected: ${socket.id}`);
-  });
-});
-
-// Make io available to routes
+// Make io and draft service available to routes
 app.set('io', io);
+app.set('draftSocketService', draftSocketService);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
