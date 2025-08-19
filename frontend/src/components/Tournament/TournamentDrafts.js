@@ -6,6 +6,9 @@ import './TournamentDrafts.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 const PHOENIX_DRAFT_URL = process.env.REACT_APP_PHOENIX_URL || 'http://localhost:4000';
 
+// Production fallback: Check if Phoenix is available, otherwise skip Phoenix calls
+const PHOENIX_ENABLED = process.env.REACT_APP_PHOENIX_ENABLED !== 'false';
+
 const TournamentDrafts = ({ tournamentId, tournament, teams, isAdmin, isTeamCaptain, user, refreshTrigger }) => {
   const [drafts, setDrafts] = useState([]);
   const [matches, setMatches] = useState([]);
@@ -113,28 +116,34 @@ const TournamentDrafts = ({ tournamentId, tournament, teams, isAdmin, isTeamCapt
         // Continue without backend drafts
       }
       
-      // Also try to load Phoenix drafts for this tournament
+      // Also try to load Phoenix drafts for this tournament (if Phoenix is enabled)
       let phoenixDrafts = [];
-      try {
-        console.log('Loading Phoenix drafts for tournament:', effectiveTournamentId);
-        const phoenixRes = await axios.get(`${PHOENIX_DRAFT_URL}/api/drafts?tournament_id=${effectiveTournamentId}`);
-        
-        if (phoenixRes.data && Array.isArray(phoenixRes.data)) {
-          phoenixDrafts = phoenixRes.data.map(draft => ({
-            id: draft.id,
-            draft_id: draft.draft_id,
-            team1_name: draft.team1_name,
-            team2_name: draft.team2_name,
-            status: draft.status,
-            current_phase: draft.current_phase,
-            created_at: draft.created_at,
-            phoenixDraftId: draft.draft_id // Mark as Phoenix draft
-          }));
-          console.log('Loaded Phoenix drafts:', phoenixDrafts);
+      if (PHOENIX_ENABLED) {
+        try {
+          console.log('Loading Phoenix drafts for tournament:', effectiveTournamentId);
+          const phoenixRes = await axios.get(`${PHOENIX_DRAFT_URL}/api/drafts?tournament_id=${effectiveTournamentId}`, {
+            timeout: 5000 // 5 second timeout to avoid hanging in production
+          });
+          
+          if (phoenixRes.data && Array.isArray(phoenixRes.data)) {
+            phoenixDrafts = phoenixRes.data.map(draft => ({
+              id: draft.id,
+              draft_id: draft.draft_id,
+              team1_name: draft.team1_name,
+              team2_name: draft.team2_name,
+              status: draft.status,
+              current_phase: draft.current_phase,
+              created_at: draft.created_at,
+              phoenixDraftId: draft.draft_id // Mark as Phoenix draft
+            }));
+            console.log('Loaded Phoenix drafts:', phoenixDrafts);
+          }
+        } catch (phoenixError) {
+          console.log('Could not load Phoenix drafts (Phoenix may not be running in production):', phoenixError.message);
+          // Continue without Phoenix drafts - this is expected in production
         }
-      } catch (phoenixError) {
-        console.log('Could not load Phoenix drafts:', phoenixError.message);
-        // Continue without Phoenix drafts
+      } else {
+        console.log('Phoenix drafts disabled via environment variable');
       }
       
       // Keep any Phoenix-only drafts that were added locally but not yet persisted
