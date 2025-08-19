@@ -26,6 +26,7 @@ const bracketRoutes = require('./routes/brackets');
 const heroesRoutes = require('./routes/heroes');
 const testAuthRoutes = require('./routes/test-auth');
 const logsRoutes = require('./routes/logs');
+const createTestDraftRoutes = require('./routes/create-test-draft');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -145,6 +146,7 @@ app.use('/api', bracketRoutes);
 app.use('/api/heroes', heroesRoutes);
 app.use('/api/test-auth', testAuthRoutes);
 app.use('/api/logs', logsRoutes);
+app.use('/api/test', createTestDraftRoutes);
 
 // Initialize enhanced draft socket service
 const draftSocketService = new DraftSocketService(io);
