@@ -198,7 +198,13 @@ router.get('/:id/teams',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const teams = await postgresService.getTeamsByTournament(req.params.id);
+      // First resolve the tournament to get the actual UUID
+      const tournament = await postgresService.getTournamentById(req.params.id);
+      if (!tournament) {
+        return res.status(404).json({ error: 'Tournament not found' });
+      }
+      
+      const teams = await postgresService.getTeamsByTournament(tournament.tournament_id);
       
       logger.info(`Retrieved ${teams.length} teams for tournament ${req.params.id}`);
       res.json(teams);
