@@ -11,14 +11,9 @@ defmodule PredecessorDraft.Application do
     PredecessorDraft.Logger.setup()
     PredecessorDraft.Logger.log(:info, "APPLICATION", "Starting PredecessorDraft application")
     
-    # Try to start Repo with better error handling
-    repo_child = if System.get_env("SKIP_DATABASE") == "true" do
-      IO.puts("SKIPPING DATABASE CONNECTION - Running without database")
-      nil
-    else
-      IO.puts("Starting database connection...")
-      PredecessorDraft.Repo
-    end
+    # MINIMAL DEPLOYMENT: Skip database completely to get basic Phoenix running
+    repo_child = nil
+    IO.puts("MINIMAL DEPLOYMENT: Running Phoenix without any database connection")
     
     children = [
       PredecessorDraftWeb.Telemetry,
