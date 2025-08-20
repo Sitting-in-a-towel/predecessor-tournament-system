@@ -1,0 +1,312 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 17.5
+-- Dumped by pg_dump version 17.5
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.users (id, user_id, discord_id, discord_username, discord_discriminator, email, avatar_url, is_admin, is_banned, created_at, last_active, updated_at, omeda_player_id, omeda_profile_data, omeda_last_sync, omeda_sync_enabled) FROM stdin;
+da6b9c5c-134e-470d-ad98-f54fe306a2ad	user_1754636203432_alphacaptain	6884497751146046	AlphaCaptain	\N	\N	\N	f	f	2025-08-08 16:56:43.432+10	2025-08-08 16:56:43.433316+10	2025-08-08 16:56:43.432+10	\N	\N	\N	f
+1a5350f5-6a41-4f44-8877-cf480a5ceb09	test_captain_1753944601496	123456789	TestCaptain	\N	testcaptain@example.com	\N	f	f	2025-07-31 16:50:01.521564+10	2025-07-31 16:50:01.521564+10	2025-08-01 22:22:12.729594+10	\N	\N	\N	f
+2c7e6044-666c-4cdd-b541-afd48d54d034	user_1754636203435_betacaptain	19207497699733533	BetaCaptain	\N	\N	\N	f	f	2025-08-08 16:56:43.435+10	2025-08-08 16:56:43.436667+10	2025-08-08 16:56:43.435+10	\N	\N	\N	f
+a9ebb824-14c6-42e5-8fd4-17e77d28ed98	user_1754636203437_gammacaptain	699872517142389	GammaCaptain	\N	\N	\N	f	f	2025-08-08 16:56:43.437+10	2025-08-08 16:56:43.438314+10	2025-08-08 16:56:43.437+10	\N	\N	\N	f
+eebc5cc1-d68d-4826-a2a3-83077f792ca8	user_1754636203439_deltacaptain	7299860980730581	DeltaCaptain	\N	\N	\N	f	f	2025-08-08 16:56:43.439+10	2025-08-08 16:56:43.440044+10	2025-08-08 16:56:43.439+10	\N	\N	\N	f
+3e3e02ca-11ee-4e70-8162-e14524bd4ca1	user_1753774405110_mk5ekhh61	130300130849980416	sitting_in_a_towel	0	hanboner@gmail.com	\N	t	f	2025-07-29 17:33:25.111112+10	2025-08-19 23:11:32.039834+10	2025-08-19 23:11:32.039834+10	120ea13d-c41a-4e37-890e-fe0d09d8310f	\N	2025-08-08 11:00:08.90117+10	t
+a1b2c3d4-e5f6-7890-abcd-ef1234567890	test_admin_user	test_discord_123456	test_admin	\N	test@admin.com	\N	t	f	2025-08-07 14:03:01.390866+10	2025-08-07 14:03:01.390866+10	2025-08-15 22:57:13.146507+10	test123	\N	2025-08-09 00:57:21.297585+10	t
+19ffc0e9-a8ae-47c3-9de6-1d899b8a3046	19ffc0e9-a8ae-47c3-9de6-1d899b8a3046	test_discord_prod_1_1754372212421	AlphaLeader	\N	\N	\N	f	f	2025-08-05 15:36:52.424853+10	2025-08-05 15:36:52.424853+10	2025-08-05 15:36:52.424853+10	\N	\N	\N	f
+e5a061b1-c73a-45c2-93bb-88a62860e4b6	e5a061b1-c73a-45c2-93bb-88a62860e4b6	test_discord_prod_2_1754372212425	BetaCommander	\N	\N	\N	f	f	2025-08-05 15:36:52.426223+10	2025-08-05 15:36:52.426223+10	2025-08-05 15:36:52.426223+10	\N	\N	\N	f
+085df6f9-eaa2-4e07-9430-a16173a981d6	085df6f9-eaa2-4e07-9430-a16173a981d6	test_discord_prod_3_1754372212426	GammaGuard	\N	\N	\N	f	f	2025-08-05 15:36:52.426908+10	2025-08-05 15:36:52.426908+10	2025-08-05 15:36:52.426908+10	\N	\N	\N	f
+b4266286-bcff-4567-bc7c-02f53dab9c67	b4266286-bcff-4567-bc7c-02f53dab9c67	test_discord_prod_4_1754372212427	DeltaDrake	\N	\N	\N	f	f	2025-08-05 15:36:52.427546+10	2025-08-05 15:36:52.427546+10	2025-08-05 15:36:52.427546+10	\N	\N	\N	f
+662b66dc-6a8d-4ec6-b3ad-b4b64693bacb	662b66dc-6a8d-4ec6-b3ad-b4b64693bacb	test_discord_prod_5_1754372212427	EchoEagle	\N	\N	\N	f	f	2025-08-05 15:36:52.428192+10	2025-08-05 15:36:52.428192+10	2025-08-05 15:36:52.428192+10	\N	\N	\N	f
+b4783c4d-c964-4426-8714-3dc837c8a07b	b4783c4d-c964-4426-8714-3dc837c8a07b	test_discord_prod_6_1754372212428	FoxtrotFlame	\N	\N	\N	f	f	2025-08-05 15:36:52.428751+10	2025-08-05 15:36:52.428751+10	2025-08-05 15:36:52.428751+10	\N	\N	\N	f
+09759201-4e95-4078-9d4d-9ea0d888bdeb	09759201-4e95-4078-9d4d-9ea0d888bdeb	test_discord_prod_7_1754372212428	GolfGladiator	\N	\N	\N	f	f	2025-08-05 15:36:52.429228+10	2025-08-05 15:36:52.429228+10	2025-08-05 15:36:52.429228+10	\N	\N	\N	f
+50e3ee73-6fec-4354-8cc3-7bdb4ccb2f73	50e3ee73-6fec-4354-8cc3-7bdb4ccb2f73	test_discord_prod_8_1754372212429	HotelHurricane	\N	\N	\N	f	f	2025-08-05 15:36:52.429831+10	2025-08-05 15:36:52.429831+10	2025-08-05 15:36:52.429831+10	\N	\N	\N	f
+bc6daa91-a510-44de-bde3-0d23ce1b6905	bc6daa91-a510-44de-bde3-0d23ce1b6905	test_discord_prod_9_1754372212430	IndiaInvader	\N	\N	\N	f	f	2025-08-05 15:36:52.43034+10	2025-08-05 15:36:52.43034+10	2025-08-05 15:36:52.43034+10	\N	\N	\N	f
+6d18a830-af4f-4a58-a0cd-9a7eef47d63d	6d18a830-af4f-4a58-a0cd-9a7eef47d63d	test_discord_prod_10_1754372212430	JulietJuggernaut	\N	\N	\N	f	f	2025-08-05 15:36:52.430695+10	2025-08-05 15:36:52.430695+10	2025-08-05 15:36:52.430695+10	\N	\N	\N	f
+ab5d92df-c801-4932-ba5a-5a52a9651864	test_player_1754458760421_0	test_discord_1754458760421_0	TestPlayer1	0000	\N	\N	f	f	2025-08-06 15:39:20.422583+10	2025-08-06 15:39:20.422583+10	2025-08-06 15:39:20.422583+10	\N	\N	\N	f
+01512045-d5a0-4e84-9026-0d5a2de2db7a	test_player_1754458760428_1	test_discord_1754458760428_1	TestPlayer2	0000	\N	\N	f	f	2025-08-06 15:39:20.429379+10	2025-08-06 15:39:20.429379+10	2025-08-06 15:39:20.429379+10	\N	\N	\N	f
+53c98fb8-57cb-4545-8eff-5eeb8ae728a6	test_player_1754458760430_2	test_discord_1754458760430_2	TestPlayer3	0000	\N	\N	f	f	2025-08-06 15:39:20.431315+10	2025-08-06 15:39:20.431315+10	2025-08-06 15:39:20.431315+10	\N	\N	\N	f
+a2985b79-e16b-4099-9bdf-96f858c7d98f	test_player_1754458760432_3	test_discord_1754458760432_3	TestPlayer4	0000	\N	\N	f	f	2025-08-06 15:39:20.432896+10	2025-08-06 15:39:20.432896+10	2025-08-06 15:39:20.432896+10	\N	\N	\N	f
+ea996e0c-1772-43ad-8bff-8e6dd87b8222	user_test_001	123456789012345678	TestAdmin	0001	admin@predecessor-tournaments.com	https://cdn.discordapp.com/avatars/123456789012345678/sample.png	t	f	2025-07-29 17:07:03.168942+10	2025-07-29 17:07:03.168942+10	2025-08-08 16:54:03.047583+10	\N	\N	\N	f
+\.
+
+
+--
+-- Data for Name: tournaments; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.tournaments (id, tournament_id, name, description, bracket_type, game_format, quarter_final_format, semi_final_format, grand_final_format, max_teams, current_teams, registration_open, check_in_enabled, status, start_date, end_date, check_in_start, created_by, created_at, updated_at) FROM stdin;
+d71c144e-887f-4772-917a-37cbe1e304f4	tour_test_1753775787225	Test Tournament Debug	Testing tournament creation	Single Elimination	Best of 1	Best of 1	Best of 1	Best of 1	8	0	t	f	Registration	2025-08-08 17:56:27.226+10	\N	\N	ea996e0c-1772-43ad-8bff-8e6dd87b8222	2025-07-29 17:56:27.253515+10	2025-07-29 17:56:27.253515+10
+56935e77-2284-4882-a852-85ab5b9b2d14	tour_1753958294261_456xdx18o	gfdhgfh		Double Elimination	Best of 3	Best of 3	Best of 5	Best of 5	16	0	t	t	Registration	2025-08-10 20:38:00+10	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	2025-07-31 20:38:14.26315+10	2025-07-31 23:53:02.40303+10
+ed399372-ff1c-453b-9a5f-04ded7752c96	tour_1753792556528_mj6igshtk	Test 1	Test 1	Double Elimination	Best of 3	Best of 3	Best of 5	Best of 5	16	4	t	f	Registration	2025-07-31 22:35:00+10	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	2025-07-29 22:35:56.529313+10	2025-08-01 00:17:05.925395+10
+4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	67e81a0d-1165-4481-ad58-85da372f86d5	test admin panel	test admin panel	Single Elimination	Best of 3	Best of 3	Best of 5	Best of 5	16	2	t	f	Registration	2025-08-01 16:15:00+10	\N	2025-08-01 17:15:00+10	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	2025-08-01 16:12:15.191968+10	2025-08-01 19:14:56.646191+10
+442e6764-1242-4f7d-a4aa-4879ad257ac9	836ac9f9-a145-4393-adf0-1e8b3b4a35d4	Testing big bracket		Double Elimination	Best of 3	Best of 3	Best of 5	Best of 5	64	0	t	f	Registration	2025-08-02 01:07:00+10	\N	2025-08-02 03:08:00+10	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	2025-08-02 00:08:25.855765+10	2025-08-02 00:08:25.855765+10
+d4f33c49-f0cc-4b80-80b4-e2e1a3643d88	42a99632-2916-4c9d-90f2-8518c2033144	Draft Test Tournament	Tournament created specifically for testing the draft system with proper bracket and teams.	Single Elimination	Best of 3	\N	\N	\N	8	0	t	f	Registration	2025-08-15 16:56:43.426+10	\N	\N	\N	2025-08-08 16:56:43.426+10	2025-08-08 16:56:43.426+10
+\.
+
+
+--
+-- Data for Name: teams; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.teams (id, team_id, team_name, team_tag, team_logo, tournament_id, captain_id, confirmed, confirmed_at, checked_in, check_in_time, seed, placement, created_at, updated_at) FROM stdin;
+36df5a1d-58af-439f-9a09-c8f9818d4070	team_1753794705875_eqd8y7hjo	Test 1	\N	https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQWYIAUyS-aoAHfk9FLIqxnnKBWU504HYTc5L3JKE5XAkod5FgN	ed399372-ff1c-453b-9a5f-04ded7752c96	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	t	\N	f	\N	\N	\N	2025-07-29 23:11:45.876824+10	2025-07-29 23:11:45.876824+10
+85dced1c-9615-4ae2-9086-dd3eebc52867	team_1753799369897_5qe5zf15q	Test team 3	\N	https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQWYIAUyS-aoAHfk9FLIqxnnKBWU504HYTc5L3JKE5XAkod5FgN	ed399372-ff1c-453b-9a5f-04ded7752c96	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	t	\N	f	\N	\N	\N	2025-07-30 00:29:29.898981+10	2025-07-30 00:29:29.898981+10
+250f482b-fbdc-4dfc-b5be-7957d73dcef7	team_1753799369897_5qe5zf15w	Manual test team	\N	https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQWYIAUyS-aoAHfk9FLIqxnnKBWU504HYTc5L3JKE5XAkod5FgN	\N	\N	t	\N	f	\N	\N	\N	2025-07-31 17:17:50.999921+10	2025-07-31 17:18:06.168595+10
+71d0815b-d89b-4aa4-805d-373386a1b5a2	team_1753794794421_mhk711e4z	Test team	\N	https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQWYIAUyS-aoAHfk9FLIqxnnKBWU504HYTc5L3JKE5XAkod5FgN	ed399372-ff1c-453b-9a5f-04ded7752c96	\N	t	\N	f	\N	\N	\N	2025-07-29 23:13:14.422657+10	2025-07-31 17:20:50.966515+10
+d9b5a37d-5584-45ef-9fb4-f15bb28653d8	team_1753797774005_r6pixwd5k	Test team 2	\N	https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQWYIAUyS-aoAHfk9FLIqxnnKBWU504HYTc5L3JKE5XAkod5FgN	\N	\N	t	\N	f	\N	\N	\N	2025-07-30 00:02:54.006939+10	2025-07-31 17:20:53.383506+10
+226423ba-d072-456b-ad5f-152d727508c6	team_1753971425923_glp0foaqb	jhgfjkhfjhg	\N	/assets/images/predecessor-default-icon.jpg	ed399372-ff1c-453b-9a5f-04ded7752c96	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	t	\N	f	\N	\N	\N	2025-08-01 00:17:05.925395+10	2025-08-01 00:17:05.925395+10
+e1b3b96c-f077-4062-aefc-39977771b943	team_1754039608317_q04z7jynx	fdss	\N	/assets/images/predecessor-default-icon.jpg	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	t	\N	f	\N	\N	\N	2025-08-01 19:13:28.318148+10	2025-08-01 19:13:28.318148+10
+8175ee2a-a462-4a9c-893f-289711adff13	team_1754039696644_xaafhy757	fdgdfg	\N	/assets/images/predecessor-default-icon.jpg	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	t	\N	f	\N	\N	\N	2025-08-01 19:14:56.646191+10	2025-08-01 19:14:56.646191+10
+2d3151b1-b4ae-4cd7-9651-c2a972174ef3	team_1754057431963_fqttelsda	Phoenix Squadron	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.964895+10	2025-08-02 00:10:31.964895+10
+4601bd56-b7a4-4c59-b724-1849eae8e4e0	team_1754057431972_j5ryouxxo	Dragon Force	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.973145+10	2025-08-02 00:10:31.973145+10
+90ca51a9-c49d-4c58-b1b4-7459177830f7	team_1754057431974_17vuqfwxu	Thunder Hawks	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.974619+10	2025-08-02 00:10:31.974619+10
+c11cfdc1-9712-4997-8678-7fb8fe791a10	team_1754057431975_ixgqpzkb9	Ice Wolves	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.975997+10	2025-08-02 00:10:31.975997+10
+d9e67037-eb32-4cc3-adff-a2886cb72d5d	team_1754057431976_b7f81nfvg	Fire Panthers	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.977255+10	2025-08-02 00:10:31.977255+10
+e0042f2d-29db-4c9e-9608-01870b19e1d1	team_1754057431977_jqhslqple	Storm Eagles	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.97857+10	2025-08-02 00:10:31.97857+10
+e1bc70b8-076b-4c07-a4a5-0b5de6493b17	team_1754057431979_a9pvc4fma	Shadow Hunters	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.980133+10	2025-08-02 00:10:31.980133+10
+2881dd89-ee48-44fb-8503-ac2de2e5bd94	team_1754057431980_ghrogsg7y	Lightning Bolts	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.9814+10	2025-08-02 00:10:31.9814+10
+993f51b4-9777-495f-ba7d-7e216250f535	team_1754057431982_gy79lpmo4	Crystal Guardians	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.982783+10	2025-08-02 00:10:31.982783+10
+39d7c6e8-b5cf-460a-8824-47e94940e93f	team_1754057431983_6b01n1i5z	Nova Crusaders	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.983949+10	2025-08-02 00:10:31.983949+10
+65c1266c-a113-47e4-a1a4-145537f797ea	team_1754057431984_qekp2i37t	Void Reapers	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.985053+10	2025-08-02 00:10:31.985053+10
+cf6ff0a5-e7c5-4a47-bda7-4409b142fbc5	team_1754057431985_unqvfrdfe	Cosmic Titans	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.985992+10	2025-08-02 00:10:31.985992+10
+2dfed986-0d48-4abb-9264-f52437023391	team_1754057431986_g5g24q048	Neon Ninjas	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.986979+10	2025-08-02 00:10:31.986979+10
+ad143545-19ec-43a3-9376-834f0fa441af	team_1754057431987_qltfhi32l	Steel Spartans	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.987999+10	2025-08-02 00:10:31.987999+10
+8c530cf9-dc94-4ad5-8c08-3e8b641b81cb	team_1754057431988_h3l5yqi8u	Crimson Knights	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.989055+10	2025-08-02 00:10:31.989055+10
+1f168044-dc59-4fc1-a40d-bdc28f5c66e8	team_1754057431989_7d5bynroz	Golden Lions	\N	\N	\N	1a5350f5-6a41-4f44-8877-cf480a5ceb09	f	\N	f	\N	\N	\N	2025-08-02 00:10:31.990138+10	2025-08-02 00:10:31.990138+10
+a07740a6-2b60-434d-b881-d2e877ccb6c0	team_prod_1754372212430_k53r76tlz	Alpha Wolves	\N	\N	\N	19ffc0e9-a8ae-47c3-9de6-1d899b8a3046	f	\N	f	\N	\N	\N	2025-08-05 15:36:52.43228+10	2025-08-05 15:36:52.43228+10
+01c47fb7-31cb-43cc-b8e9-e4aaf0b71b49	team_prod_1754372212434_b3ahhkvue	Beta Brigade	\N	\N	\N	e5a061b1-c73a-45c2-93bb-88a62860e4b6	f	\N	f	\N	\N	\N	2025-08-05 15:36:52.434975+10	2025-08-05 15:36:52.434975+10
+1daecb6a-9f2e-489e-89ac-840c48d04e82	team_prod_1754372212435_cs5c4s6on	Gamma Guardians	\N	\N	\N	085df6f9-eaa2-4e07-9430-a16173a981d6	f	\N	f	\N	\N	\N	2025-08-05 15:36:52.435629+10	2025-08-05 15:36:52.435629+10
+5b735e1f-7884-4f70-8655-7712386e3a4d	team_prod_1754372212435_vssayimcu	Delta Dragons	\N	\N	\N	b4266286-bcff-4567-bc7c-02f53dab9c67	f	\N	f	\N	\N	\N	2025-08-05 15:36:52.43619+10	2025-08-05 15:36:52.43619+10
+1d3c4964-34cc-42d3-b6cf-866a50f8322f	team_prod_1754372212436_y20cy9zaa	Echo Eagles	\N	\N	\N	662b66dc-6a8d-4ec6-b3ad-b4b64693bacb	f	\N	f	\N	\N	\N	2025-08-05 15:36:52.436813+10	2025-08-05 15:36:52.436813+10
+1c8bfd99-0b77-423f-965b-1acea98a10cd	team_prod_1754372212437_j0ahd68ve	Foxtrot Phoenixes	\N	\N	\N	b4783c4d-c964-4426-8714-3dc837c8a07b	f	\N	f	\N	\N	\N	2025-08-05 15:36:52.437787+10	2025-08-05 15:36:52.437787+10
+4a1942cc-72f8-4f4a-bbb9-c6df6dab040f	team_prod_1754372212438_93bxiezig	Golf Gladiators	\N	\N	\N	09759201-4e95-4078-9d4d-9ea0d888bdeb	f	\N	f	\N	\N	\N	2025-08-05 15:36:52.43844+10	2025-08-05 15:36:52.43844+10
+6498c065-1523-45dd-a51f-86c20887855d	team_prod_1754372212438_xr9ffcebx	Hotel Hurricanes	\N	\N	\N	50e3ee73-6fec-4354-8cc3-7bdb4ccb2f73	f	\N	f	\N	\N	\N	2025-08-05 15:36:52.439133+10	2025-08-05 15:36:52.439133+10
+0ffa2d3e-b673-4963-a13d-8181102d5c21	team_prod_1754372212439_zsxiq7xol	India Invaders	\N	\N	\N	bc6daa91-a510-44de-bde3-0d23ce1b6905	f	\N	f	\N	\N	\N	2025-08-05 15:36:52.43978+10	2025-08-05 15:36:52.43978+10
+a26238aa-0de9-487a-944b-da6854769952	team_prod_1754372212439_i98ct1k5j	Juliet Juggernauts	\N	\N	\N	6d18a830-af4f-4a58-a0cd-9a7eef47d63d	f	\N	f	\N	\N	\N	2025-08-05 15:36:52.440355+10	2025-08-05 15:36:52.440355+10
+57181143-40d0-4832-890e-326b55dacbfe	team_1754636203433_teamalpha	Team Alpha	\N	\N	\N	da6b9c5c-134e-470d-ad98-f54fe306a2ad	f	\N	f	\N	\N	\N	2025-08-08 16:56:43.433+10	2025-08-08 16:56:43.433+10
+30d1657e-1ff4-4486-a092-d74620df2b0e	team_1754636203436_teambeta	Team Beta	\N	\N	\N	2c7e6044-666c-4cdd-b541-afd48d54d034	f	\N	f	\N	\N	\N	2025-08-08 16:56:43.436+10	2025-08-08 16:56:43.436+10
+4dc206d4-7fe0-483f-91e3-f92e3589d30d	team_1754636203438_teamgamma	Team Gamma	\N	\N	\N	a9ebb824-14c6-42e5-8fd4-17e77d28ed98	f	\N	f	\N	\N	\N	2025-08-08 16:56:43.438+10	2025-08-08 16:56:43.438+10
+c0af4f39-b731-4dbc-b052-d50205dd14bd	team_1754636203440_teamdelta	Team Delta	\N	\N	\N	eebc5cc1-d68d-4826-a2a3-83077f792ca8	f	\N	f	\N	\N	\N	2025-08-08 16:56:43.44+10	2025-08-08 16:56:43.44+10
+\.
+
+
+--
+-- Data for Name: tournament_brackets; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.tournament_brackets (id, tournament_id, bracket_data, locked_slots, is_published, seeding_mode, series_length, created_at, updated_at, created_by) FROM stdin;
+0d635a26-b528-4811-8beb-7b1b5485b767	442e6764-1242-4f7d-a4aa-4879ad257ac9	{"type": "Double Elimination", "grandFinal": {"id": "grand-final", "locked": false, "champion": null, "needsReset": false, "lowerWinner": null, "upperWinner": null}, "totalTeams": 11, "lowerBracket": {"rounds": [{"name": "Lower Round 1", "round": 1, "matches": [{"id": "l1m0", "round": 1, "team1": {"id": "494c1d36-6d5e-4dc6-b4a8-a16c873fff2b", "status": "registered", "team_id": "team_1754057431987_qltfhi32l", "team_logo": null, "team_name": "Steel Spartans", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.999Z", "captain_username": "TestCaptain"}, "team2": null, "locked": false, "winner": null, "position": 0, "winnerTo": "l2m0"}, {"id": "l1m1", "round": 1, "team1": {"id": "7e9614ba-400e-4d24-b987-d10660b8cee0", "status": "registered", "team_id": "team_1754057431979_a9pvc4fma", "team_logo": null, "team_name": "Shadow Hunters", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.996Z", "captain_username": "TestCaptain"}, "team2": null, "locked": false, "winner": null, "position": 1, "winnerTo": "l2m0"}], "isDropRound": false}, {"name": "Lower Round 2", "round": 2, "matches": [{"id": "l2m0", "round": 2, "team1": null, "team2": null, "locked": false, "winner": null, "position": 0, "winnerTo": "l3m0"}, {"id": "l2m1", "round": 2, "team1": null, "team2": null, "locked": false, "winner": null, "position": 1, "winnerTo": "l3m0"}, {"id": "l2m2", "round": 2, "team1": null, "team2": null, "locked": false, "winner": null, "position": 2, "winnerTo": "l3m1"}], "isDropRound": true}, {"name": "Lower Round 3", "round": 3, "matches": [{"id": "l3m0", "round": 3, "team1": null, "team2": null, "locked": false, "winner": null, "position": 0, "winnerTo": "l4m0"}, {"id": "l3m1", "round": 3, "team1": null, "team2": null, "locked": false, "winner": null, "position": 1, "winnerTo": "l4m0"}], "isDropRound": false}, {"name": "Lower Round 4", "round": 4, "matches": [{"id": "l4m0", "round": 4, "team1": null, "team2": null, "locked": false, "winner": null, "position": 0, "winnerTo": "l5m0"}, {"id": "l4m1", "round": 4, "team1": null, "team2": null, "locked": false, "winner": null, "position": 1, "winnerTo": "l5m0"}], "isDropRound": true}, {"name": "Lower Round 5", "round": 5, "matches": [{"id": "l5m0", "round": 5, "team1": null, "team2": null, "locked": false, "winner": null, "position": 0, "winnerTo": "grand-final"}], "isDropRound": false}]}, "upperBracket": {"rounds": [{"name": "Round 1", "round": 1, "matches": [{"id": "u1m0", "isBye": false, "loser": {"id": "494c1d36-6d5e-4dc6-b4a8-a16c873fff2b", "status": "registered", "team_id": "team_1754057431987_qltfhi32l", "team_logo": null, "team_name": "Steel Spartans", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.999Z", "captain_username": "TestCaptain"}, "round": 1, "team1": {"id": "32486302-a387-491a-8324-825d5765d4ff", "status": "registered", "team_id": "team_1754057431985_unqvfrdfe", "team_logo": null, "team_name": "Cosmic Titans", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.997Z", "captain_username": "TestCaptain"}, "team2": {"id": "494c1d36-6d5e-4dc6-b4a8-a16c873fff2b", "status": "registered", "team_id": "team_1754057431987_qltfhi32l", "team_logo": null, "team_name": "Steel Spartans", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.999Z", "captain_username": "TestCaptain"}, "locked": false, "scores": [{"game": 1, "winner": "team_1754057431985_unqvfrdfe", "team1Score": "1", "team2Score": "", "omedaMatchId": ""}], "status": "completed", "winner": {"id": "32486302-a387-491a-8324-825d5765d4ff", "status": "registered", "team_id": "team_1754057431985_unqvfrdfe", "team_logo": null, "team_name": "Cosmic Titans", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.997Z", "captain_username": "TestCaptain"}, "loserTo": "l1m0", "position": 0, "winnerTo": "u2m0"}, {"id": "u1m1", "isBye": false, "loser": {"id": "7e9614ba-400e-4d24-b987-d10660b8cee0", "status": "registered", "team_id": "team_1754057431979_a9pvc4fma", "team_logo": null, "team_name": "Shadow Hunters", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.996Z", "captain_username": "TestCaptain"}, "round": 1, "team1": {"id": "7e9614ba-400e-4d24-b987-d10660b8cee0", "status": "registered", "team_id": "team_1754057431979_a9pvc4fma", "team_logo": null, "team_name": "Shadow Hunters", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.996Z", "captain_username": "TestCaptain"}, "team2": {"id": "f16c25ec-fd44-4b5e-bdaa-feaa2132dfac", "status": "registered", "team_id": "team_1754057431983_6b01n1i5z", "team_logo": null, "team_name": "Nova Crusaders", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.002Z", "captain_username": "TestCaptain"}, "locked": false, "scores": [{"game": 1, "winner": "team_1754057431983_6b01n1i5z", "team1Score": "", "team2Score": "1", "omedaMatchId": ""}], "status": "completed", "winner": {"id": "f16c25ec-fd44-4b5e-bdaa-feaa2132dfac", "status": "registered", "team_id": "team_1754057431983_6b01n1i5z", "team_logo": null, "team_name": "Nova Crusaders", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.002Z", "captain_username": "TestCaptain"}, "loserTo": "l1m1", "position": 1, "winnerTo": "u2m0"}, {"id": "u1m2", "isBye": false, "loser": null, "round": 1, "team1": {"id": "8f5b1b33-387c-45d5-ad6e-9580b6abb4f8", "status": "registered", "team_id": "team_1754057431989_7d5bynroz", "team_logo": null, "team_name": "Golden Lions", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.001Z", "captain_username": "TestCaptain"}, "team2": {"id": "341dfb98-3d4c-4c8a-be96-37b6fec03c0b", "status": "registered", "team_id": "team_1754057431975_ixgqpzkb9", "team_logo": null, "team_name": "Ice Wolves", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.000Z", "captain_username": "TestCaptain"}, "locked": false, "winner": null, "loserTo": "l1m2", "position": 2, "winnerTo": "u2m1"}, {"id": "u1m3", "isBye": false, "loser": null, "round": 1, "team1": {"id": "cb2cc054-7239-4ba1-a489-224c1f3354ad", "status": "registered", "team_id": "team_1754057431982_gy79lpmo4", "team_logo": null, "team_name": "Crystal Guardians", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.993Z", "captain_username": "TestCaptain"}, "team2": {"id": "53c166ed-fb4b-4e70-be7b-0a54bb4ea28e", "status": "registered", "team_id": "team_1754057431980_ghrogsg7y", "team_logo": null, "team_name": "Lightning Bolts", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.001Z", "captain_username": "TestCaptain"}, "locked": false, "winner": null, "loserTo": "l1m3", "position": 3, "winnerTo": "u2m1"}, {"id": "u1m4", "isBye": false, "loser": null, "round": 1, "team1": {"id": "b7c86406-e65f-49e8-a7e7-c0c061d0de40", "status": "registered", "team_id": "team_1754057431976_b7f81nfvg", "team_logo": null, "team_name": "Fire Panthers", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.998Z", "captain_username": "TestCaptain"}, "team2": {"id": "e4c9d181-c543-4bab-9b29-e08dde98ca44", "status": "registered", "team_id": "team_1754057431963_fqttelsda", "team_logo": null, "team_name": "Phoenix Squadron", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.998Z", "captain_username": "TestCaptain"}, "locked": false, "winner": null, "loserTo": "l1m4", "position": 4, "winnerTo": "u2m2"}, {"id": "u1m5", "isBye": true, "loser": null, "round": 1, "team1": null, "team2": null, "locked": false, "winner": null, "loserTo": "l1m5", "position": 5, "winnerTo": "u2m2"}]}, {"name": "Quarter-Final", "round": 2, "matches": [{"id": "u2m0", "isBye": false, "loser": null, "round": 2, "team1": {"id": "32486302-a387-491a-8324-825d5765d4ff", "status": "registered", "team_id": "team_1754057431985_unqvfrdfe", "team_logo": null, "team_name": "Cosmic Titans", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:31.997Z", "captain_username": "TestCaptain"}, "team2": {"id": "f16c25ec-fd44-4b5e-bdaa-feaa2132dfac", "status": "registered", "team_id": "team_1754057431983_6b01n1i5z", "team_logo": null, "team_name": "Nova Crusaders", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.002Z", "captain_username": "TestCaptain"}, "locked": false, "winner": null, "loserTo": "l2m0", "position": 0, "winnerTo": "u3m0"}, {"id": "u2m1", "isBye": false, "loser": null, "round": 2, "team1": null, "team2": null, "locked": false, "winner": null, "loserTo": "l2m1", "position": 1, "winnerTo": "u3m0"}, {"id": "u2m2", "isBye": false, "loser": null, "round": 2, "team1": null, "team2": null, "locked": false, "winner": null, "loserTo": "l2m2", "position": 2, "winnerTo": "u3m1"}]}, {"name": "Semi-Final", "round": 3, "matches": [{"id": "u3m0", "isBye": false, "loser": null, "round": 3, "team1": null, "team2": null, "locked": false, "winner": null, "loserTo": "l4m0", "position": 0, "winnerTo": "u4m0"}, {"id": "u3m1", "isBye": false, "loser": null, "round": 3, "team1": null, "team2": null, "locked": false, "winner": null, "loserTo": "l4m1", "position": 1, "winnerTo": "u4m0"}]}, {"name": "Final", "round": 4, "matches": [{"id": "u4m0", "isBye": false, "loser": null, "round": 4, "team1": null, "team2": null, "locked": false, "winner": null, "loserTo": "l6m0", "position": 0, "winnerTo": "grand-final"}]}]}}	["u1m0-team1", "u1m1-team1", "u1m3-team1", "u1m0-team2"]	f	random	1	2025-08-09 22:20:19.21069+10	2025-08-09 22:25:38.795641+10	3e3e02ca-11ee-4e70-8162-e14524bd4ca1
+4ac854b6-6883-4a52-b67a-df6f4cc9ef96	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	{"type": "Single Elimination", "rounds": [{"name": "Round 1", "round": 1, "matches": [{"id": "r1m0", "isBye": false, "loser": null, "round": 1, "score": null, "team1": {"id": "c377a7e0-6215-49f3-9825-d586fa3dd1fd", "status": "registered", "team_id": "team_1754057431989_7d5bynroz", "team_logo": null, "team_name": "Golden Lions", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.004Z", "captain_username": "TestCaptain"}, "team2": {"id": "1e1b7c3f-bde7-469d-9ccd-30e431889ab6", "status": "registered", "team_id": "team_1754057431974_17vuqfwxu", "team_logo": null, "team_name": "Thunder Hawks", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.007Z", "captain_username": "TestCaptain"}, "locked": false, "scores": [{"game": 1, "winner": "team_1754057431989_7d5bynroz", "team1Score": "1", "team2Score": "0", "omedaMatchId": ""}], "status": "pending", "winner": null, "details": null, "position": 0, "nextMatch": "r2m0", "tempWinner": "team_1754057431989_7d5bynroz", "nextPosition": "team1"}, {"id": "r1m1", "isBye": false, "loser": null, "round": 1, "score": null, "team1": {"id": "ad791180-90ba-4b70-8ba9-9702ba36d77c", "status": "registered", "team_id": "team_1754057431977_jqhslqple", "team_logo": null, "team_name": "Storm Eagles", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.006Z", "captain_username": "TestCaptain"}, "team2": {"id": "9ea2c89e-fa7b-4eba-9e88-c504b3d92282", "status": "registered", "team_id": "team_1754057431979_a9pvc4fma", "team_logo": null, "team_name": "Shadow Hunters", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.005Z", "captain_username": "TestCaptain"}, "locked": false, "scores": [{"game": 1, "winner": "team_1754057431975_ixgqpzkb9", "team1Score": "1", "team2Score": "", "omedaMatchId": ""}], "status": "pending", "winner": null, "details": null, "position": 1, "nextMatch": "r2m0", "nextPosition": "team2"}, {"id": "r1m2", "isBye": false, "loser": null, "round": 1, "score": null, "team1": {"id": "43243040-0aba-4bab-8aa5-868077cbba6d", "status": "registered", "team_id": "team_1754057431982_gy79lpmo4", "team_logo": null, "team_name": "Crystal Guardians", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.004Z", "captain_username": "TestCaptain"}, "team2": {"id": "353c1ccd-ee82-4cc5-9579-ecc3346c79a9", "status": "registered", "team_id": "team_1754057431988_h3l5yqi8u", "team_logo": null, "team_name": "Crimson Knights", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.009Z", "captain_username": "TestCaptain"}, "locked": false, "scores": [{"game": 1, "winner": "team_1754057431987_qltfhi32l", "team1Score": "2", "team2Score": "1", "omedaMatchId": ""}], "status": "pending", "winner": null, "details": null, "position": 2, "nextMatch": "r2m1", "nextPosition": "team1"}, {"id": "r1m3", "isBye": false, "loser": null, "round": 1, "score": null, "team1": {"id": "79d22103-2cd9-4f43-8dcc-f696d400a64f", "status": "registered", "team_id": "team_1754057431984_qekp2i37t", "team_logo": null, "team_name": "Void Reapers", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.006Z", "captain_username": "TestCaptain"}, "team2": {"id": "52530a5a-0888-4631-ac95-ae6b67b59a57", "status": "registered", "team_id": "team_1754057431975_ixgqpzkb9", "team_logo": null, "team_name": "Ice Wolves", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.003Z", "captain_username": "TestCaptain"}, "locked": false, "status": "pending", "winner": null, "details": null, "position": 3, "nextMatch": "r2m1", "nextPosition": "team2"}, {"id": "r1m4", "isBye": false, "loser": null, "round": 1, "score": null, "team1": {"id": "a6deb4eb-d2cc-4ed9-94ff-4524d71ccb53", "status": "registered", "team_id": "team_1754057431987_qltfhi32l", "team_logo": null, "team_name": "Steel Spartans", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.010Z", "captain_username": "TestCaptain"}, "team2": {"id": "fbedc7c3-f432-45ff-9ac3-9d859ea806b2", "status": "registered", "team_id": "team_1754039608317_q04z7jynx", "team_logo": "/assets/images/predecessor-default-icon.jpg", "team_name": "fdss", "checked_in": true, "check_in_time": "2025-08-06T05:46:43.417Z", "registered_date": "2025-08-01T10:39:12.323Z", "captain_username": "sitting_in_a_towel"}, "locked": false, "status": "pending", "winner": null, "details": null, "position": 4, "nextMatch": "r2m2", "nextPosition": "team1"}, {"id": "r1m5", "isBye": false, "loser": null, "round": 1, "score": null, "team1": {"id": "3f0a9892-c093-480e-a6dd-f1cb325ad4dd", "status": "registered", "team_id": "team_1754057431972_j5ryouxxo", "team_logo": null, "team_name": "Dragon Force", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.011Z", "captain_username": "TestCaptain"}, "team2": {"id": "e69a64d9-6c1c-4c77-a474-a25da77fc406", "status": "registered", "team_id": "team_1754057431980_ghrogsg7y", "team_logo": null, "team_name": "Lightning Bolts", "checked_in": true, "check_in_time": null, "registered_date": "2025-08-01T14:10:32.008Z", "captain_username": "TestCaptain"}, "locked": false, "status": "pending", "winner": null, "details": null, "position": 5, "nextMatch": "r2m2", "nextPosition": "team2"}]}, {"name": "Quarter-Final", "round": 2, "matches": [{"id": "r2m0", "isBye": false, "round": 2, "team1": null, "team2": null, "locked": false, "winner": null, "position": 0, "nextMatch": "r3m0", "nextPosition": "team1"}, {"id": "r2m1", "isBye": false, "round": 2, "team1": null, "team2": null, "locked": false, "winner": null, "position": 1, "nextMatch": "r3m0", "nextPosition": "team2"}, {"id": "r2m2", "isBye": false, "round": 2, "team1": null, "team2": null, "locked": false, "winner": null, "position": 2, "nextMatch": "r3m1", "nextPosition": "team1"}]}, {"name": "Semi-Final", "round": 3, "matches": [{"id": "r3m0", "isBye": false, "round": 3, "team1": null, "team2": null, "locked": false, "winner": null, "position": 0, "nextMatch": "r4m0", "nextPosition": "team1"}, {"id": "r3m1", "isBye": false, "round": 3, "team1": null, "team2": null, "locked": false, "winner": null, "position": 1, "nextMatch": "r4m0", "nextPosition": "team2"}]}, {"name": "Final", "round": 4, "matches": [{"id": "r4m0", "isBye": false, "round": 4, "team1": null, "team2": null, "locked": false, "winner": null, "position": 0, "nextMatch": null, "nextPosition": null}]}], "totalTeams": 12, "totalRounds": 4}	["r1m5-team1", "r1m5-team2", "r1m3-team1", "r1m2-team1"]	t	random	1	2025-08-06 18:02:35.897824+10	2025-08-19 19:41:38.761659+10	3e3e02ca-11ee-4e70-8162-e14524bd4ca1
+\.
+
+
+--
+-- Data for Name: bracket_matches; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.bracket_matches (id, tournament_id, bracket_id, match_identifier, round_number, match_number, team1_id, team2_id, winner_id, team1_score, team2_score, status, scheduled_time, completed_time, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: matches; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.matches (id, match_id, tournament_id, team1_id, team2_id, round, match_type, match_number, best_of, status, scheduled_time, started_at, completed_at, winner_id, team1_score, team2_score, vod_link, notes, created_by, started_by, reported_by, created_at, updated_at) FROM stdin;
+0b7f8da2-6678-4262-8b77-d7ef77f4081f	match_1754091785581_i25e4rsgy	442e6764-1242-4f7d-a4aa-4879ad257ac9	2d3151b1-b4ae-4cd7-9651-c2a972174ef3	39d7c6e8-b5cf-460a-8824-47e94940e93f	Round 1	Group Stage	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.582467+10	2025-08-02 09:43:05.582467+10
+0e04f457-d8a3-44e3-862a-5e6a26b6f419	match_1754091785588_vbt4j5c0j	442e6764-1242-4f7d-a4aa-4879ad257ac9	cf6ff0a5-e7c5-4a47-bda7-4409b142fbc5	e1bc70b8-076b-4c07-a4a5-0b5de6493b17	Round 1	Group Stage	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.588936+10	2025-08-02 09:43:05.588936+10
+3cb62291-e4e9-4769-a67b-084aada1fa28	match_1754091785589_t0zllpim7	442e6764-1242-4f7d-a4aa-4879ad257ac9	2881dd89-ee48-44fb-8503-ac2de2e5bd94	993f51b4-9777-495f-ba7d-7e216250f535	Round 1	Group Stage	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.590471+10	2025-08-02 09:43:05.590471+10
+8d439af0-999a-4bc3-bfbe-d41de4414f52	match_1754091785591_qg736rwjf	442e6764-1242-4f7d-a4aa-4879ad257ac9	ad143545-19ec-43a3-9376-834f0fa441af	1f168044-dc59-4fc1-a40d-bdc28f5c66e8	Round 1	Group Stage	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.591725+10	2025-08-02 09:43:05.591725+10
+225efc00-7ba7-459b-b35e-99cc4efc26ec	match_1754091785592_phaosluxo	442e6764-1242-4f7d-a4aa-4879ad257ac9	c11cfdc1-9712-4997-8678-7fb8fe791a10	d9e67037-eb32-4cc3-adff-a2886cb72d5d	Round 1	Group Stage	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.592838+10	2025-08-02 09:43:05.592838+10
+bb022a38-6fe8-461e-b3d4-6393b1e5faf3	match_1754091785593_xz6ncw455	442e6764-1242-4f7d-a4aa-4879ad257ac9	2d3151b1-b4ae-4cd7-9651-c2a972174ef3	39d7c6e8-b5cf-460a-8824-47e94940e93f	Quarter-Final	Quarter Final	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.593821+10	2025-08-02 09:43:05.593821+10
+a428815e-814c-4a9b-9ba3-f0337955369f	match_1754091785594_dfmejn9eo	442e6764-1242-4f7d-a4aa-4879ad257ac9	cf6ff0a5-e7c5-4a47-bda7-4409b142fbc5	e1bc70b8-076b-4c07-a4a5-0b5de6493b17	Quarter-Final	Quarter Final	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.594727+10	2025-08-02 09:43:05.594727+10
+8e429657-bbaa-4da5-b098-1b96154bcc0c	match_1754091785595_vnmdog3gg	442e6764-1242-4f7d-a4aa-4879ad257ac9	2881dd89-ee48-44fb-8503-ac2de2e5bd94	\N	Quarter-Final	Quarter Final	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.595698+10	2025-08-02 09:43:05.595698+10
+bb260c15-d4d5-4d12-acaf-a599979012b8	match_1754091785596_punszbp20	442e6764-1242-4f7d-a4aa-4879ad257ac9	2d3151b1-b4ae-4cd7-9651-c2a972174ef3	39d7c6e8-b5cf-460a-8824-47e94940e93f	Semi-Final	Semi Final	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.597159+10	2025-08-02 09:43:05.597159+10
+081a14c7-781b-44e6-8230-33b8f08c339f	match_1754091785598_mk780c742	442e6764-1242-4f7d-a4aa-4879ad257ac9	cf6ff0a5-e7c5-4a47-bda7-4409b142fbc5	\N	Semi-Final	Semi Final	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.598762+10	2025-08-02 09:43:05.598762+10
+9db9ce8b-8de1-4200-a7c7-4f93e391773b	match_1754091785599_sjtr6bo2s	442e6764-1242-4f7d-a4aa-4879ad257ac9	2d3151b1-b4ae-4cd7-9651-c2a972174ef3	39d7c6e8-b5cf-460a-8824-47e94940e93f	Final	Grand Final	\N	1	Scheduled	\N	\N	\N	\N	0	0	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	\N	\N	2025-08-02 09:43:05.599729+10	2025-08-02 09:43:05.599729+10
+\.
+
+
+--
+-- Data for Name: draft_sessions; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.draft_sessions (id, draft_id, match_id, team1_captain_id, team2_captain_id, status, current_phase, current_turn, coin_toss_winner, first_pick, pick_order, ban_order, team1_picks, team2_picks, team1_bans, team2_bans, spectator_link, created_by, created_at, start_time, completed_at, stopped_at, stopped_by, updated_at, team1_id, team2_id, team1_connected, team2_connected, team1_coin_choice, team2_coin_choice, coin_toss_result, both_teams_connected_at, coin_choices_enabled_at, metadata, settings, tournament_id, first_pick_team, coin_toss_started_at, coin_toss_completed_at, draft_started_at, draft_completed_at, current_timer_started_at, current_timer_duration, current_timer_extra_time, timer_expired, timer_config, pick_order_chosen) FROM stdin;
+15c38544-b9c4-4bec-bb33-c67bdcc13196	draft_1755596508359_bc00qjfql	\N	test_captain_1753944601496	test_captain_1753944601496	Waiting	Coin Toss	team1	\N	\N	\N	\N	[]	[]	[]	[]	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	2025-08-19 19:41:48.367672+10	\N	\N	\N	\N	2025-08-19 19:41:48.367672+10	c377a7e0-6215-49f3-9825-d586fa3dd1fd	1e1b7c3f-bde7-469d-9ccd-30e431889ab6	f	f	\N	\N	\N	\N	\N	{}	{}	\N	\N	\N	\N	\N	\N	\N	20	0	f	{"base_time": 20, "timer_strategy": "20s per pick", "team1_extra_time": 10, "team2_extra_time": 10, "bonus_time_per_team": 10, "timer_strategy_enabled": true}	f
+f17c4c80-1839-4bbe-b7ed-87b99ceff8e6	test_draft_playwright	\N	\N	\N	In Progress	Ban Phase	team2	\N	\N	\N	\N	[]	[]	["zinx"]	[]	\N	\N	2025-08-13 14:50:04+10	\N	\N	\N	\N	2025-08-17 16:06:55.688094+10	05894f01-bb93-4743-bd6a-2e7b20923bce	1fd3a3f1-d66f-4dc1-ab65-66a528de444f	f	f	\N	\N	\N	\N	\N	{}	{}	test_tournament_1	team1	\N	\N	\N	\N	\N	20	0	t	{"base_time": 20, "team2_timer": 20, "timer_strategy": "per pick", "team1_extra_time": 10, "team2_extra_time": 10, "bonus_time_per_team": 10, "timer_strategy_enabled": true}	f
+\.
+
+
+--
+-- Data for Name: heroes; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.heroes (id, hero_id, name, role, image_url, is_active, created_at, updated_at) FROM stdin;
+67eae3af-d848-4d0d-9f7b-1b48bcd3c82f	hero_sparrow	Sparrow	Carry	\N	t	2025-07-29 16:53:53.349111+10	2025-07-29 16:53:53.349111+10
+a0a6a00c-7903-4593-869e-cd41d64065e7	hero_murdock	Murdock	Carry	\N	t	2025-07-29 16:53:53.349111+10	2025-07-29 16:53:53.349111+10
+16650e0a-432d-44b8-af8e-ee2d8c97eeac	hero_steel	Steel	Support	\N	t	2025-07-29 16:53:53.349111+10	2025-07-29 16:53:53.349111+10
+b4b8b709-e99f-4977-ae6c-2b493bcdb646	hero_muriel	Muriel	Support	\N	t	2025-07-29 16:53:53.349111+10	2025-07-29 16:53:53.349111+10
+facd9dc2-baef-4190-ae53-80176bf08327	hero_gadget	Gadget	Midlane	\N	t	2025-07-29 16:53:53.349111+10	2025-07-29 16:53:53.349111+10
+c1031a87-3d3f-46dd-810d-80792c20e18a	hero_howitzer	Howitzer	Midlane	\N	t	2025-07-29 16:53:53.349111+10	2025-07-29 16:53:53.349111+10
+13647ede-908b-4198-a588-adf9d37d3b99	hero_greystone	Greystone	Offlane	\N	t	2025-07-29 16:53:53.349111+10	2025-07-29 16:53:53.349111+10
+5bc1eb69-a4d3-4b25-836d-40038f94c6c6	hero_kwang	Kwang	Offlane	\N	t	2025-07-29 16:53:53.349111+10	2025-07-29 16:53:53.349111+10
+e25533d1-9bda-4d8a-a933-feb2f055c1d6	hero_khaimera	Khaimera	Jungle	\N	t	2025-07-29 16:53:53.349111+10	2025-07-29 16:53:53.349111+10
+cb0b9c60-ee11-4d43-8493-76c9c8f8616c	hero_rampage	Rampage	Jungle	\N	t	2025-07-29 16:53:53.349111+10	2025-07-29 16:53:53.349111+10
+\.
+
+
+--
+-- Data for Name: draft_actions; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.draft_actions (id, draft_session_id, action_type, team, hero_id, action_order, performed_by, performed_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: draft_participants; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.draft_participants (id, session_id, user_id, team_number, is_present, joined_at, last_active, socket_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: draft_spectators; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.draft_spectators (id, draft_session_id, user_id, joined_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: omeda_game_data; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.omeda_game_data (id, user_id, omeda_match_id, match_data, match_date, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: schema_migrations; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.schema_migrations (version, inserted_at) FROM stdin;
+20250812122150	2025-08-12 12:31:15
+20250812225339	2025-08-12 22:53:53
+20250813015812	2025-08-13 01:58:34
+20250817050423	2025-08-17 05:04:55
+\.
+
+
+--
+-- Data for Name: team_invitations; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.team_invitations (id, team_id, inviter_id, invited_discord_username, invited_discord_email, invited_user_id, role, message, status, created_at, expires_at, responded_at) FROM stdin;
+bf285fa5-79dc-4874-a320-48dc31f93bdb	85dced1c-9615-4ae2-9086-dd3eebc52867	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	7empests	\N	\N	Player	\N	pending	2025-07-31 16:37:40.367534+10	2025-08-07 16:37:40.366+10	\N
+8837500c-8b92-42cd-b549-05b85f7be7c7	250f482b-fbdc-4dfc-b5be-7957d73dcef7	ea996e0c-1772-43ad-8bff-8e6dd87b8222	Sitting_in_a_towel	\N	\N	Player	Test invitation! Please accept to test the invitation system.	pending	2025-07-31 18:51:58.498942+10	2025-08-07 18:51:58.496+10	\N
+8f1e2f3a-3787-4ea6-aa6e-651433d7ac61	85dced1c-9615-4ae2-9086-dd3eebc52867	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	test player 5	\N	\N	Player	\N	pending	2025-07-31 20:07:23.377785+10	2025-08-07 20:07:23.376+10	\N
+0485aa35-55b8-4b8b-a447-f919d29ea7d6	85dced1c-9615-4ae2-9086-dd3eebc52867	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	test 325643	\N	\N	Player	\N	pending	2025-07-31 20:35:31.244865+10	2025-08-07 20:35:31.244+10	\N
+86299617-14b1-4079-b9db-59d2f8ac12fc	36df5a1d-58af-439f-9a09-c8f9818d4070	ea996e0c-1772-43ad-8bff-8e6dd87b8222	\N	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	Player	Test invitation #1 - Please ACCEPT this one to test acceptance flow	accepted	2025-07-31 20:55:56.812396+10	2025-08-07 20:55:56.811+10	2025-07-31 22:51:25.774639+10
+213f2fdf-58f5-4407-a07b-eb151b15f331	85dced1c-9615-4ae2-9086-dd3eebc52867	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	sitting_in_a_towel	\N	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	Player	fdsf	declined	2025-07-31 16:39:48.287557+10	2025-08-07 16:39:48.286+10	2025-07-31 22:51:27.127007+10
+\.
+
+
+--
+-- Data for Name: team_players; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.team_players (id, team_id, player_id, role, "position", joined_at, accepted, accepted_at, removed, removed_at, removed_by) FROM stdin;
+fcd0eb2d-5501-4651-a137-79404bcedc87	71d0815b-d89b-4aa4-805d-373386a1b5a2	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	captain	\N	2025-07-29 23:13:14.43321+10	t	\N	f	\N	\N
+0873257a-ac13-46c7-b4f0-a8142603f713	d9b5a37d-5584-45ef-9fb4-f15bb28653d8	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	captain	\N	2025-07-30 00:02:54.014174+10	t	\N	f	\N	\N
+3538d63a-e582-4a0c-97b1-33d594bf8692	85dced1c-9615-4ae2-9086-dd3eebc52867	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	captain	\N	2025-07-30 00:29:29.910828+10	t	\N	f	\N	\N
+9bc2db31-c58b-45d2-9a23-2b5081695886	226423ba-d072-456b-ad5f-152d727508c6	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	captain	\N	2025-08-01 00:17:05.935397+10	t	\N	f	\N	\N
+7917aade-7899-4378-aa20-9b820c53e3a0	e1b3b96c-f077-4062-aefc-39977771b943	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	captain	\N	2025-08-01 19:13:28.32986+10	t	\N	f	\N	\N
+68259405-c70d-4708-9cbe-7fd97ce63227	8175ee2a-a462-4a9c-893f-289711adff13	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	captain	\N	2025-08-01 19:14:56.657351+10	t	\N	f	\N	\N
+efe3b4f3-1685-48f1-b9f2-932831355f64	e1b3b96c-f077-4062-aefc-39977771b943	ab5d92df-c801-4932-ba5a-5a52a9651864	player	\N	2025-08-06 15:44:01.634651+10	t	\N	f	\N	\N
+02dbfaa9-550c-4191-86db-931b8584a3b4	e1b3b96c-f077-4062-aefc-39977771b943	01512045-d5a0-4e84-9026-0d5a2de2db7a	player	\N	2025-08-06 15:44:01.638257+10	t	\N	f	\N	\N
+5994c911-2f89-49bc-9010-7ecec5c8cc4f	e1b3b96c-f077-4062-aefc-39977771b943	53c98fb8-57cb-4545-8eff-5eeb8ae728a6	player	\N	2025-08-06 15:44:01.639313+10	t	\N	f	\N	\N
+93777eff-eb35-45b9-99f1-24185e894cf0	e1b3b96c-f077-4062-aefc-39977771b943	a2985b79-e16b-4099-9bdf-96f858c7d98f	player	\N	2025-08-06 15:44:01.640246+10	t	\N	f	\N	\N
+\.
+
+
+--
+-- Data for Name: tournament_registrations; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.tournament_registrations (id, tournament_id, team_id, registered_by, registration_date, status, checked_in, check_in_time) FROM stdin;
+cb2cc054-7239-4ba1-a489-224c1f3354ad	442e6764-1242-4f7d-a4aa-4879ad257ac9	993f51b4-9777-495f-ba7d-7e216250f535	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:31.993745+10	registered	t	\N
+7e9614ba-400e-4d24-b987-d10660b8cee0	442e6764-1242-4f7d-a4aa-4879ad257ac9	e1bc70b8-076b-4c07-a4a5-0b5de6493b17	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:31.996354+10	registered	t	\N
+32486302-a387-491a-8324-825d5765d4ff	442e6764-1242-4f7d-a4aa-4879ad257ac9	cf6ff0a5-e7c5-4a47-bda7-4409b142fbc5	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:31.997434+10	registered	t	\N
+e4c9d181-c543-4bab-9b29-e08dde98ca44	442e6764-1242-4f7d-a4aa-4879ad257ac9	2d3151b1-b4ae-4cd7-9651-c2a972174ef3	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:31.998163+10	registered	t	\N
+b7c86406-e65f-49e8-a7e7-c0c061d0de40	442e6764-1242-4f7d-a4aa-4879ad257ac9	d9e67037-eb32-4cc3-adff-a2886cb72d5d	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:31.998894+10	registered	t	\N
+494c1d36-6d5e-4dc6-b4a8-a16c873fff2b	442e6764-1242-4f7d-a4aa-4879ad257ac9	ad143545-19ec-43a3-9376-834f0fa441af	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:31.999701+10	registered	t	\N
+341dfb98-3d4c-4c8a-be96-37b6fec03c0b	442e6764-1242-4f7d-a4aa-4879ad257ac9	c11cfdc1-9712-4997-8678-7fb8fe791a10	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.000475+10	registered	t	\N
+8f5b1b33-387c-45d5-ad6e-9580b6abb4f8	442e6764-1242-4f7d-a4aa-4879ad257ac9	1f168044-dc59-4fc1-a40d-bdc28f5c66e8	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.001183+10	registered	t	\N
+53c166ed-fb4b-4e70-be7b-0a54bb4ea28e	442e6764-1242-4f7d-a4aa-4879ad257ac9	2881dd89-ee48-44fb-8503-ac2de2e5bd94	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.001956+10	registered	t	\N
+f16c25ec-fd44-4b5e-bdaa-feaa2132dfac	442e6764-1242-4f7d-a4aa-4879ad257ac9	39d7c6e8-b5cf-460a-8824-47e94940e93f	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.002657+10	registered	t	\N
+52530a5a-0888-4631-ac95-ae6b67b59a57	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	c11cfdc1-9712-4997-8678-7fb8fe791a10	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.003301+10	registered	t	\N
+c377a7e0-6215-49f3-9825-d586fa3dd1fd	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	1f168044-dc59-4fc1-a40d-bdc28f5c66e8	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.004021+10	registered	t	\N
+43243040-0aba-4bab-8aa5-868077cbba6d	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	993f51b4-9777-495f-ba7d-7e216250f535	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.004727+10	registered	t	\N
+9ea2c89e-fa7b-4eba-9e88-c504b3d92282	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	e1bc70b8-076b-4c07-a4a5-0b5de6493b17	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.005423+10	registered	t	\N
+ad791180-90ba-4b70-8ba9-9702ba36d77c	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	e0042f2d-29db-4c9e-9608-01870b19e1d1	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.006063+10	registered	t	\N
+79d22103-2cd9-4f43-8dcc-f696d400a64f	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	65c1266c-a113-47e4-a1a4-145537f797ea	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.006872+10	registered	t	\N
+1e1b7c3f-bde7-469d-9ccd-30e431889ab6	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	90ca51a9-c49d-4c58-b1b4-7459177830f7	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.007786+10	registered	t	\N
+e69a64d9-6c1c-4c77-a474-a25da77fc406	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	2881dd89-ee48-44fb-8503-ac2de2e5bd94	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.008746+10	registered	t	\N
+353c1ccd-ee82-4cc5-9579-ecc3346c79a9	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	8c530cf9-dc94-4ad5-8c08-3e8b641b81cb	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.009723+10	registered	t	\N
+a6deb4eb-d2cc-4ed9-94ff-4524d71ccb53	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	ad143545-19ec-43a3-9376-834f0fa441af	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.010685+10	registered	t	\N
+3f0a9892-c093-480e-a6dd-f1cb325ad4dd	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	4601bd56-b7a4-4c59-b724-1849eae8e4e0	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.011504+10	registered	t	\N
+62ad6770-3fc1-4f3a-b308-0b463291fe88	56935e77-2284-4882-a852-85ab5b9b2d14	e1bc70b8-076b-4c07-a4a5-0b5de6493b17	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.012129+10	registered	t	\N
+8acd39c9-8637-4675-b141-0ce936afdf57	56935e77-2284-4882-a852-85ab5b9b2d14	ad143545-19ec-43a3-9376-834f0fa441af	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.013029+10	registered	t	\N
+22764f3e-6fb6-4f13-85a0-e2ec1bdadf4d	56935e77-2284-4882-a852-85ab5b9b2d14	90ca51a9-c49d-4c58-b1b4-7459177830f7	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.013781+10	registered	t	\N
+06478853-ee32-47fe-9c84-3e9c108b62bf	56935e77-2284-4882-a852-85ab5b9b2d14	e0042f2d-29db-4c9e-9608-01870b19e1d1	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.01445+10	registered	t	\N
+3fef1e57-9f5b-4bfc-87eb-903f93bd9bc8	56935e77-2284-4882-a852-85ab5b9b2d14	65c1266c-a113-47e4-a1a4-145537f797ea	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.015064+10	registered	t	\N
+a6e944e1-d550-4d27-ac01-1bfa5e98ffcb	56935e77-2284-4882-a852-85ab5b9b2d14	4601bd56-b7a4-4c59-b724-1849eae8e4e0	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.015704+10	registered	t	\N
+2d68b072-b6d0-45a7-a584-877108db84f1	56935e77-2284-4882-a852-85ab5b9b2d14	39d7c6e8-b5cf-460a-8824-47e94940e93f	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.016414+10	registered	t	\N
+694e9e9f-0d70-467e-816f-972c1d5dfbc7	56935e77-2284-4882-a852-85ab5b9b2d14	2dfed986-0d48-4abb-9264-f52437023391	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.017213+10	registered	t	\N
+d90322c8-fbf7-438a-90fe-abee7b727f43	56935e77-2284-4882-a852-85ab5b9b2d14	2d3151b1-b4ae-4cd7-9651-c2a972174ef3	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.017887+10	registered	t	\N
+1c9bc9d6-697a-4742-83ff-ad0486a352c0	ed399372-ff1c-453b-9a5f-04ded7752c96	90ca51a9-c49d-4c58-b1b4-7459177830f7	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.018549+10	registered	t	\N
+552155b5-8053-490b-a7cc-0c90507435cd	ed399372-ff1c-453b-9a5f-04ded7752c96	e0042f2d-29db-4c9e-9608-01870b19e1d1	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.019155+10	registered	t	\N
+46b08cf5-1f20-418e-a55f-78a7153de437	ed399372-ff1c-453b-9a5f-04ded7752c96	1f168044-dc59-4fc1-a40d-bdc28f5c66e8	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.019796+10	registered	t	\N
+2a78d5b7-a9c9-440e-8f70-2c7fd97323b0	ed399372-ff1c-453b-9a5f-04ded7752c96	ad143545-19ec-43a3-9376-834f0fa441af	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.020359+10	registered	t	\N
+4d2d9f3d-1cf5-4dca-9e10-c33d2dbc3875	ed399372-ff1c-453b-9a5f-04ded7752c96	4601bd56-b7a4-4c59-b724-1849eae8e4e0	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.020989+10	registered	t	\N
+9c76eca5-090d-449d-8c19-71ef1d828fa2	ed399372-ff1c-453b-9a5f-04ded7752c96	c11cfdc1-9712-4997-8678-7fb8fe791a10	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.021739+10	registered	t	\N
+2077e65b-6bcc-4986-a09d-86bd459669d3	ed399372-ff1c-453b-9a5f-04ded7752c96	d9e67037-eb32-4cc3-adff-a2886cb72d5d	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.022461+10	registered	t	\N
+e675c803-5342-4021-a9f1-8c2bc6d591ef	ed399372-ff1c-453b-9a5f-04ded7752c96	2d3151b1-b4ae-4cd7-9651-c2a972174ef3	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.023178+10	registered	t	\N
+4954fd27-48ae-4f54-84d0-8ed8f1a53235	d71c144e-887f-4772-917a-37cbe1e304f4	e1bc70b8-076b-4c07-a4a5-0b5de6493b17	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.023911+10	registered	t	\N
+7dcb8a9f-9c62-4a56-80ce-6ecabc859ce9	d71c144e-887f-4772-917a-37cbe1e304f4	cf6ff0a5-e7c5-4a47-bda7-4409b142fbc5	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.024837+10	registered	t	\N
+3ba54d2f-75a1-4d90-9894-bc30ca13502a	d71c144e-887f-4772-917a-37cbe1e304f4	e0042f2d-29db-4c9e-9608-01870b19e1d1	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.025461+10	registered	t	\N
+35b5eaea-7b05-4f24-a38f-3704728f8375	d71c144e-887f-4772-917a-37cbe1e304f4	d9e67037-eb32-4cc3-adff-a2886cb72d5d	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.026081+10	registered	t	\N
+ec0bf149-f91b-4dcc-a2bc-4f370f26040f	d71c144e-887f-4772-917a-37cbe1e304f4	c11cfdc1-9712-4997-8678-7fb8fe791a10	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.026761+10	registered	t	\N
+3d8ff29e-071a-4ea4-9e55-36227ca63a03	d71c144e-887f-4772-917a-37cbe1e304f4	90ca51a9-c49d-4c58-b1b4-7459177830f7	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.028148+10	registered	t	\N
+9d99ef6d-43b2-4a59-8cee-c633baa278a7	d71c144e-887f-4772-917a-37cbe1e304f4	2dfed986-0d48-4abb-9264-f52437023391	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.029153+10	registered	t	\N
+1a2a418d-293b-443b-a897-df414bd018fb	d71c144e-887f-4772-917a-37cbe1e304f4	ad143545-19ec-43a3-9376-834f0fa441af	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.029873+10	registered	t	\N
+dee19932-fb73-4d11-8b92-74710a0903ed	d71c144e-887f-4772-917a-37cbe1e304f4	65c1266c-a113-47e4-a1a4-145537f797ea	1a5350f5-6a41-4f44-8877-cf480a5ceb09	2025-08-02 00:10:32.030555+10	registered	t	\N
+36419f8b-f1b6-44b2-b867-8184520e6e17	442e6764-1242-4f7d-a4aa-4879ad257ac9	8175ee2a-a462-4a9c-893f-289711adff13	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	2025-08-05 16:16:18.462978+10	registered	f	\N
+fbedc7c3-f432-45ff-9ac3-9d859ea806b2	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	e1b3b96c-f077-4062-aefc-39977771b943	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	2025-08-01 20:39:12.323443+10	registered	t	2025-08-06 15:46:43.41794+10
+62d1a8f8-c93a-4e17-8271-f057720e7a87	4fe28137-a1c3-426e-bfa0-1ae9c54f58a0	36df5a1d-58af-439f-9a09-c8f9818d4070	3e3e02ca-11ee-4e70-8162-e14524bd4ca1	2025-08-09 00:44:22.456257+10	registered	f	\N
+\.
+
+
+--
+-- PostgreSQL database dump complete
+--
+
