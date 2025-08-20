@@ -78,10 +78,9 @@ ENV MIX_ENV="prod"
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/predecessor_draft ./
 
+# Make startup script executable
+RUN chmod +x /app/bin/startup
+
 USER nobody
 
-# If using a startup script, copy it and make sure it's executable
-# COPY entrypoint.sh ./
-# RUN chmod +x entrypoint.sh
-
-CMD ["/app/bin/server"]
+CMD ["/app/bin/startup"]

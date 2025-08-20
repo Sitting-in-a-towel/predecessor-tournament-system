@@ -17,11 +17,11 @@ services:
         value: 4350d403df7c38dc965fecdc9fbc2780
       - key: PHX_HOST
         value: predecessor-draft-phoenix.onrender.com
-      - key: PORT
-        value: 4000
       - key: PHX_SERVER
         value: true
       - key: POOL_SIZE
         value: 10
       - key: RELEASE_TMP
         value: /tmp
+      - key: ECTO_IPV6
+        value: false

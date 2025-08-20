@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+cd -P -- "$(dirname -- "$0")"
+
+echo "Starting Phoenix application..."
+echo "Database URL: ${DATABASE_URL:-not set}"
+echo "Secret Key Base: ${SECRET_KEY_BASE:-not set}"
+echo "PHX_HOST: ${PHX_HOST:-not set}"
+echo "PORT: ${PORT:-not set}"
+
+# Start the application
+PHX_SERVER=true exec ./predecessor_draft start
