@@ -193,8 +193,9 @@ async function startServer() {
     // Connect to database
     await connectDatabase();
     
-    // Run database migration in production
-    if (process.env.NODE_ENV === 'production') {
+    // Run database migration in production - TEMPORARILY DISABLED
+    // Migration taking too long, run manually after deployment
+    if (process.env.NODE_ENV === 'production' && process.env.RUN_MIGRATIONS === 'true') {
       try {
         logger.info('Running production database migration...');
         const runMigration = require('./migrate');
