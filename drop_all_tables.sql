@@ -14,8 +14,11 @@ DROP TABLE IF EXISTS heroes CASCADE;
 -- Drop any remaining sequences
 DROP SEQUENCE IF EXISTS heroes_id_seq CASCADE;
 
--- Drop any remaining functions or types
+-- Drop all functions first
 DROP FUNCTION IF EXISTS update_tournament_team_count() CASCADE;
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+
+-- Drop any remaining types
 DROP TYPE IF EXISTS match_status CASCADE;
 DROP TYPE IF EXISTS bracket_type CASCADE;
 DROP TYPE IF EXISTS tournament_status CASCADE;
