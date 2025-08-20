@@ -11,9 +11,9 @@ defmodule PredecessorDraft.Application do
     PredecessorDraft.Logger.setup()
     PredecessorDraft.Logger.log(:info, "APPLICATION", "Starting PredecessorDraft application")
     
-    # MINIMAL DEPLOYMENT: Skip database completely to get basic Phoenix running
-    repo_child = nil
-    IO.puts("MINIMAL DEPLOYMENT: Running Phoenix without any database connection")
+    # Re-enable database connection with fixed SSL configuration
+    repo_child = PredecessorDraft.Repo
+    IO.puts("Starting database connection with fixed SSL configuration...")
     
     children = [
       PredecessorDraftWeb.Telemetry,
