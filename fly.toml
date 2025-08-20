@@ -13,7 +13,7 @@ primary_region = "iad"
   auto_stop_machines = "off"
   auto_start_machines = true
 
-  [http_service.checks]
+  [[http_service.checks]]
     grace_period = "10s"
     interval = "30s"
     method = "GET"
