@@ -18,28 +18,38 @@ router.post('/create-for-tournament/:tournamentId', async (req, res) => {
         
         const createdTeams = [];
         
+        // Get the current user (tournament creator) to use as registered_by
+        const userQuery = `SELECT id FROM users ORDER BY created_at DESC LIMIT 1`;
+        const userResult = await postgresService.query(userQuery);
+        const userId = userResult.rows[0]?.id;
+        
+        if (!userId) {
+            throw new Error('No user found to register teams');
+        }
+        
         for (const team of teams) {
             // Create team
+            const teamUUID = require('crypto').randomUUID();
             const teamId = `team_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             
             const createTeamQuery = `
                 INSERT INTO teams (id, team_id, team_name, team_tag, confirmed, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, false, NOW(), NOW())
+                VALUES ($1, $2, $3, $4, true, NOW(), NOW())
                 RETURNING *
             `;
             
             const teamResult = await postgresService.query(createTeamQuery, [
-                require('crypto').randomUUID(), teamId, team.name, team.tag
+                teamUUID, teamId, team.name, team.tag
             ]);
             
             // Register team to tournament
             const registrationQuery = `
-                INSERT INTO tournament_registrations (id, tournament_id, team_id, registration_date, confirmed, checked_in)
-                VALUES ($1, $2, $3, NOW(), true, false)
+                INSERT INTO tournament_registrations (id, tournament_id, team_id, registered_by, registration_date, status, checked_in)
+                VALUES ($1, $2, $3, $4, NOW(), 'confirmed', false)
             `;
             
             await postgresService.query(registrationQuery, [
-                require('crypto').randomUUID(), tournamentId, teamId
+                require('crypto').randomUUID(), tournamentId, teamUUID, userId
             ]);
             
             createdTeams.push({
