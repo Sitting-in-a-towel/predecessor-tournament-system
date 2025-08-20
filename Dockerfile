@@ -83,5 +83,5 @@ USER nobody
 # Ensure Phoenix server starts
 ENV PHX_SERVER=true
 
-# Start Phoenix as daemon and keep container running
-CMD ["sh", "-c", "/app/bin/predecessor_draft daemon && tail -f /dev/null"]
+# Start Phoenix directly in foreground mode
+CMD ["/app/bin/predecessor_draft", "start"]
