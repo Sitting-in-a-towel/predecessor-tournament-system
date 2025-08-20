@@ -150,6 +150,7 @@ app.use('/api/logs', logsRoutes);
 app.use('/api/test', createTestDraftRoutes);
 app.use('/api/database', databaseMigrationRoutes);
 app.use('/api/data', require('./routes/data-only'));
+app.use('/api/test-teams', require('./routes/test-teams'));
 
 // Initialize enhanced draft socket service
 const draftSocketService = new DraftSocketService(io);
