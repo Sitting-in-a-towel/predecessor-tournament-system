@@ -11,9 +11,9 @@ defmodule PredecessorDraft.Application do
     PredecessorDraft.Logger.setup()
     PredecessorDraft.Logger.log(:info, "APPLICATION", "Starting PredecessorDraft application")
     
-    # TEMPORARILY DISABLE DATABASE TO GET PRODUCTION RUNNING
-    repo_child = if true do
-      IO.puts("TEMPORARILY SKIPPING DATABASE - Phoenix running without DB")
+    # Try to start Repo with better error handling
+    repo_child = if System.get_env("SKIP_DATABASE") == "true" do
+      IO.puts("SKIPPING DATABASE CONNECTION - Running without database")
       nil
     else
       IO.puts("Starting database connection...")
