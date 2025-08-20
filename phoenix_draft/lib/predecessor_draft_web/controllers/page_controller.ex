@@ -2,9 +2,37 @@ defmodule PredecessorDraftWeb.PageController do
   use PredecessorDraftWeb, :controller
 
   def home(conn, _params) do
-    # The home page is often custom made,
-    # so skip the default app layout.
-    render(conn, :home, layout: false)
+    # Simple HTML response for testing
+    html(conn, """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Phoenix Draft System - PRODUCTION</title>
+        <style>
+            body { font-family: Arial; padding: 20px; background: #1a1a1a; color: white; }
+            .status { color: #4ade80; }
+        </style>
+    </head>
+    <body>
+        <h1>🎉 Phoenix Draft System - PRODUCTION RUNNING!</h1>
+        <p class="status">✅ Phoenix LiveView Server is ONLINE</p>
+        <p class="status">✅ Deployed on Fly.io</p>
+        <p class="status">✅ Network binding fixed</p>
+        <p class="status">✅ SSL configuration fixed</p>
+        
+        <h2>Next Steps:</h2>
+        <ul>
+            <li>Re-enable database connection</li>
+            <li>Test draft functionality</li>
+            <li>Update frontend to use this URL</li>
+        </ul>
+        
+        <p><strong>Health Check:</strong> <a href="/api/health" style="color: #60a5fa;">/api/health</a></p>
+        
+        <p><em>Phoenix deployment successful after fixing CA certificates issue!</em></p>
+    </body>
+    </html>
+    """)
   end
 
   def health(conn, _params) do
