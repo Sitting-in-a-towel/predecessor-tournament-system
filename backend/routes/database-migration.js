@@ -11,11 +11,13 @@ router.post('/replace-with-local', async (req, res) => {
     try {
         logger.info('🚨 STARTING COMPLETE DATABASE REPLACEMENT');
         
-        // Step 1: Drop all tables
-        logger.info('🗑️  Dropping all tables...');
-        const dropScript = fs.readFileSync(path.join(__dirname, '..', '..', 'drop_all_tables.sql'), 'utf8');
-        await postgresService.query(dropScript);
-        logger.info('✅ Dropped all tables');
+        // Step 1: Drop entire schema and recreate (force reconnect for each query)
+        logger.info('🗑️  Dropping entire schema...');
+        await postgresService.query('DROP SCHEMA IF EXISTS public CASCADE;');
+        logger.info('✅ Dropped schema');
+        
+        await postgresService.query('CREATE SCHEMA public;');
+        logger.info('✅ Created schema');
 
         // Step 2: Create schema
         logger.info('🏗️  Creating schema...');
