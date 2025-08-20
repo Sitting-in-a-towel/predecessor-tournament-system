@@ -11,9 +11,9 @@ defmodule PredecessorDraft.Application do
     PredecessorDraft.Logger.setup()
     PredecessorDraft.Logger.log(:info, "APPLICATION", "Starting PredecessorDraft application")
     
-    # TEMPORARILY DISABLE DATABASE - site is working without it
-    repo_child = nil
-    IO.puts("RUNNING WITHOUT DATABASE - site accessible at https://predecessor-tournament-system.fly.dev/")
+    # Enable database connection with simplified SSL configuration
+    repo_child = PredecessorDraft.Repo
+    IO.puts("Attempting database connection with simplified SSL (ssl: true)...")
     
     children = [
       PredecessorDraftWeb.Telemetry,
