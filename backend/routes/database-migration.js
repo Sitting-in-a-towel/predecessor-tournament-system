@@ -27,7 +27,7 @@ router.post('/replace-with-local', async (req, res) => {
 
         // Step 3: Load data
         logger.info('📊 Loading data...');
-        const dataScript = fs.readFileSync(path.join(__dirname, '..', '..', 'local_data_clean.sql'), 'utf8');
+        const dataScript = fs.readFileSync(path.join(__dirname, '..', '..', 'local_data_inserts.sql'), 'utf8');
         await postgresService.query(dataScript);
         logger.info('✅ Loaded data');
 
