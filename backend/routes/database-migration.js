@@ -21,13 +21,13 @@ router.post('/replace-with-local', async (req, res) => {
 
         // Step 2: Create schema
         logger.info('🏗️  Creating schema...');
-        const schemaScript = fs.readFileSync(path.join(__dirname, '..', '..', 'local_schema.sql'), 'utf8');
+        const schemaScript = fs.readFileSync(path.join(__dirname, '..', '..', 'local_schema_clean.sql'), 'utf8');
         await postgresService.query(schemaScript);
         logger.info('✅ Created schema');
 
         // Step 3: Load data
         logger.info('📊 Loading data...');
-        const dataScript = fs.readFileSync(path.join(__dirname, '..', '..', 'local_data.sql'), 'utf8');
+        const dataScript = fs.readFileSync(path.join(__dirname, '..', '..', 'local_data_clean.sql'), 'utf8');
         await postgresService.query(dataScript);
         logger.info('✅ Loaded data');
 
