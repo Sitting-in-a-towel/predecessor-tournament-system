@@ -13,6 +13,20 @@ const TournamentView = () => {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Collapsible sections state
+  const [collapsedSections, setCollapsedSections] = useState({
+    details: false,
+    format: false,
+    registration: false
+  });
+
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   useEffect(() => {
     const loadTournamentData = async () => {
@@ -151,8 +165,12 @@ const TournamentView = () => {
         <div className="tournament-main">
           {/* Tournament Details */}
           <div className="tournament-details-card">
-            <h2>Tournament Details</h2>
+            <div className="collapsible-header" onClick={() => toggleSection('details')}>
+              <h2>Tournament Details</h2>
+              <span className={`collapse-icon ${collapsedSections.details ? 'collapsed' : ''}`}>▼</span>
+            </div>
             
+            {!collapsedSections.details && (
             <div className="details-grid">
               <div className="detail-item">
                 <label>Format</label>
@@ -190,6 +208,7 @@ const TournamentView = () => {
                 <h3>About This Tournament</h3>
                 <p>{tournament.Description}</p>
               </div>
+            )}
             )}
           </div>
 

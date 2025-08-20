@@ -54,19 +54,14 @@ const TournamentCreation = ({ onClose }) => {
       newErrors.name = 'Tournament name must be less than 100 characters';
     }
 
-    if (formData.description && formData.description.length > 1000) {
-      newErrors.description = 'Description must be less than 1000 characters';
+    if (formData.description && formData.description.length > 10000) {
+      newErrors.description = 'Description must be less than 10,000 characters';
     }
 
     if (!formData.registrationStart) {
       newErrors.registrationStart = 'Registration start date is required';
-    } else {
-      const regStart = new Date(formData.registrationStart);
-      const now = new Date();
-      if (regStart < now) {
-        newErrors.registrationStart = 'Registration start must be in the future';
-      }
     }
+    // Removed past date restriction - allow any registration start date
 
     if (!formData.registrationEnd) {
       newErrors.registrationEnd = 'Registration end date is required';
@@ -197,10 +192,10 @@ const TournamentCreation = ({ onClose }) => {
             onChange={handleInputChange}
             placeholder="Describe your tournament, rules, prizes, etc."
             rows="4"
-            maxLength={1000}
+            maxLength={10000}
             className={errors.description ? 'error' : ''}
           />
-          <small className="char-count">{formData.description.length}/1000 characters</small>
+          <small className="char-count">{formData.description.length}/10,000 characters</small>
           {errors.description && <span className="error-message">{errors.description}</span>}
         </div>
 
@@ -355,9 +350,9 @@ const TournamentCreation = ({ onClose }) => {
             onChange={handleInputChange}
             placeholder="Enter tournament rules and additional information..."
             rows="4"
-            maxLength={2000}
+            maxLength={10000}
           />
-          <small className="char-count">{formData.rules.length}/2000 characters</small>
+          <small className="char-count">{formData.rules.length}/10,000 characters</small>
         </div>
 
         {/* Tournament Preview */}
