@@ -89,13 +89,16 @@ defmodule PredecessorDraft.MixProject do
       predecessor_draft: [
         include_executables_for: [:unix],
         applications: [runtime_tools: :permanent],
-        steps: [:assemble, &copy_bin_files/1]
+        steps: [:assemble, &copy_bin_files_safe/1]
       ]
     ]
   end
 
-  defp copy_bin_files(release) do
-    File.cp_r!("rel/overlays", release.path)
+  defp copy_bin_files_safe(release) do
+    overlays_path = "rel/overlays"
+    if File.exists?(overlays_path) do
+      File.cp_r!(overlays_path, release.path)
+    end
     release
   end
 end

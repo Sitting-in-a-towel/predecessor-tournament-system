@@ -83,4 +83,5 @@ USER nobody
 # Ensure Phoenix server starts
 ENV PHX_SERVER=true
 
-CMD ["sh", "-c", "echo 'Starting Phoenix with PHX_SERVER=true' && /app/bin/predecessor_draft start"]
+# Use exec form to ensure proper signal handling
+CMD ["/app/bin/predecessor_draft", "start"]
