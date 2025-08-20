@@ -80,4 +80,7 @@ COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/predecessor_d
 
 USER nobody
 
-CMD ["/app/bin/server"]
+# Ensure Phoenix server starts
+ENV PHX_SERVER=true
+
+CMD ["sh", "-c", "echo 'Starting Phoenix with PHX_SERVER=true' && /app/bin/predecessor_draft start"]
