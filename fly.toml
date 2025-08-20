@@ -1,4 +1,4 @@
-app = "predecessor-draft-phoenix"
+app = "predecessor-draft-phoenix" 
 primary_region = "syd"
 
 [build]
