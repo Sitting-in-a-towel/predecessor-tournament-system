@@ -4,6 +4,8 @@ app = "predecessor-draft-phoenix"
 primary_region = "iad"
 
 [build]
+  dockerfile = "./phoenix_draft/Dockerfile"
+  build-context = "./phoenix_draft"
 
 [http_service]
   internal_port = 4000
