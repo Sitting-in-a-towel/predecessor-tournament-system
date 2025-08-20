@@ -1,0 +1,9 @@
+# Ignore Node.js files to prevent auto-detection as Node.js app
+package.json
+package-lock.json
+frontend/
+backend/
+node_modules/
+
+# Only include Phoenix files
+!phoenix_draft/
