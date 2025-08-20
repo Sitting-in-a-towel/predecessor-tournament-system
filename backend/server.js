@@ -155,6 +155,7 @@ app.use('/api/test-teams', require('./routes/test-teams'));
 app.use('/api/deployment', deploymentChecklistRoutes);
 app.use('/api/debug', require('./routes/debug-production-drafts'));
 app.use('/api/emergency', require('./routes/emergency-draft-fix'));
+app.use('/api/schema', require('./routes/schema-comparison'));
 
 // Initialize enhanced draft socket service
 const draftSocketService = new DraftSocketService(io);

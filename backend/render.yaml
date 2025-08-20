@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: predecessor-tournament-api
+    runtime: node
+    repo: https://github.com/Sitting-in-a-towel/predecessor-tournament-system
+    branch: main
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: predecessor-tournament-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      - key: DISCORD_CALLBACK_URL
+        sync: false
+      - key: FRONTEND_URL
+        value: https://exfang.netlify.app
+      - key: USE_PRODUCTION_DB
+        value: true
