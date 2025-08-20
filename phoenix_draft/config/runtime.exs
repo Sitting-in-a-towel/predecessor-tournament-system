@@ -51,7 +51,13 @@ if config_env() == :prod do
       """
 
   host = System.get_env("PHX_HOST") || "predecessor-draft-phoenix.onrender.com"
-  port = String.to_integer(System.get_env("PORT") || "10000")
+  port = String.to_integer(System.get_env("PORT") || "4000")
+  
+  IO.puts("Phoenix starting on host: #{host}, port: #{port}")
+  IO.puts("Available environment variables:")
+  System.get_env() |> Enum.each(fn {key, value} -> 
+    if String.contains?(key, ["PORT", "PHX", "HOST"]), do: IO.puts("#{key}=#{value}")
+  end)
 
   config :predecessor_draft, PredecessorDraftWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

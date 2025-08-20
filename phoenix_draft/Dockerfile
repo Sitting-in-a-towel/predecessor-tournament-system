@@ -83,5 +83,5 @@ USER nobody
 # Ensure Phoenix server starts
 ENV PHX_SERVER=true
 
-# Use exec form to ensure proper signal handling
+# Use foreground mode to keep container running
 CMD ["/app/bin/predecessor_draft", "start"]
