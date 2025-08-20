@@ -83,5 +83,5 @@ USER nobody
 # Ensure Phoenix server starts
 ENV PHX_SERVER=true
 
-# Use daemon_iex to keep Phoenix running interactively  
-CMD ["/app/bin/predecessor_draft", "daemon_iex"]
+# Use the foreground command to keep container running
+CMD ["/app/bin/predecessor_draft", "foreground"]
