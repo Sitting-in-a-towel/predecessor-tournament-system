@@ -7,8 +7,7 @@ primary_region = "iad"
   auto_rollback = true
 
 [build]
-  dockerfile = "Dockerfile"
-  build-context = "./phoenix_draft"
+  dockerfile = "./Dockerfile"
 
 [http_service]
   internal_port = 4000
