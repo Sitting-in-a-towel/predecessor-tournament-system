@@ -11,9 +11,18 @@ defmodule PredecessorDraft.Application do
     PredecessorDraft.Logger.setup()
     PredecessorDraft.Logger.log(:info, "APPLICATION", "Starting PredecessorDraft application")
     
+    # Try to start Repo with better error handling
+    repo_child = if System.get_env("SKIP_DATABASE") == "true" do
+      IO.puts("SKIPPING DATABASE CONNECTION - Running without database")
+      nil
+    else
+      IO.puts("Starting database connection...")
+      PredecessorDraft.Repo
+    end
+    
     children = [
       PredecessorDraftWeb.Telemetry,
-      PredecessorDraft.Repo,
+      repo_child,
       {DNSCluster, query: Application.get_env(:predecessor_draft, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: PredecessorDraft.PubSub},
       # Start the Finch HTTP client for sending emails
@@ -27,7 +36,7 @@ defmodule PredecessorDraft.Application do
       # {PredecessorDraft.Worker, arg},
       # Start to serve requests, typically the last entry
       PredecessorDraftWeb.Endpoint
-    ]
+    ] |> Enum.filter(&(&1 != nil))
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
