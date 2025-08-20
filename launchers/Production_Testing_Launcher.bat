@@ -80,10 +80,7 @@ echo  or type 'stop' and press Enter
 echo ========================================
 echo.
 
-REM Open browsers
-timeout /t 2 /nobreak >nul
-start http://localhost:3000
-start http://localhost:4000
+
 
 REM Keep this window open and listen for shutdown
 :loop

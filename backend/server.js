@@ -28,6 +28,7 @@ const testAuthRoutes = require('./routes/test-auth');
 const logsRoutes = require('./routes/logs');
 const createTestDraftRoutes = require('./routes/create-test-draft');
 const databaseMigrationRoutes = require('./routes/database-migration');
+const deploymentChecklistRoutes = require('./routes/deployment-checklist');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -151,6 +152,9 @@ app.use('/api/test', createTestDraftRoutes);
 app.use('/api/database', databaseMigrationRoutes);
 app.use('/api/data', require('./routes/data-only'));
 app.use('/api/test-teams', require('./routes/test-teams'));
+app.use('/api/deployment', deploymentChecklistRoutes);
+app.use('/api/debug', require('./routes/debug-production-drafts'));
+app.use('/api/emergency', require('./routes/emergency-draft-fix'));
 
 // Initialize enhanced draft socket service
 const draftSocketService = new DraftSocketService(io);
