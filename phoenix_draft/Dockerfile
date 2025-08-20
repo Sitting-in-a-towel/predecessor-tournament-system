@@ -27,21 +27,21 @@ RUN mix local.hex --force && \
 ENV MIX_ENV="prod"
 
 # install mix dependencies
-COPY mix.exs mix.lock ./
+COPY phoenix_draft/mix.exs phoenix_draft/mix.lock ./
 RUN mix deps.get --only=prod
 RUN mkdir config
 
 # copy compile-time config files before we compile dependencies
 # to ensure any relevant config change will trigger the dependencies
 # to be re-compiled.
-COPY config/config.exs config/${MIX_ENV}.exs config/
+COPY phoenix_draft/config/config.exs phoenix_draft/config/${MIX_ENV}.exs config/
 RUN mix deps.compile
 
-COPY priv priv
+COPY phoenix_draft/priv priv
 
-COPY lib lib
+COPY phoenix_draft/lib lib
 
-COPY assets assets
+COPY phoenix_draft/assets assets
 
 # compile assets
 RUN mix assets.deploy
@@ -50,9 +50,9 @@ RUN mix assets.deploy
 RUN mix compile
 
 # Changes to config/runtime.exs don't require recompiling the code
-COPY config/runtime.exs config/
+COPY phoenix_draft/config/runtime.exs config/
 
-COPY rel rel
+COPY phoenix_draft/rel rel
 RUN mix release
 
 # start a new build stage so that the final image will only contain
