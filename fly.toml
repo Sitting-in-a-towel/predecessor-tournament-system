@@ -3,6 +3,9 @@
 app = "predecessor-draft-phoenix"
 primary_region = "iad"
 
+[experimental]
+  auto_rollback = true
+
 [build]
   dockerfile = "./phoenix_draft/Dockerfile"
   build-context = "./phoenix_draft"
