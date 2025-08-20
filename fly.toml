@@ -8,6 +8,6 @@ primary_region = "syd"
   force_https = true
 
 [env]
-  PHX_HOST = "predecessor-draft-phoenix.fly.dev"
+  PHX_HOST = "predecessor-tournament-system.fly.dev"
   PHX_SERVER = "true"
   MIX_ENV = "prod"
