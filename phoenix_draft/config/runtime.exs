@@ -36,8 +36,7 @@ if config_env() == :prod do
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "1"),
     socket_options: maybe_ipv6,
     ssl: [
-      verify: :verify_none,
-      cacerts: :public_key.cacerts_get()
+      verify: :verify_none
     ],
     timeout: 60000,
     connect_timeout: 60000,
