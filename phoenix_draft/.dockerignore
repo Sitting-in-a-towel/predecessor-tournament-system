@@ -1,0 +1,51 @@
+# Elixir build artifacts
+/_build
+/deps
+*.ez
+
+# Mix artifacts
+/.mix
+/cover
+
+# Generated files
+/priv/static/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor artifacts
+*~
+*.swp
+*.swo
+.vscode
+.idea
+
+# Logs
+*.log
+
+# Node.js (for assets)
+node_modules/
+npm-debug.log*
+
+# Phoenix artifacts
+/tmp
+
+# Environment
+.env
+.env.local
+.env.production
+.env.staging
+
+# Git
+.git
+.gitignore
+
+# Test artifacts
+cover/
+doc/

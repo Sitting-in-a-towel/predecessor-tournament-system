@@ -5,7 +5,7 @@ services:
     repo: https://github.com/Sitting-in-a-towel/predecessor-tournament-system
     branch: main
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm ci --only=production
     startCommand: npm start
     envVars:
       - key: NODE_ENV

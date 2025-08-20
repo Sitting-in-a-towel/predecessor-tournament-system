@@ -4,7 +4,10 @@ import axios from 'axios';
 import './TournamentDrafts.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-const PHOENIX_DRAFT_URL = process.env.REACT_APP_PHOENIX_URL || 'http://localhost:4000';
+const PHOENIX_DRAFT_URL = process.env.REACT_APP_PHOENIX_URL || 
+  (process.env.NODE_ENV === 'production' 
+    ? 'https://predecessor-draft-phoenix.onrender.com' 
+    : 'http://localhost:4000');
 
 // Production fallback: Check if Phoenix is available, otherwise skip Phoenix calls
 const PHOENIX_ENABLED = process.env.REACT_APP_PHOENIX_ENABLED !== 'false';

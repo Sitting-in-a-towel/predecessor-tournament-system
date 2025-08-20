@@ -31,6 +31,7 @@ defmodule PredecessorDraftWeb.Router do
   scope "/api", PredecessorDraftWeb do
     pipe_through :api
     
+    get "/health", PageController, :health
     post "/auth/token", AuthController, :create_token
     get "/drafts", DraftController, :list
     post "/drafts", DraftController, :create

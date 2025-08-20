@@ -9,7 +9,8 @@ defmodule PredecessorDraft.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      releases: releases()
     ]
   end
 
@@ -80,5 +81,21 @@ defmodule PredecessorDraft.MixProject do
       "assets.build": ["tailwind default", "esbuild default"],
       "assets.deploy": ["tailwind default --minify", "esbuild default --minify", "phx.digest"]
     ]
+  end
+
+  # Release configuration
+  defp releases do
+    [
+      predecessor_draft: [
+        include_executables_for: [:unix],
+        applications: [runtime_tools: :permanent],
+        steps: [:assemble, &copy_bin_files/1]
+      ]
+    ]
+  end
+
+  defp copy_bin_files(release) do
+    File.cp_r!("rel/overlays", release.path)
+    release
   end
 end

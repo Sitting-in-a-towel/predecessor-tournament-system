@@ -7,6 +7,15 @@ defmodule PredecessorDraftWeb.PageController do
     render(conn, :home, layout: false)
   end
 
+  def health(conn, _params) do
+    json(conn, %{
+      status: "healthy",
+      service: "predecessor-draft-phoenix",
+      environment: Application.get_env(:predecessor_draft, :environment, "production"),
+      timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
+    })
+  end
+
   def assets(conn, %{"path" => path}) do
     # Serve static assets from priv/static
     file_path = Path.join(["priv", "static", "assets"] ++ path)
