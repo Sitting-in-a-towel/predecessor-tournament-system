@@ -9,6 +9,10 @@
 - **User**: predecessor_tournament_db_user
 - **Connection**: postgresql://predecessor_tournament_db_user:2WQIOj046lYHGuGnXFA5Ks5asy21xTcH@dpg-d24r7vfgi27c73bbmgh0-a.singapore-postgres.render.com/predecessor_tournament_db
 
+### 🔑 **Phoenix Production Secrets:**
+- **SECRET_KEY_BASE**: `4350d403df7c38dc965fecdc9fbc2780`
+- **Generated**: August 2025 for Phoenix draft server deployment
+
 ### ❌ **NOT USING:**
 - ~~Supabase~~ (was a confusion - ignore this completely)
 - ~~Local database for production~~ (local is only for development)

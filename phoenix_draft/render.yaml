@@ -14,7 +14,7 @@ services:
           name: predecessor-tournament-db
           property: connectionString
       - key: SECRET_KEY_BASE
-        generateValue: true
+        value: 4350d403df7c38dc965fecdc9fbc2780
       - key: PHX_HOST
         value: predecessor-draft-phoenix.onrender.com
       - key: PORT
@@ -23,3 +23,5 @@ services:
         value: true
       - key: POOL_SIZE
         value: 10
+      - key: RELEASE_TMP
+        value: /tmp
