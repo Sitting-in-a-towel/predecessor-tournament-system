@@ -26,7 +26,7 @@ RUN mix local.hex --force && \
 # set build ENV
 ENV MIX_ENV="prod"
 # Cache bust: 2025-08-21-15:05
-ENV CACHE_BUST="2025-08-21-15:05"
+ENV CACHE_BUST="2025-08-21-15:44"
 
 # install mix dependencies
 COPY mix.exs mix.lock ./
