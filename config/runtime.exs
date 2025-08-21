@@ -74,7 +74,10 @@ if config_env() == :prod do
     secret_key_base: secret_key_base,
     server: true,
     # Critical LiveView settings for production
-    check_origin: false,  # Temporarily disable for debugging
+    check_origin: [
+      "https://predecessor-tournament-system.onrender.com",
+      "https://ocl-predecessor.netlify.app"  # Allow frontend origin
+    ],
     force_ssl: [rewrite_on: [:x_forwarded_proto]]
     
   # Ensure we're definitely binding to 0.0.0.0

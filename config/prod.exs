@@ -4,7 +4,7 @@ import Config
 # to something meaningful, Phoenix uses this information
 # when generating URLs.
 config :predecessor_draft, PredecessorDraftWeb.Endpoint,
-  url: [host: "predecessor-draft-phoenix.onrender.com", port: 443, scheme: "https"],
+  url: [host: "predecessor-tournament-system.onrender.com", port: 443, scheme: "https"],
   cache_static_manifest: "priv/static/cache_manifest.json",
   server: true
 
