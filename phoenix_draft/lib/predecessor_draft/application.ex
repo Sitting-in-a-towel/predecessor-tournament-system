@@ -14,11 +14,10 @@ defmodule PredecessorDraft.Application do
     # Database connection for Render
     IO.puts("DATABASE_URL environment variable present: #{if System.get_env("DATABASE_URL"), do: "YES", else: "NO"}")
     
-    # Run migrations if DATABASE_URL is set (production)
+    # Migrations are manually managed - no auto-run needed
     if System.get_env("DATABASE_URL") do
       IO.puts("MIX_ENV: #{System.get_env("MIX_ENV")}")
-      IO.puts("Running database migrations in production...")
-      migrate()
+      IO.puts("✅ Database URL configured - migrations handled manually")
     end
     
     # Enable database
