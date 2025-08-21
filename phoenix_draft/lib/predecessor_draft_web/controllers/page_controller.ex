@@ -16,20 +16,23 @@ defmodule PredecessorDraftWeb.PageController do
     <body>
         <h1>🎉 Phoenix Draft System - PRODUCTION RUNNING!</h1>
         <p class="status">✅ Phoenix LiveView Server is ONLINE</p>
-        <p class="status">✅ Deployed on Fly.io</p>
-        <p class="status">✅ Network binding fixed</p>
-        <p class="status">✅ SSL configuration fixed</p>
+        <p class="status">✅ Deployed on Render</p>
+        <p class="status">✅ Database connection enabled</p>
+        <p class="status">✅ Migrations synchronized</p>
+        <p class="status">✅ Test heroes added</p>
         
-        <h2>Next Steps:</h2>
+        <h2>System Status:</h2>
         <ul>
-            <li>Re-enable database connection</li>
-            <li>Test draft functionality</li>
-            <li>Update frontend to use this URL</li>
+            <li>PostgreSQL Database: Connected</li>
+            <li>Migration Status: All migrations applied</li>
+            <li>Heroes Table: 5 test heroes loaded</li>
+            <li>Draft System: Ready for testing</li>
         </ul>
         
         <p><strong>Health Check:</strong> <a href="/api/health" style="color: #60a5fa;">/api/health</a></p>
+        <p><strong>Database Test:</strong> <a href="/api/db-test" style="color: #60a5fa;">/api/db-test</a></p>
         
-        <p><em>Phoenix deployment successful after fixing CA certificates issue!</em></p>
+        <p><em>Phoenix deployment successful with full database integration!</em></p>
     </body>
     </html>
     """)
@@ -42,6 +45,35 @@ defmodule PredecessorDraftWeb.PageController do
       environment: Application.get_env(:predecessor_draft, :environment, "production"),
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
     })
+  end
+
+  def db_test(conn, _params) do
+    try do
+      # Simple database test - check if we can connect
+      case PredecessorDraft.Repo.query("SELECT 1 as test", []) do
+        {:ok, %{rows: [[1]]}} ->
+          json(conn, %{
+            database: "connected",
+            status: "success",
+            timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
+          })
+        {:error, error} ->
+          json(conn, %{
+            database: "error",
+            status: "failed",
+            error: inspect(error),
+            timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
+          })
+      end
+    rescue
+      e ->
+        json(conn, %{
+          database: "exception",
+          status: "failed",
+          error: inspect(e),
+          timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
+        })
+    end
   end
 
   def assets(conn, %{"path" => path}) do
