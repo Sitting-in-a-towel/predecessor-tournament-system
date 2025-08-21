@@ -42,7 +42,7 @@ timeout /t 3 /nobreak >nul
 
 REM Start Phoenix Draft System
 echo [4/4] Starting Phoenix Draft System on port 4000...
-start "Phoenix Draft System" /D "H:\Project Folder\Predecessor website\phoenix_draft" cmd /c "mix phx.server || pause"
+start "Phoenix Draft System" /D "H:\Project Folder\Predecessor website" cmd /c "mix phx.server || pause"
 timeout /t 5 /nobreak >nul
 
 echo.

@@ -163,13 +163,13 @@
                   
                   <div class="grid grid-cols-2 gap-4 mt-6">
                     <div class="p-3 bg-gray-600 rounded-lg">
-                      <div class="font-semibold text-white"><%= @team1.name %></div>
+                      <div class="font-semibold text-white"><%= @team1.team_name %></div>
                       <div class="text-gray-300">
                         <%= if @draft.team1_coin_choice, do: "Chose: #{String.capitalize(@draft.team1_coin_choice)}", else: "Choosing..." %>
                       </div>
                     </div>
                     <div class="p-3 bg-gray-600 rounded-lg">
-                      <div class="font-semibold text-white"><%= @team2.name %></div>
+                      <div class="font-semibold text-white"><%= @team2.team_name %></div>
                       <div class="text-gray-300">
                         <%= if @draft.team2_coin_choice, do: "Chose: #{String.capitalize(@draft.team2_coin_choice)}", else: "Choosing..." %>
                       </div>
