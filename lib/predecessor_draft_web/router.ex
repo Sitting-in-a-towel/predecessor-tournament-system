@@ -22,6 +22,7 @@ defmodule PredecessorDraftWeb.Router do
     live "/draft/:draft_id", DraftLive, :show
     live "/draft/:draft_id/spectate", SpectateLive, :show
     live "/admin", AdminLive, :index
+    live "/debug", DebugLive, :index
     
     # Static asset routes
     get "/assets/*path", PageController, :assets
