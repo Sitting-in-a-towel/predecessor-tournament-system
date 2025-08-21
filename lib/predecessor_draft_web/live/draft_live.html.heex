@@ -368,9 +368,7 @@
                         else
                           "bg-gray-500 text-gray-300 cursor-not-allowed opacity-50"
                         end,
-                        unless show_skip do
-                          "hidden"
-                        end
+                        "hidden"  <%!-- Always hide skip ban button --%>
                       ]}
                       disabled={!my_turn || !show_skip}
                     >
