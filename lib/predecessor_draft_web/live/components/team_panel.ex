@@ -73,7 +73,7 @@ defmodule PredecessorDraftWeb.Components.TeamPanel do
         <%= if @show_timers do %>
           <.live_component
             module={TimerDisplay}
-            id={"timer-#{@team_position}"}
+            id={"timer-#{@team_position}-#{if(@team_position == :left, do: "team1", else: "team2")}"}
             display_mode={:full}
             team_name={@team_name}
             is_active={@current_team == if(@team_position == :left, do: "team1", else: "team2")}
@@ -125,6 +125,8 @@ defmodule PredecessorDraftWeb.Components.TeamPanel do
   defp team_panel_class(:spectator, :left), do: "team-panel team-panel-left"
   defp team_panel_class(:spectator, :right), do: "team-panel team-panel-right"  
   defp team_panel_class(:captain, _), do: "width: 140px; background-color: #2f3136; padding: 8px; overflow-y: auto;"
+  defp team_panel_class(:captain_side, :left), do: "team-panel team-panel-left"
+  defp team_panel_class(:captain_side, :right), do: "team-panel team-panel-right"
 
   defp draft_slot_classes(slot, current_position, current_phase) do
     classes = []
