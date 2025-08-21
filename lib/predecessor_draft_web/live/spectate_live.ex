@@ -232,6 +232,18 @@ defmodule PredecessorDraftWeb.SpectateLive do
     }
   end
   
+  @impl true
+  def handle_info({:timer_state_update, timer_state}, socket) do
+    # Handle timer state updates from TimerManager for real-time updates
+    socket = socket
+    |> assign(:timer_state, timer_state)
+    |> assign(:current_timer_team, timer_state.current_team)
+    |> assign(:current_timer_phase, timer_state.current_phase)
+    |> assign(:timer_remaining, timer_state.current_timer_remaining || 0)
+    
+    {:noreply, socket}
+  end
+  
   # Draft completion
   @impl true
   def handle_info({"draft_completed", draft}, socket) do
@@ -424,6 +436,17 @@ defmodule PredecessorDraftWeb.SpectateLive do
     else
       # Use the database field which is maintained by the draft system
       draft.current_turn
+    end
+  end
+  
+  # Helper function to get current turn using timer state for real-time updates (spectator version)
+  def get_current_turn(assigns, fallback_draft) do
+    # Use timer state if available for real-time updates
+    if assigns[:timer_state] && assigns.timer_state[:current_team] do
+      assigns.timer_state.current_team
+    else
+      # Fall back to draft state calculation
+      get_current_turn_team(fallback_draft)
     end
   end
   

@@ -422,7 +422,7 @@
       team1_connected={@draft.team1_connected}
       team2_connected={@draft.team2_connected}
       timer_state={@timer_state}
-      current_turn={get_current_turn_team(@draft)}
+      current_turn={get_current_turn(assigns, @draft)}
       current_action={PredecessorDraft.Drafts.determine_current_action(@draft)}
       show_back_link={false}
     />
@@ -440,7 +440,7 @@
         team_bans={@draft.team1_bans || []}
         heroes={@heroes}
         current_phase={@draft.current_phase}
-        current_team={get_current_turn_team(@draft)}
+        current_team={get_current_turn(assigns, @draft)}
         show_timers={false}
         show_draft_order={false}
         show_coin_info={false}
@@ -498,7 +498,7 @@
         team_bans={@draft.team2_bans || []}
         heroes={@heroes}
         current_phase={@draft.current_phase}
-        current_team={get_current_turn_team(@draft)}
+        current_team={get_current_turn(assigns, @draft)}
         show_timers={false}
         show_draft_order={false}
         show_coin_info={false}

@@ -800,6 +800,11 @@ defmodule PredecessorDraftWeb.DraftLive do
   def is_my_turn?(draft, captain_role) do
     PredecessorDraft.Drafts.Session.next_pick_team(draft) == captain_role
   end
+  
+  # Updated version that uses timer state for real-time updates
+  def is_my_turn?(assigns, draft, captain_role) do
+    get_current_turn(assigns, draft) == captain_role
+  end
 
   def coin_choice_disabled?(draft, team_role, both_captains_present) do
     # Disable coin choice if:
@@ -971,6 +976,17 @@ defmodule PredecessorDraftWeb.DraftLive do
   def is_team_timer_active?(draft, team) do
     current_team = PredecessorDraft.Drafts.Session.next_pick_team(draft)
     current_team == team && draft.current_phase in ["Ban Phase", "Pick Phase"]
+  end
+  
+  # Helper function to get current turn using timer state for real-time updates
+  def get_current_turn(assigns, fallback_draft) do
+    # Use timer state if available for real-time updates
+    if assigns[:timer_state] && assigns.timer_state[:current_team] do
+      assigns.timer_state.current_team
+    else
+      # Fall back to draft state calculation
+      PredecessorDraft.Drafts.Session.next_pick_team(fallback_draft)
+    end
   end
   
   # Helper function to get the current position in the draft sequence

@@ -53,7 +53,7 @@
       team2_connected={@draft.team2_connected}
       captain_role={@captain_role}
       timer_state={@timer_state}
-      current_turn={PredecessorDraft.Drafts.Session.next_pick_team(@draft)}
+      current_turn={get_current_turn(assigns, @draft)}
       current_action={PredecessorDraft.Drafts.determine_current_action(@draft)}
       show_back_link={true}
     />
@@ -279,7 +279,7 @@
               <% else %>
                 <%= if @draft.current_phase in ["Ban Phase", "Pick Phase"] do %>
                   <div style="color: #fbbf24; font-size: 16px; font-weight: bold; margin-bottom: 8px;">
-                    <%= case PredecessorDraft.Drafts.Session.next_pick_team(@draft) do %>
+                    <%= case get_current_turn(assigns, @draft) do %>
                       <% "team1" -> %>
                         <%= @team1.team_name %>'s Turn to <%= if PredecessorDraft.Drafts.determine_current_action(@draft) == :ban, do: "BAN", else: "PICK" %>
                       <% "team2" -> %>
@@ -293,8 +293,8 @@
               
               <%# Hero Selection Bar - Hidden when draft complete %>
               <%= if @draft.current_phase != "Complete" do %>
-                <div style={"margin-top: 8px; background: #{if assigns[:selected_hero] && @captain_role == PredecessorDraft.Drafts.Session.next_pick_team(@draft), do: "#7c2d12", else: "#4a4a4a"}; border: 2px solid #{if assigns[:selected_hero] && @captain_role == PredecessorDraft.Drafts.Session.next_pick_team(@draft), do: "#eab308", else: "#6b7280"}; border-radius: 6px; padding: 4px 12px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease;"}>
-                  <%= if assigns[:selected_hero] && @captain_role == PredecessorDraft.Drafts.Session.next_pick_team(@draft) do %>
+                <div style={"margin-top: 8px; background: #{if assigns[:selected_hero] && @captain_role == get_current_turn(assigns, @draft), do: "#7c2d12", else: "#4a4a4a"}; border: 2px solid #{if assigns[:selected_hero] && @captain_role == get_current_turn(assigns, @draft), do: "#eab308", else: "#6b7280"}; border-radius: 6px; padding: 4px 12px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease;"}>
+                  <%= if assigns[:selected_hero] && @captain_role == get_current_turn(assigns, @draft) do %>
                     <span style="font-weight: bold; color: white; font-size: 12px;">
                       <%= if PredecessorDraft.Drafts.determine_current_action(@draft) == :ban, do: "Ban", else: "Pick" %>:
                     </span>
@@ -352,7 +352,7 @@
               <div style="flex: 1; display: flex; flex-direction: column; padding: 0 8px;">
                 <%# Skip Button - Always present, stable DOM element %>
                 <%= if @draft.current_phase in ["Ban Phase", "Pick Phase"] do %>
-                  <% my_turn = is_my_turn?(@draft, @captain_role) %>
+                  <% my_turn = is_my_turn?(assigns, @draft, @captain_role) %>
                   <% current_action = PredecessorDraft.Drafts.determine_current_action(@draft) %>
                   <% show_skip = current_action == :ban %>
                   
@@ -386,8 +386,8 @@
                     picks={(@draft.team1_picks || []) ++ (@draft.team2_picks || [])}
                     bans={(@draft.team1_bans || []) ++ (@draft.team2_bans || [])}
                     current_action={to_string(PredecessorDraft.Drafts.determine_current_action(@draft))}
-                    current_team={PredecessorDraft.Drafts.Session.next_pick_team(@draft)}
-                    can_select={@captain_role == PredecessorDraft.Drafts.Session.next_pick_team(@draft)}
+                    current_team={get_current_turn(assigns, @draft)}
+                    can_select={@captain_role == get_current_turn(assigns, @draft)}
                     role_filter={@role_filter}
                     parent_target={nil}
                   />
