@@ -224,7 +224,7 @@ defmodule PredecessorDraftWeb.DraftController do
   defp format_team_status(team, session, team_role) do
     %{
       id: team.id,
-      name: team.name,
+      name: team.team_name,
       tag: team.tag,
       connected: Map.get(session, String.to_atom("#{team_role}_connected")),
       captain_id: Map.get(session, String.to_atom("#{team_role}_captain_id"))
@@ -234,7 +234,7 @@ defmodule PredecessorDraftWeb.DraftController do
   defp format_team_basic(team) do
     %{
       id: team.id,
-      name: team.name,
+      name: team.team_name,
       tag: team.tag
     }
   end
