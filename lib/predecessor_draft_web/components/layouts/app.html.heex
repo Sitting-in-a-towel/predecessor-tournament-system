@@ -8,7 +8,7 @@
       </a>
     </div>
     <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900">
-      <a href="http://localhost:3000" class="hover:text-zinc-700">
+      <a href={if Mix.env() == :prod, do: "https://ocl-predecessor.netlify.app", else: "http://localhost:3000"} class="hover:text-zinc-700">
         ← Back to Tournament System
       </a>
     </div>
