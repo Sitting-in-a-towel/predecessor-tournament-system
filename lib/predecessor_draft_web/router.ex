@@ -18,7 +18,6 @@ defmodule PredecessorDraftWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    get "/test", PageController, :test
     live "/draft/:draft_id", DraftLive, :show
     live "/draft/:draft_id/spectate", SpectateLive, :show
     live "/admin", AdminLive, :index

@@ -16,23 +16,20 @@ defmodule PredecessorDraftWeb.PageController do
     <body>
         <h1>🎉 Phoenix Draft System - PRODUCTION RUNNING!</h1>
         <p class="status">✅ Phoenix LiveView Server is ONLINE</p>
-        <p class="status">✅ Deployed on Render</p>
-        <p class="status">✅ Database connection enabled</p>
-        <p class="status">✅ Migrations synchronized</p>
-        <p class="status">✅ Test heroes added</p>
+        <p class="status">✅ Deployed on Fly.io</p>
+        <p class="status">✅ Network binding fixed</p>
+        <p class="status">✅ SSL configuration fixed</p>
         
-        <h2>System Status:</h2>
+        <h2>Next Steps:</h2>
         <ul>
-            <li>PostgreSQL Database: Connected</li>
-            <li>Migration Status: All migrations applied</li>
-            <li>Heroes Table: 5 test heroes loaded</li>
-            <li>Draft System: Ready for testing</li>
+            <li>Re-enable database connection</li>
+            <li>Test draft functionality</li>
+            <li>Update frontend to use this URL</li>
         </ul>
         
         <p><strong>Health Check:</strong> <a href="/api/health" style="color: #60a5fa;">/api/health</a></p>
-        <p><strong>Database Test:</strong> <a href="/api/db-test" style="color: #60a5fa;">/api/db-test</a></p>
         
-        <p><em>Phoenix deployment successful with full database integration!</em></p>
+        <p><em>Phoenix deployment successful after fixing CA certificates issue!</em></p>
     </body>
     </html>
     """)
@@ -45,24 +42,6 @@ defmodule PredecessorDraftWeb.PageController do
       environment: Application.get_env(:predecessor_draft, :environment, "production"),
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
     })
-  end
-
-  def test(conn, _params) do
-    html(conn, """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Phoenix Test Route</title>
-        <style>body { font-family: Arial; padding: 20px; }</style>
-    </head>
-    <body>
-        <h1>🧪 Phoenix Test Route Working!</h1>
-        <p>This route goes through the browser pipeline but doesn't use LiveView.</p>
-        <p>If this works, the issue is LiveView-specific.</p>
-        <p><a href="/api/health">Health Check</a> | <a href="/api/db-test">Database Test</a></p>
-    </body>
-    </html>
-    """)
   end
 
   def db_test(conn, _params) do

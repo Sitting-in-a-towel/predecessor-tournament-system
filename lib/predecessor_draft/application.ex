@@ -11,19 +11,12 @@ defmodule PredecessorDraft.Application do
     PredecessorDraft.Logger.setup()
     PredecessorDraft.Logger.log(:info, "APPLICATION", "Starting PredecessorDraft application")
     
-    # Database connection for Render
+    # Database connection with minimal SSL configuration
     IO.puts("DATABASE_URL environment variable present: #{if System.get_env("DATABASE_URL"), do: "YES", else: "NO"}")
     
-    # Run migrations if DATABASE_URL is set (production)
-    if System.get_env("DATABASE_URL") do
-      IO.puts("MIX_ENV: #{System.get_env("MIX_ENV")}")
-      IO.puts("Running database migrations in production...")
-      migrate()
-    end
-    
-    # Enable database
+    # Re-enable database with minimal SSL setup
     repo_child = PredecessorDraft.Repo
-    IO.puts("✅ Database enabled for Render deployment")
+    IO.puts("✅ Database re-enabled with minimal SSL configuration")
     
     children = [
       PredecessorDraftWeb.Telemetry,
@@ -58,22 +51,5 @@ defmodule PredecessorDraft.Application do
   def config_change(changed, _new, removed) do
     PredecessorDraftWeb.Endpoint.config_change(changed, removed)
     :ok
-  end
-
-  defp migrate do
-    IO.puts("Starting Ecto repository for migrations...")
-    {:ok, _} = PredecessorDraft.Repo.start_link([])
-    
-    IO.puts("Running migrations...")
-    path = Application.app_dir(:predecessor_draft, "priv/repo/migrations")
-    Ecto.Migrator.run(PredecessorDraft.Repo, path, :up, all: true)
-    
-    IO.puts("Stopping temporary Ecto repository...")
-    :ok = Supervisor.stop(PredecessorDraft.Repo)
-    
-    IO.puts("✅ Migrations completed successfully")
-  rescue
-    error ->
-      IO.puts("⚠️ Migration error (may be already run): #{inspect(error)}")
   end
 end
