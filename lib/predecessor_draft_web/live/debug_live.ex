@@ -11,8 +11,8 @@ defmodule PredecessorDraftWeb.DebugLive do
       <h1 class="text-3xl font-bold mb-4">Debug LiveView</h1>
       <p class="text-green-400 text-xl"><%= @message %></p>
       <p class="text-gray-300 mt-4">If you can see this, LiveView is working properly.</p>
-      <p class="text-gray-300">Environment: <%= Mix.env() %></p>
-      <p class="text-gray-300">Phoenix Version: <%= Application.spec(:phoenix, :vsn) %></p>
+      <p class="text-gray-300">Environment: Production</p>
+      <p class="text-gray-300">Phoenix Version: 1.7.21</p>
     </div>
     """
   end
