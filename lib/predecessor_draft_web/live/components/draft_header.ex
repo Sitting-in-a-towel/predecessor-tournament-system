@@ -27,8 +27,8 @@ defmodule PredecessorDraftWeb.Components.DraftHeader do
       |> assign_new(:display_mode, fn -> :captain end)     # :captain, :spectator
       |> assign_new(:draft_id, fn -> "unknown" end)
       |> assign_new(:current_phase, fn -> "waiting" end)
-      |> assign_new(:team1, fn -> %{name: "Team 1"} end)
-      |> assign_new(:team2, fn -> %{name: "Team 2"} end)
+      |> assign_new(:team1, fn -> %{team_name: "Team 1"} end)
+      |> assign_new(:team2, fn -> %{team_name: "Team 2"} end)
       |> assign_new(:team1_connected, fn -> false end)
       |> assign_new(:team2_connected, fn -> false end)
       |> assign_new(:captain_role, fn -> nil end)
@@ -44,14 +44,14 @@ defmodule PredecessorDraftWeb.Components.DraftHeader do
         <%!-- Team 1 Section --%>
         <div class="team-header-section">
           <div class="team-name-box team1-name">
-            <%= @team1.name %>
+            <%= @team1.team_name %>
           </div>
           <%= if Map.get(@timer_state, :timer_enabled, false) do %>
             <.live_component
               module={TimerDisplay}
               id="header-timer-team1"
               display_mode={:spectator}
-              team_name={@team1.name}
+              team_name={@team1.team_name}
               is_active={@current_turn == "team1"}
               timer_remaining={Map.get(@timer_state, :timer_remaining, 20)}
               bonus_remaining={Map.get(@timer_state, :team1_bonus_remaining, 10)}
@@ -69,7 +69,7 @@ defmodule PredecessorDraftWeb.Components.DraftHeader do
               module={TimerDisplay}
               id="header-timer-team2"
               display_mode={:spectator}
-              team_name={@team2.name}
+              team_name={@team2.team_name}
               is_active={@current_turn == "team2"}
               timer_remaining={Map.get(@timer_state, :timer_remaining, 20)}
               bonus_remaining={Map.get(@timer_state, :team2_bonus_remaining, 10)}
@@ -79,7 +79,7 @@ defmodule PredecessorDraftWeb.Components.DraftHeader do
             />
           <% end %>
           <div class="team-name-box team2-name">
-            <%= @team2.name %>
+            <%= @team2.team_name %>
           </div>
         </div>
         
@@ -91,8 +91,8 @@ defmodule PredecessorDraftWeb.Components.DraftHeader do
           current_phase={@current_phase}
           current_turn={@current_turn}
           current_action={@current_action}
-          team1_name={@team1.name}
-          team2_name={@team2.name}
+          team1_name={@team1.team_name}
+          team2_name={@team2.team_name}
           show_action={true}
           show_team_names={true}
         />
@@ -113,8 +113,8 @@ defmodule PredecessorDraftWeb.Components.DraftHeader do
                   current_phase={@current_phase}
                   current_turn={@current_turn}
                   current_action={@current_action}
-                  team1_name={@team1.name}
-                  team2_name={@team2.name}
+                  team1_name={@team1.team_name}
+                  team2_name={@team2.team_name}
                   show_action={false}
                   show_team_names={false}
                 />
@@ -123,7 +123,7 @@ defmodule PredecessorDraftWeb.Components.DraftHeader do
               <%= if @captain_role do %>
                 <div class="ml-6 px-3 py-1 bg-blue-600 rounded text-sm">
                   <span class="text-white font-semibold">
-                    Drafting for: <%= if @captain_role == "team1", do: @team1.name, else: @team2.name %>
+                    Drafting for: <%= if @captain_role == "team1", do: @team1.team_name, else: @team2.team_name %>
                   </span>
                 </div>
               <% end %>
@@ -133,11 +133,11 @@ defmodule PredecessorDraftWeb.Components.DraftHeader do
               <div class="flex items-center space-x-4 text-xs text-gray-300">
                 <div class="flex items-center">
                   <span class={["inline-block w-2 h-2 rounded-full mr-1", if(@team1_connected, do: "bg-green-400", else: "bg-gray-500")]}></span>
-                  <%= @team1.name %> Captain
+                  <%= @team1.team_name %> Captain
                 </div>
                 <div class="flex items-center">
                   <span class={["inline-block w-2 h-2 rounded-full mr-1", if(@team2_connected, do: "bg-green-400", else: "bg-gray-500")]}></span>
-                  <%= @team2.name %> Captain
+                  <%= @team2.team_name %> Captain
                 </div>
               </div>
               
