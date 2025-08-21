@@ -92,7 +92,7 @@ defmodule PredecessorDraft.Teams.Team do
   def for_draft_display(team, position, captain \\ nil) do
     %{
       id: team.id,
-      name: display_name(team),
+      team_name: display_name(team),
       tag: team.team_tag,
       logo_url: logo_url(team),
       position: position,
