@@ -82,4 +82,9 @@ if config_env() == :prod do
     
   # Ensure we're definitely binding to 0.0.0.0
   IO.puts("Phoenix binding to 0.0.0.0:#{port} for external access")
+
+  # React service URLs for production
+  config :predecessor_draft,
+    react_backend_url: System.get_env("REACT_BACKEND_URL") || "https://api.predecessor-tournament.onrender.com",
+    react_frontend_url: System.get_env("REACT_FRONTEND_URL") || "https://ocl-predecessor.netlify.app"
 end
