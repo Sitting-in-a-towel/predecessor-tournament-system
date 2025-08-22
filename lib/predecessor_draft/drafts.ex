@@ -370,6 +370,14 @@ defmodule PredecessorDraft.Drafts do
           {:ok, session} ->
             broadcast_draft_update(session, "selection_made")
             if session.status == "Completed" do
+              # Stop the timer manager when draft completes
+              try do
+                PredecessorDraft.TimerManager.stop_timers(session.draft_id)
+                IO.puts("Timer manager stopped for completed draft #{session.draft_id}")
+              rescue
+                e ->
+                  IO.puts("Failed to stop timer manager: #{inspect(e)}")
+              end
               broadcast_draft_update(session, "draft_completed")
             end
             {:ok, session}
@@ -380,8 +388,91 @@ defmodule PredecessorDraft.Drafts do
   end
 
   @doc """
+  Makes a hero selection without broadcasting (internal use only).
+  This allows for coordinated updates with timer state.
+  """
+  def make_selection_without_broadcast(session, team_role, hero_id, action) 
+      when team_role in ["team1", "team2"] and action in ["pick", "ban"] do
+    
+    if Session.next_pick_team(session) != team_role do
+      {:error, "It's not your turn to #{action}"}
+    else
+      current_list = case action do
+        "pick" -> Map.get(session, String.to_atom("#{team_role}_picks"))
+        "ban" -> Map.get(session, String.to_atom("#{team_role}_bans"))
+      end
+      
+      # Check if hero is already selected (except for "skipped" which can be used multiple times)
+      all_selections = get_all_selected_heroes(session)
+      
+      if hero_id != "skipped" && hero_id in all_selections do
+        {:error, "Hero already selected"}
+      else
+        updated_list = current_list ++ [hero_id]
+        
+        # Create an updated session struct to determine next turn
+        updated_session = Map.put(session, String.to_atom("#{team_role}_#{action}s"), updated_list)
+        next_turn = Session.next_pick_team(updated_session)
+        
+        attrs = %{
+          "#{team_role}_#{action}s" => updated_list,
+          "current_turn" => next_turn
+        }
+        
+        # Check if draft is complete or advance phase
+        updated_attrs = 
+          if action == "pick" and length(updated_list) >= 5 do
+            other_team = if team_role == "team1", do: "team2", else: "team1"
+            other_picks = Map.get(session, String.to_atom("#{other_team}_picks")) || []
+            
+            if length(other_picks) >= 5 do
+              attrs
+              |> Map.put("current_phase", "Complete")
+              |> Map.put("status", "Completed") 
+              |> Map.put("draft_completed_at", DateTime.utc_now())
+              |> Map.put("current_timer_started_at", nil)
+              |> Map.put("timer_expired", false)
+            else
+              # Continue drafting - might need to advance from Ban Phase to Pick Phase
+              current_phase = advance_phase_if_needed(session, attrs)
+              
+              attrs
+              |> Map.put("current_phase", current_phase)
+            end
+          else
+            # Check if we need to advance from Ban Phase to Pick Phase  
+            current_phase = advance_phase_if_needed(session, attrs)
+            
+            attrs
+            |> Map.put("current_phase", current_phase)
+          end
+        
+        # Apply bonus timer reset logic if enabled
+        final_session = 
+          if session.timer_config["timer_strategy_enabled"] do
+            current_action = if action == "ban", do: :ban, else: :pick
+            Session.reset_bonus_timer_if_needed(session, team_role, current_action)
+          else
+            session
+          end
+        
+        final_session
+        |> Session.picks_changeset(updated_attrs)
+        |> Repo.update()
+        |> case do
+          {:ok, session} ->
+            # NO BROADCAST HERE - caller handles broadcasting
+            {:ok, session}
+          error -> error
+        end
+      end
+    end
+  end
+
+  @doc """
   Confirms a hero selection and resets the timer for next turn.
   This should be called after the "Lock In" button is pressed.
+  FIXED: Coordinates database and timer updates to prevent race conditions.
   """
   def confirm_hero_selection(session, team_role, hero_id, action) 
       when team_role in ["team1", "team2"] and action in ["pick", "ban"] do
@@ -402,17 +493,17 @@ defmodule PredecessorDraft.Drafts do
       timer_stopped_session
     end
     
-    # Make the selection
-    case make_selection(final_timer_session, team_role, hero_id, action) do
+    # Make the selection WITHOUT broadcasting (to prevent race condition)
+    case make_selection_without_broadcast(final_timer_session, team_role, hero_id, action) do
       {:ok, updated_session} ->
-        # Start timer for next team if draft continues
-        if updated_session.current_phase in ["Ban Phase", "Pick Phase"] and 
-           updated_session.status != "Completed" do
+        # Update timer state FIRST (before broadcasting database changes)
+        timer_updated = if updated_session.current_phase in ["Ban Phase", "Pick Phase"] and 
+                          updated_session.status != "Completed" do
           
           next_team = Session.next_pick_team(updated_session)
           
           if next_team do
-            # Start timer for next team using per-team timer system
+            # CRITICAL FIX: Update timer state synchronously before broadcasting
             case start_next_team_timer(updated_session, next_team) do
               {:ok, final_session} -> {:ok, final_session}
               {:error, _reason} -> {:ok, updated_session}  # Continue even if timer start fails
@@ -422,6 +513,25 @@ defmodule PredecessorDraft.Drafts do
           end
         else
           {:ok, updated_session}
+        end
+        
+        # NOW broadcast the database changes (after timer is coordinated)
+        case timer_updated do
+          {:ok, final_session} ->
+            broadcast_draft_update(final_session, "selection_made")
+            if final_session.status == "Completed" do
+              # Stop the timer manager when draft completes
+              try do
+                PredecessorDraft.TimerManager.stop_timers(final_session.draft_id)
+                IO.puts("Timer manager stopped for completed draft #{final_session.draft_id}")
+              rescue
+                e ->
+                  IO.puts("Failed to stop timer manager: #{inspect(e)}")
+              end
+              broadcast_draft_update(final_session, "draft_completed")
+            end
+            {:ok, final_session}
+          error -> error
         end
         
       error -> error
@@ -562,13 +672,13 @@ defmodule PredecessorDraft.Drafts do
         # First 4 actions are bans - stay in Ban Phase
         total_actions <= 4 -> "Ban Phase"
         
-        # Actions 5-6 are picks - switch to Pick Phase
-        total_actions <= 6 -> "Pick Phase"
+        # Actions 5-10 are picks - switch to Pick Phase
+        total_actions <= 10 -> "Pick Phase"
         
-        # Actions 7-8 are bans - back to Ban Phase
-        total_actions <= 8 -> "Ban Phase"
+        # Actions 11-12 are bans - back to Ban Phase  
+        total_actions <= 12 -> "Ban Phase"
         
-        # Remaining actions are picks - Pick Phase
+        # Remaining actions 13-16 are picks - Pick Phase
         true -> "Pick Phase"
       end
     end
@@ -1049,6 +1159,9 @@ defmodule PredecessorDraft.Drafts do
       {:ok, :timer_started} ->
         IO.puts("DEBUG: Successfully started timer for #{team} via TimerManager")
         {:ok, session}
+      :ok ->
+        IO.puts("DEBUG: TimerManager returned :ok for #{team} - treating as success")
+        {:ok, session}
       {:error, reason} ->
         IO.puts("DEBUG: Failed to start timer for #{team}: #{inspect(reason)}")
         {:error, reason}
@@ -1105,22 +1218,24 @@ defmodule PredecessorDraft.Drafts do
       case get_session_by_draft_id(draft_id) do
         nil -> :ok  # Draft no longer exists
         session ->
-          # Initialize ban phase
+          # CRITICAL FIX: Initialize TimerManager FIRST before database broadcast
+          PredecessorDraft.TimerManager.team_ready(draft_id, "team1")
+          PredecessorDraft.TimerManager.team_ready(draft_id, "team2")
+          
+          # Small delay to let TimerManager initialize
+          Process.sleep(500)
+          
+          # Initialize ban phase (this sets database state)
           case start_ban_phase(session) do
             {:ok, updated_session} -> 
-              # Broadcast ban phase started
+              # Broadcast ban phase started (now database and timer are both ready)
+              # CRITICAL FIX: Include remaining_time in broadcast (spectator expects 3-param tuple)
+              remaining_time = PredecessorDraft.Drafts.Session.get_timer_remaining(updated_session)
               Phoenix.PubSub.broadcast(
                 PredecessorDraft.PubSub,
                 "draft:#{draft_id}",
-                {"ban_phase_started", updated_session}
+                {"ban_phase_started", updated_session, remaining_time}
               )
-              
-              # Wait for teams to load, THEN mark both teams ready and start TimerManager
-              Process.sleep(3000)  # Give teams 3 seconds to load
-              
-              # Mark both teams as ready (since they're both in the draft)
-              PredecessorDraft.TimerManager.team_ready(draft_id, "team1")
-              PredecessorDraft.TimerManager.team_ready(draft_id, "team2")
               
               :ok
             {:error, _reason} -> :ok

@@ -341,6 +341,12 @@
     background: linear-gradient(135deg, #5c1e1e 0%, #7f2929 100%);
   }
   
+  .ban-slot.active {
+    border-color: #fbbf24;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+    animation: pulse-border 1.5s infinite;
+  }
+  
   .ban-portrait {
     width: 50px;
     height: 50px;
@@ -424,6 +430,9 @@
       timer_state={@timer_state}
       current_turn={get_current_turn(assigns, @draft)}
       current_action={PredecessorDraft.Drafts.determine_current_action(@draft)}
+      coin_toss_result={@draft.coin_toss_result}
+      coin_toss_winner={@draft.coin_toss_winner}
+      pick_order_chosen={@draft.pick_order_chosen}
       show_back_link={false}
     />
     
@@ -484,6 +493,8 @@
           heroes={@heroes}
           max_bans_per_team={4}
           show_labels={true}
+          current_team={get_current_turn(assigns, @draft)}
+          current_phase={@draft.current_phase}
         />
       </div>
       

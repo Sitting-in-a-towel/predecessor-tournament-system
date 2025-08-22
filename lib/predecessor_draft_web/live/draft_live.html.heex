@@ -343,8 +343,9 @@
                 coin_choice={@draft.team1_coin_choice}
                 coin_winner={@draft.coin_toss_winner == "team1"}
                 draft_sequence={get_draft_sequence(@draft) |> Enum.filter(&(&1.team == "team1"))}
-                current_position={get_current_draft_position(@draft)}
+                current_draft_position={get_current_draft_position(@draft)}
                 current_phase={@draft.current_phase}
+                current_team={get_current_turn(assigns, @draft)}
                 is_narrow={true}
               />
               
@@ -402,8 +403,9 @@
                 coin_choice={@draft.team2_coin_choice}
                 coin_winner={@draft.coin_toss_winner == "team2"}
                 draft_sequence={get_draft_sequence(@draft) |> Enum.filter(&(&1.team == "team2"))}
-                current_position={get_current_draft_position(@draft)}
+                current_draft_position={get_current_draft_position(@draft)}
                 current_phase={@draft.current_phase}
+                current_team={get_current_turn(assigns, @draft)}
                 is_narrow={true}
               />
             </div>

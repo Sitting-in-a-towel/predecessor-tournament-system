@@ -203,6 +203,20 @@ defmodule PredecessorDraftWeb.SpectateLive do
     }
   end
   
+  @impl true
+  def handle_info({"ban_phase_started", draft}, socket) do
+    {:noreply, assign(socket, :draft, draft)}
+  end
+  
+  @impl true
+  def handle_info({"ban_phase_started", draft, remaining_time}, socket) do
+    {:noreply, 
+      socket
+      |> assign(:draft, draft)
+      |> assign(:timer_remaining, remaining_time)
+    }
+  end
+  
   # Timer events
   @impl true
   def handle_info({"timer_reset", draft}, socket) do

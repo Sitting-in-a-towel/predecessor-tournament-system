@@ -28,6 +28,8 @@ defmodule PredecessorDraftWeb.Components.BansDisplay do
       |> assign_new(:heroes, fn -> [] end)
       |> assign_new(:max_bans_per_team, fn -> 4 end)
       |> assign_new(:show_labels, fn -> true end)
+      |> assign_new(:current_team, fn -> nil end)
+      |> assign_new(:current_phase, fn -> nil end)
 
     ~H"""
     <div class={bans_container_class(@display_mode)}>
@@ -39,8 +41,10 @@ defmodule PredecessorDraftWeb.Components.BansDisplay do
             <%= for i <- 1..@max_bans_per_team do %>
               <% ban_id = Enum.at(@team1_bans, i - 1) %>
               <% hero = if ban_id && ban_id != "skipped", do: Enum.find(@heroes, &(&1.id == ban_id)), else: nil %>
+              <% team1_ban_count = length(@team1_bans) %>
+              <% is_current = @current_team == "team1" && @current_phase == "Ban Phase" && i == team1_ban_count + 1 %>
               
-              <div class={["ban-slot", if(hero, do: "filled", else: "")]}>
+              <div class={["ban-slot", if(hero, do: "filled", else: ""), if(is_current, do: "active", else: "")]}>
                 <%= if hero do %>
                   <img src={hero.image} alt={hero.name} class="ban-portrait" 
                        onerror="this.src='/images/heroes/placeholder.jpg'" />
@@ -66,8 +70,10 @@ defmodule PredecessorDraftWeb.Components.BansDisplay do
             <%= for i <- 1..@max_bans_per_team do %>
               <% ban_id = Enum.at(@team2_bans, i - 1) %>
               <% hero = if ban_id && ban_id != "skipped", do: Enum.find(@heroes, &(&1.id == ban_id)), else: nil %>
+              <% team2_ban_count = length(@team2_bans) %>
+              <% is_current = @current_team == "team2" && @current_phase == "Ban Phase" && i == team2_ban_count + 1 %>
               
-              <div class={["ban-slot", if(hero, do: "filled", else: "")]}>
+              <div class={["ban-slot", if(hero, do: "filled", else: ""), if(is_current, do: "active", else: "")]}>
                 <%= if hero do %>
                   <img src={hero.image} alt={hero.name} class="ban-portrait" 
                        onerror="this.src='/images/heroes/placeholder.jpg'" />

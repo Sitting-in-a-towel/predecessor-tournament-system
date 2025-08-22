@@ -71,15 +71,22 @@ defmodule PredecessorDraftWeb.Components.TeamPanel do
         
         <%!-- Timer Display --%>
         <%= if @show_timers do %>
+          <% team_key = if(@team_position == :left, do: "team1", else: "team2") %>
+          <% is_this_teams_turn = @current_team == team_key %>
+          <% main_timer = if is_this_teams_turn && Map.get(@timer_state, :current_phase) == :main_timer do
+              Map.get(@timer_state, :current_timer_remaining, 20)
+            else
+              Map.get(@timer_state, :"#{team_key}_main_remaining", 20)
+            end %>
           <.live_component
             module={TimerDisplay}
-            id={"timer-#{@team_position}-#{if(@team_position == :left, do: "team1", else: "team2")}"}
+            id={"timer-#{@team_position}-#{team_key}"}
             display_mode={:full}
             team_name={@team_name}
-            is_active={@current_team == if(@team_position == :left, do: "team1", else: "team2")}
-            timer_remaining={Map.get(@timer_state, :timer_remaining, 20)}
-            bonus_remaining={Map.get(@timer_state, :"#{if(@team_position == :left, do: "team1", else: "team2")}_bonus_remaining", 10)}
-            in_bonus={Map.get(@timer_state, :"#{if(@team_position == :left, do: "team1", else: "team2")}_in_bonus", false)}
+            is_active={is_this_teams_turn}
+            timer_remaining={main_timer}
+            bonus_remaining={Map.get(@timer_state, :"#{team_key}_bonus_remaining", 10)}
+            in_bonus={is_this_teams_turn && Map.get(@timer_state, :current_phase) == :bonus_timer}
             timer_enabled={Map.get(@timer_state, :timer_enabled, true)}
             show_bonus_timer={true}
           />
@@ -103,7 +110,7 @@ defmodule PredecessorDraftWeb.Components.TeamPanel do
         <%= if @show_draft_order do %>
           <div class="text-white text-xs font-semibold mb-2">Draft Order</div>
           <%= for slot <- @draft_sequence do %>
-            <div class={draft_slot_classes(slot, @current_draft_position, @current_phase)} 
+            <div class={draft_slot_classes(slot, @current_draft_position, @current_phase, @current_team)} 
                  style={draft_slot_styles(slot)}>
               <div style="position: absolute; top: 2px; right: 4px; font-size: 10px; color: #9ca3af;"><%= slot.position %></div>
               <span class="text-xs">
@@ -128,9 +135,11 @@ defmodule PredecessorDraftWeb.Components.TeamPanel do
   defp team_panel_class(:captain_side, :left), do: "team-panel team-panel-left"
   defp team_panel_class(:captain_side, :right), do: "team-panel team-panel-right"
 
-  defp draft_slot_classes(slot, current_position, current_phase) do
+  defp draft_slot_classes(slot, current_position, current_phase, current_team) do
     classes = []
-    classes = if slot.position == current_position && current_phase in ["Ban Phase", "Pick Phase"] do
+    classes = if slot.position == current_position && 
+                 current_phase in ["Ban Phase", "Pick Phase"] && 
+                 slot.team == current_team do
       ["active-slot" | classes]
     else
       classes
