@@ -5,54 +5,54 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
   use Phoenix.LiveComponent
   
   
-  # Static hero list - will try to get from API at runtime  
+  # Static hero list - prioritizes local web server images first
   @static_heroes [
     # Carry Role
-    %{id: "drongo", name: "Drongo", role: "Carry", image: "/images/heroes/drongo.jpg"},
-    %{id: "grim_exe", name: "GRIM.exe", role: "Carry", image: "/images/heroes/grim_exe.jpg"},
-    %{id: "murdock", name: "Murdock", role: "Carry", image: "/images/heroes/murdock.jpg"},
-    %{id: "revenant", name: "Revenant", role: "Carry", image: "/images/heroes/revenant.jpg"},
-    %{id: "sparrow", name: "Sparrow", role: "Carry", image: "/images/heroes/sparrow.jpg"},
-    %{id: "twinblast", name: "TwinBlast", role: "Carry", image: "/images/heroes/twinblast.jpg"},
-    %{id: "kira", name: "Kira", role: "Carry", image: "/images/heroes/kira.jpg"},
+    %{id: "drongo", name: "Drongo", role: "Carry", image: "/images/heroes/portraits/drongo.jpg"},
+    %{id: "grim_exe", name: "GRIM.exe", role: "Carry", image: "/images/heroes/portraits/grim_exe.jpg"},
+    %{id: "murdock", name: "Murdock", role: "Carry", image: "/images/heroes/portraits/murdock.jpg"},
+    %{id: "revenant", name: "Revenant", role: "Carry", image: "/images/heroes/portraits/revenant.jpg"},
+    %{id: "sparrow", name: "Sparrow", role: "Carry", image: "/images/heroes/portraits/sparrow.jpg"},
+    %{id: "twinblast", name: "TwinBlast", role: "Carry", image: "/images/heroes/portraits/twinblast.jpg"},
+    %{id: "kira", name: "Kira", role: "Carry", image: "/images/heroes/portraits/kira.jpg"},
     
     # Support Role  
-    %{id: "dekker", name: "Dekker", role: "Support", image: "/images/heroes/dekker.jpg"},
-    %{id: "the_fey", name: "The Fey", role: "Support", image: "/images/heroes/the_fey.jpg"},
-    %{id: "muriel", name: "Muriel", role: "Support", image: "/images/heroes/muriel.jpg"},
-    %{id: "narbash", name: "Narbash", role: "Support", image: "/images/heroes/narbash.jpg"},
-    %{id: "phase", name: "Phase", role: "Support", image: "/images/heroes/phase.jpg"},
-    %{id: "riktor", name: "Riktor", role: "Support", image: "/images/heroes/riktor.jpg"},
+    %{id: "dekker", name: "Dekker", role: "Support", image: "/images/heroes/portraits/dekker.jpg"},
+    %{id: "the_fey", name: "The Fey", role: "Support", image: "/images/heroes/portraits/the_fey.jpg"},
+    %{id: "muriel", name: "Muriel", role: "Support", image: "/images/heroes/portraits/muriel.jpg"},
+    %{id: "narbash", name: "Narbash", role: "Support", image: "/images/heroes/portraits/narbash.jpg"},
+    %{id: "phase", name: "Phase", role: "Support", image: "/images/heroes/portraits/phase.jpg"},
+    %{id: "riktor", name: "Riktor", role: "Support", image: "/images/heroes/portraits/riktor.jpg"},
     
     # Midlane Role
-    %{id: "lt_belica", name: "Lt. Belica", role: "Midlane", image: "/images/heroes/lt_belica.jpg"},
-    %{id: "countess", name: "Countess", role: "Midlane", image: "/images/heroes/countess.jpg"},
-    %{id: "gadget", name: "Gadget", role: "Midlane", image: "/images/heroes/gadget.jpg"},
-    %{id: "gideon", name: "Gideon", role: "Midlane", image: "/images/heroes/gideon.jpg"},
-    %{id: "howitzer", name: "Howitzer", role: "Midlane", image: "/images/heroes/howitzer.jpg"},
-    %{id: "morigesh", name: "Morigesh", role: "Midlane", image: "/images/heroes/morigesh.jpg"},
-    %{id: "shinbi", name: "Shinbi", role: "Midlane", image: "/images/heroes/shinbi.jpg"},
-    %{id: "argus", name: "Argus", role: "Midlane", image: "/images/heroes/argus.jpg"},
+    %{id: "lt_belica", name: "Lt. Belica", role: "Midlane", image: "/images/heroes/portraits/lt_belica.jpg"},
+    %{id: "countess", name: "Countess", role: "Midlane", image: "/images/heroes/portraits/countess.jpg"},
+    %{id: "gadget", name: "Gadget", role: "Midlane", image: "/images/heroes/portraits/gadget.jpg"},
+    %{id: "gideon", name: "Gideon", role: "Midlane", image: "/images/heroes/portraits/gideon.jpg"},
+    %{id: "howitzer", name: "Howitzer", role: "Midlane", image: "/images/heroes/portraits/howitzer.jpg"},
+    %{id: "morigesh", name: "Morigesh", role: "Midlane", image: "/images/heroes/portraits/morigesh.jpg"},
+    %{id: "shinbi", name: "Shinbi", role: "Midlane", image: "/images/heroes/portraits/shinbi.jpg"},
+    %{id: "argus", name: "Argus", role: "Midlane", image: "/images/heroes/portraits/argus.jpg"},
     
     # Offlane Role
-    %{id: "aurora", name: "Aurora", role: "Offlane", image: "/images/heroes/aurora.jpg"},
-    %{id: "crunch", name: "Crunch", role: "Offlane", image: "/images/heroes/crunch.jpg"},
-    %{id: "feng_mao", name: "Feng Mao", role: "Offlane", image: "/images/heroes/feng_mao.jpg"},
-    %{id: "greystone", name: "Greystone", role: "Offlane", image: "/images/heroes/greystone.jpg"},
-    %{id: "iggy_scorch", name: "Iggy & Scorch", role: "Offlane", image: "/images/heroes/iggy_scorch.jpg"},
-    %{id: "kwang", name: "Kwang", role: "Offlane", image: "/images/heroes/kwang.jpg"},
-    %{id: "serath", name: "Serath", role: "Offlane", image: "/images/heroes/serath.jpg"},
-    %{id: "sevarog", name: "Sevarog", role: "Offlane", image: "/images/heroes/sevarog.jpg"},
-    %{id: "steel", name: "Steel", role: "Offlane", image: "/images/heroes/steel.jpg"},
-    %{id: "terra", name: "Terra", role: "Offlane", image: "/images/heroes/terra.jpg"},
-    %{id: "wukong", name: "Wukong", role: "Offlane", image: "/images/heroes/wukong.jpg"},
-    %{id: "zarus", name: "Zarus", role: "Offlane", image: "/images/heroes/zarus.jpg"},
+    %{id: "aurora", name: "Aurora", role: "Offlane", image: "/images/heroes/portraits/aurora.jpg"},
+    %{id: "crunch", name: "Crunch", role: "Offlane", image: "/images/heroes/portraits/crunch.jpg"},
+    %{id: "feng_mao", name: "Feng Mao", role: "Offlane", image: "/images/heroes/portraits/feng_mao.jpg"},
+    %{id: "greystone", name: "Greystone", role: "Offlane", image: "/images/heroes/portraits/greystone.jpg"},
+    %{id: "iggy_scorch", name: "Iggy & Scorch", role: "Offlane", image: "/images/heroes/portraits/iggy_scorch.jpg"},
+    %{id: "kwang", name: "Kwang", role: "Offlane", image: "/images/heroes/portraits/kwang.jpg"},
+    %{id: "serath", name: "Serath", role: "Offlane", image: "/images/heroes/portraits/serath.jpg"},
+    %{id: "sevarog", name: "Sevarog", role: "Offlane", image: "/images/heroes/portraits/sevarog.jpg"},
+    %{id: "steel", name: "Steel", role: "Offlane", image: "/images/heroes/portraits/steel.jpg"},
+    %{id: "terra", name: "Terra", role: "Offlane", image: "/images/heroes/portraits/terra.jpg"},
+    %{id: "wukong", name: "Wukong", role: "Offlane", image: "/images/heroes/portraits/wukong.jpg"},
+    %{id: "zarus", name: "Zarus", role: "Offlane", image: "/images/heroes/portraits/zarus.jpg"},
     
     # Jungle Role
-    %{id: "grux", name: "Grux", role: "Jungle", image: "/images/heroes/grux.jpg"},
-    %{id: "kallari", name: "Kallari", role: "Jungle", image: "/images/heroes/kallari.jpg"},
-    %{id: "khaimera", name: "Khaimera", role: "Jungle", image: "/images/heroes/khaimera.jpg"},
-    %{id: "rampage", name: "Rampage", role: "Jungle", image: "/images/heroes/rampage.jpg"}
+    %{id: "grux", name: "Grux", role: "Jungle", image: "/images/heroes/portraits/grux.jpg"},
+    %{id: "kallari", name: "Kallari", role: "Jungle", image: "/images/heroes/portraits/kallari.jpg"},
+    %{id: "khaimera", name: "Khaimera", role: "Jungle", image: "/images/heroes/portraits/khaimera.jpg"},
+    %{id: "rampage", name: "Rampage", role: "Jungle", image: "/images/heroes/portraits/rampage.jpg"}
   ]
   
   # Cache API results using ETS with safe table access
@@ -142,7 +142,7 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
                   id: hero_id,
                   name: hero["display_name"],
                   role: combined_roles,
-                  image: "/images/heroes/#{hero_id}.jpg",
+                  image: "/images/heroes/portraits/#{hero_id}.jpg",
                   api_image: "https://omeda.city" <> hero["image"]
                 }
               end)
@@ -156,9 +156,59 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
     end
   end
   
+  # Banner functionality for spectator views
+  def get_random_hero_banner(hero_id) do
+    banner_path = "priv/static/images/heroes/banners/#{hero_id}"
+    
+    # Debug logging
+    IO.puts("DEBUG: Looking for banners for hero_id: #{hero_id}")
+    IO.puts("DEBUG: Banner path: #{banner_path}")
+    
+    case File.ls(banner_path) do
+      {:ok, files} ->
+        png_files = Enum.filter(files, &String.ends_with?(&1, ".png"))
+        IO.puts("DEBUG: Found PNG files: #{inspect(png_files)}")
+        case png_files do
+          [] -> 
+            IO.puts("DEBUG: No PNG files found, using misc banner")
+            get_random_misc_banner()
+          banners -> 
+            random_banner = Enum.random(banners)
+            result = "/images/heroes/banners/#{hero_id}/#{random_banner}"
+            IO.puts("DEBUG: Selected banner: #{result}")
+            result
+        end
+      {:error, reason} -> 
+        IO.puts("DEBUG: Error reading banner path: #{inspect(reason)}")
+        get_random_misc_banner()
+    end
+  end
+  
+  def get_random_misc_banner do
+    misc_banner_path = "priv/static/images/misc_banners"
+    
+    case File.ls(misc_banner_path) do
+      {:ok, files} ->
+        # Filter PNG files
+        png_files = files
+          |> Enum.filter(&String.ends_with?(&1, ".png"))
+        
+        case png_files do
+          [] -> 
+            "/images/heroes/portraits/placeholder.jpg" # Ultimate fallback
+          banners ->
+            random_banner = Enum.random(banners)
+            "/images/misc_banners/#{random_banner}"
+        end
+      {:error, _} -> 
+        "/images/heroes/portraits/placeholder.jpg"
+    end
+  end
+  
   @impl true
   def mount(socket) do
-    {:ok, assign(socket, role_filter: "all")}
+    # Don't set default role_filter here - let parent control it
+    {:ok, socket}
   end
   
   @impl true
@@ -174,7 +224,6 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
       <div class="hero-filters" style="display: flex; gap: 8px; margin-bottom: 12px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; flex-shrink: 0;">
         <button 
           phx-click="filter_role" 
-          phx-target={@myself}
           phx-value-role="all"
           class={["filter-btn", @role_filter == "all" && "active"]}
           style={"padding: 6px 12px; border-radius: 4px; border: none; font-size: 12px; cursor: pointer; #{if @role_filter == "all", do: "background: #5865f2; color: white;", else: "background: #4a5568; color: #d1d5db;"}"}
@@ -183,7 +232,6 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
         </button>
         <button 
           phx-click="filter_role" 
-          phx-target={@myself}
           phx-value-role="Carry"
           class={["filter-btn", @role_filter == "Carry" && "active"]}
           style={"padding: 6px 12px; border-radius: 4px; border: none; font-size: 12px; cursor: pointer; #{if @role_filter == "Carry", do: "background: #5865f2; color: white;", else: "background: #4a5568; color: #d1d5db;"}"}
@@ -192,7 +240,6 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
         </button>
         <button 
           phx-click="filter_role" 
-          phx-target={@myself}
           phx-value-role="Support"
           class={["filter-btn", @role_filter == "Support" && "active"]}
           style={"padding: 6px 12px; border-radius: 4px; border: none; font-size: 12px; cursor: pointer; #{if @role_filter == "Support", do: "background: #5865f2; color: white;", else: "background: #4a5568; color: #d1d5db;"}"}
@@ -201,7 +248,6 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
         </button>
         <button 
           phx-click="filter_role" 
-          phx-target={@myself}
           phx-value-role="Midlane"
           class={["filter-btn", @role_filter == "Midlane" && "active"]}
           style={"padding: 6px 12px; border-radius: 4px; border: none; font-size: 12px; cursor: pointer; #{if @role_filter == "Midlane", do: "background: #5865f2; color: white;", else: "background: #4a5568; color: #d1d5db;"}"}
@@ -210,7 +256,6 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
         </button>
         <button 
           phx-click="filter_role" 
-          phx-target={@myself}
           phx-value-role="Offlane"
           class={["filter-btn", @role_filter == "Offlane" && "active"]}
           style={"padding: 6px 12px; border-radius: 4px; border: none; font-size: 12px; cursor: pointer; #{if @role_filter == "Offlane", do: "background: #5865f2; color: white;", else: "background: #4a5568; color: #d1d5db;"}"}
@@ -219,7 +264,6 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
         </button>
         <button 
           phx-click="filter_role" 
-          phx-target={@myself}
           phx-value-role="Jungle"
           class={["filter-btn", @role_filter == "Jungle" && "active"]}
           style={"padding: 6px 12px; border-radius: 4px; border: none; font-size: 12px; cursor: pointer; #{if @role_filter == "Jungle", do: "background: #5865f2; color: white;", else: "background: #4a5568; color: #d1d5db;"}"}
@@ -276,17 +320,17 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
     """
   end
 
-  @impl true
-  def handle_event("filter_role", %{"role" => role}, socket) do
-    {:noreply, assign(socket, role_filter: role)}
-  end
+  # Filter event is now handled by parent component
   
   defp filter_heroes(heroes, "all", _picks, _bans) do
     heroes
   end
   
   defp filter_heroes(heroes, role, _picks, _bans) do
-    Enum.filter(heroes, fn hero -> hero.role == role end)
+    Enum.filter(heroes, fn hero -> 
+      # Check if the hero's role contains the filter role (handles multi-role heroes like "Carry/Support")
+      String.contains?(hero.role, role)
+    end)
   end
   
   defp hero_picked?(hero, picks) do

@@ -44,6 +44,34 @@ defmodule PredecessorDraftWeb.Components.TeamPanel do
     ~H"""
     <div class={team_panel_class(@display_mode, @team_position)}>
       <%= if @display_mode == :spectator do %>
+        <%!-- Team Bans Section --%>
+        <% misc_banner = PredecessorDraftWeb.Components.HeroGrid.get_random_misc_banner() %>
+        <%!-- Use misc banner background with dedicated background layer --%>
+        <div class="team-bans-section" style="position: relative;">
+          <%!-- Background layer - using dynamic misc banner --%>
+          <div style={"position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('#{misc_banner}') center center / cover no-repeat; opacity: 1.0; z-index: 1;"}></div>
+          <%!-- Content layer --%>
+          <div style="position: relative; z-index: 2;">
+            <div class="team-bans-title">Bans</div>
+            <div class="team-bans-grid">
+            <%= for i <- 1..3 do %>
+              <% ban_id = Enum.at(@team_bans, i - 1) %>
+              <% banned_hero = if ban_id && ban_id != "skipped", do: Enum.find(@heroes, &(&1.id == ban_id)), else: nil %>
+              
+              <div class={["team-ban-slot", if(banned_hero, do: "filled", else: "")]}>
+                <%= if banned_hero do %>
+                  <img src={banned_hero.image} alt={banned_hero.name} class="team-ban-portrait"
+                       onerror="this.src='/images/heroes/portraits/placeholder.jpg'" />
+                  <div class="team-ban-x">✕</div>
+                <% else %>
+                  <div style="color: #6b7280; font-size: 12px;">Ban <%= i %></div>
+                <% end %>
+              </div>
+            <% end %>
+            </div>
+          </div>
+        </div>
+        
         <%!-- Spectator Mode: Large hero slots for picks --%>
         <%= for i <- 1..5 do %>
           <% hero_id = Enum.at(@team_picks, i - 1) %>
@@ -52,14 +80,18 @@ defmodule PredecessorDraftWeb.Components.TeamPanel do
           <% team_id = if @team_position == :left, do: "team1", else: "team2" %>
           <% is_current = @current_team == team_id && @current_phase == "Pick Phase" && i == team_pick_count + 1 %>
           
-          <div class={["hero-slot", if(hero, do: "filled", else: ""), if(is_current, do: "active", else: "")]}>
+          <% banner_image = if hero, do: PredecessorDraftWeb.Components.HeroGrid.get_random_hero_banner(hero.id), else: nil %>
+          <div class={["hero-slot", if(hero, do: "filled", else: ""), if(is_current, do: "active", else: "")]}
+               style={if banner_image, do: "background-image: url('#{banner_image}'); background-size: cover; background-repeat: no-repeat; background-position: center;", else: ""}>
             <div class="slot-number">Pick <%= i %></div>
             <%= if hero do %>
-              <img src={hero.image} alt={hero.name} class="hero-portrait-small" 
-                   onerror="this.src='/images/heroes/placeholder.jpg'" />
-              <div class="hero-info">
-                <div class="hero-name"><%= hero.name %></div>
-                <div class="hero-role"><%= hero.role %></div>
+              <div class="hero-banner-overlay">
+                <img src={hero.image} alt={hero.name} class="hero-portrait-small" 
+                     onerror="this.src='/images/heroes/portraits/placeholder.jpg'" />
+                <div class="hero-info">
+                  <div class="hero-name"><%= hero.name %></div>
+                  <div class="hero-role"><%= hero.role %></div>
+                </div>
               </div>
             <% else %>
               <div class="empty-slot-text">Empty</div>
