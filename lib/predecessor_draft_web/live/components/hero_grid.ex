@@ -158,29 +158,61 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
   
   # Banner functionality for spectator views
   def get_random_hero_banner(hero_id) do
-    banner_path = "priv/static/images/heroes/banners/#{hero_id}"
+    # Hardcoded hero banner mappings to avoid filesystem access in production
+    hero_banners = %{
+      "aurora" => ["Banner_Aurora_Default.png", "Aurora_GlacialEmpress.png"],
+      "argus" => ["Banner_Emerald_Default.png", "Emerald Warlord .png", "Emerald Winter .png"],
+      "boris" => ["Banner_Boris_Default.png", "Banner_Boris_ShadowOps_Blue.png", "Boris Shadow Ops .png"],
+      "countess" => ["Banner_Countess_Demon.png", "Banner_Countess_Hunt.png", "Countess_Login.png"],
+      "crunch" => ["Banner_Crunch_Boxer.png", "Banner_Crunch_Default.png"],
+      "dekker" => ["Banner_Dekker_Default.png", "Winter Dekker.png"],
+      "drongo" => ["Banner_Drongo_Default.png"],
+      "feng_mao" => ["Banner_FengMao_Default.png", "Feng Mao Undertow .png"],
+      "gadget" => ["Banner_Gadget_Default.png"],
+      "gideon" => ["Banner_Gideon_Default.png", "Gideon Undertow .png"],
+      "greystone" => ["Banner_Greystone_ShadowOps.png", "Default_Greystone.png", "Greystone_Halloween.png"],
+      "grim_exe" => ["Banner_GrimEXE_Default.png"],
+      "grux" => ["Banner_Grux_Default.png", "Scarab Grux .png"],
+      "howitzer" => ["Banner_Howitzer_Default.png", "Howi Odyssey .png"],
+      "iggy_scorch" => ["Banner_Iggy_Default.png", "Banner_Iggy_Phoenix.png", "Iggy Mecha Terror .png"],
+      "kallari" => ["Banner_Kallari_Default.png", "Rogue Kallari .png"],
+      "khaimera" => ["Banner_Khaimera_Default.png", "Banner_Khaimera_Demon.png", "Khaimera Wasteland .png"],
+      "kira" => ["Banner_Huntress_Default.png", "Default_Kira.png", "Huntress Halloween .png"],
+      "kwang" => ["Banner_Kwang_Default.png", "Banner_Kwang_Rogue.png"],
+      "lt_belica" => ["Banner_LtBelica_Default.png", "Lt Belica Cyberpunk .png", "Lt Belica Polar Strike .png"],
+      "morigesh" => ["Default_Hero_Morigesh.png", "Default_Morigesh_Swamp.png", "Morigesh_Login.png"],
+      "mourn" => ["Banner_Wood_Default.png", "Wood Purple Alien.png"],
+      "murdock" => ["Banner_Murdock_Default.png", "Murdock Shogun .png"],
+      "muriel" => ["Banner_Muriel_Cyber_Angel.png", "Banner_Muriel_Default.png"],
+      "narbash" => ["Banner_Narbash_Summer_Red.png", "Default_Hero_Narbash.png", "Narbash_Login.png"],
+      "phase" => ["Banner_Phase_Default.png"],
+      "rampage" => ["T_Banner_Rampage_Default.png"],
+      "renna" => ["Banner_Bright_Alternate.png", "LoadingScreen_Renna.png", "T_Banner_Renna_Default.png"],
+      "revenant" => ["Banner_Revenant_Default.png", "Winterfest Frost King 01.png"],
+      "riktor" => ["Banner_Riktor_Default.png", "Riktor Undertow .png"],
+      "serath" => ["Banner_Serath_Default.png", "Banner_Serath_ShadowOps.png", "Default_Serath.png"],
+      "sevarog" => ["Banner_Sevarog_Default.png", "Sevarog Angel .png"],
+      "shinbi" => ["Banner_Shinbi_Default.png", "Banner_Shinbi_Prime.png", "Default_Shinbi.png"],
+      "skylar" => ["Banner_Boost_Default.png", "Banner_Boost_Alien.png", "Banner_Boost_Convict.png"],
+      "sparrow" => ["Banner_Sparrow_Default.png", "Banner_Sparrow_ZechinHuntress.png", "Rogue Sparrow .png"],
+      "steel" => ["Banner_Steel_Default.png", "Steel Doomsday .png", "Steel Galactic Raider .png"],
+      "terra" => ["Banner_Terra_Default.png", "Terra Gryphon Knight .png"],
+      "the_fey" => ["Default_Hero_The_Fey.png"],
+      "twinblast" => ["Banner_Twinblast_ShadowOps_Red.png", "Default_Hero_TwinBlast.png", "TwinBlast_Login.png"],
+      "wraith" => ["Banner_Wraith_Default.png", "Banner_Wraith_Rogue.png"],
+      "wukong" => ["Banner_Wukong_Default.png", "Banner_Wukong_ShadowOps.png"],
+      "yin" => ["Banner_Yin_Default.png", "Banner_Yin_Bunny.png", "Banner_Yin_ShadowOps.png"],
+      "yurei" => ["Banner_Yurei.png", "Banner_Yurei_Neon.png", "Banner_Tidebinder_Demon.png"],
+      "yuri" => ["Banner_Yurei.png", "Banner_Yurei_Neon.png", "Banner_Tidebinder_Demon.png"],
+      "zarus" => ["Banner_Lizard_Default.png", "Banner_Zarus_Demon.png", "Zarus Warlord Cbt.png"],
+      "zinx" => ["Banner_Zinx_Default.png", "Zinx Starqueen.png"]
+    }
     
-    # Debug logging
-    IO.puts("DEBUG: Looking for banners for hero_id: #{hero_id}")
-    IO.puts("DEBUG: Banner path: #{banner_path}")
-    
-    case File.ls(banner_path) do
-      {:ok, files} ->
-        png_files = Enum.filter(files, &String.ends_with?(&1, ".png"))
-        IO.puts("DEBUG: Found PNG files: #{inspect(png_files)}")
-        case png_files do
-          [] -> 
-            IO.puts("DEBUG: No PNG files found, using misc banner")
-            get_random_misc_banner()
-          banners -> 
-            random_banner = Enum.random(banners)
-            result = "/images/heroes/banners/#{hero_id}/#{random_banner}"
-            IO.puts("DEBUG: Selected banner: #{result}")
-            result
-        end
-      {:error, reason} -> 
-        IO.puts("DEBUG: Error reading banner path: #{inspect(reason)}")
-        get_random_misc_banner()
+    case Map.get(hero_banners, hero_id) do
+      nil -> get_random_misc_banner() # Fallback to misc banner if hero not found
+      banners -> 
+        random_banner = Enum.random(banners)
+        "/images/heroes/banners/#{hero_id}/#{random_banner}"
     end
   end
   
