@@ -185,24 +185,31 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
   end
   
   def get_random_misc_banner do
-    misc_banner_path = "priv/static/images/misc_banners"
+    # Hardcoded list of misc banners to avoid filesystem access issues in production
+    misc_banners = [
+      "MainBackground.png",
+      "EdSplash.png", 
+      "LoadingScreen_Arena.png",
+      "LoadingScreen_Legacy.png",
+      "LoadingScreen_Practice.png",
+      "LoadingScreen_Twilight_Dawn.png",
+      "LoadingScreen_Twilight_Dusk.png",
+      "Tecntacles.png",
+      "Winterfest 2024.png",
+      "GamemodePanel_Legacy_PopupBackground.png",
+      "Banner Community Helper Black.png",
+      "Banner Community Helper Blue.png",
+      "Banner Community Helper Gold.png",
+      "Banner Community Helper Orange.png",
+      "Banner Community Helper Purple.png",
+      "Banner Community Helper White.png",
+      "Creator Bronze.png",
+      "Creator Gold.png",
+      "Creator Silver.png"
+    ]
     
-    case File.ls(misc_banner_path) do
-      {:ok, files} ->
-        # Filter PNG files
-        png_files = files
-          |> Enum.filter(&String.ends_with?(&1, ".png"))
-        
-        case png_files do
-          [] -> 
-            "/images/heroes/portraits/placeholder.jpg" # Ultimate fallback
-          banners ->
-            random_banner = Enum.random(banners)
-            "/images/misc_banners/#{random_banner}"
-        end
-      {:error, _} -> 
-        "/images/heroes/portraits/placeholder.jpg"
-    end
+    random_banner = Enum.random(misc_banners)
+    "/images/misc_banners/#{random_banner}"
   end
   
   @impl true
