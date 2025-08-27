@@ -9,18 +9,23 @@ defmodule PredecessorDraftWeb.SpectateLive do
   alias PredecessorDraftWeb.Components.{DraftHeader, TeamPanel, BansDisplay, DraftStatus, TimerDisplay}
   
   require Logger
+  
+  # Safe logging function - only logs in development
+  defp safe_log(level, context, message) do
+    if Application.get_env(:predecessor_draft, :environment) == :dev do
+      PredecessorDraft.Logger.log(level, context, message)
+    end
+  end
 
   @impl true
   def mount(%{"draft_id" => draft_id} = _params, _session, socket) do
-    PredecessorDraft.Logger.log(:info, "SPECTATOR", "Spectator attempting to join draft: #{draft_id}")
+    safe_log(:info, "SPECTATOR", "Spectator joining draft: #{draft_id}")
     
     # Subscribe to draft updates
-    subscription_result = PubSub.subscribe(PredecessorDraft.PubSub, "draft:#{draft_id}")
-    PredecessorDraft.Logger.log(:info, "SPECTATOR", "PubSub subscription result: #{inspect(subscription_result)} for draft:#{draft_id}")
+    PubSub.subscribe(PredecessorDraft.PubSub, "draft:#{draft_id}")
     
     # Also subscribe to timer events specifically
-    timer_sub_result = PubSub.subscribe(PredecessorDraft.PubSub, "timer:#{draft_id}")
-    PredecessorDraft.Logger.log(:info, "SPECTATOR", "Timer subscription result: #{inspect(timer_sub_result)} for timer:#{draft_id}")
+    PubSub.subscribe(PredecessorDraft.PubSub, "timer:#{draft_id}")
     
     # Load draft session
     case Drafts.get_session_by_draft_id(draft_id) do
@@ -33,16 +38,8 @@ defmodule PredecessorDraftWeb.SpectateLive do
         }
         
       draft ->
-        # DEBUG: Log the initial draft state to see what we're loading
-        PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** SPECTATOR MOUNT: Loading initial draft state for #{draft_id}")
-        PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** Initial draft data: team1_picks=#{length(draft.team1_picks || [])}, team1_bans=#{length(draft.team1_bans || [])}, team2_picks=#{length(draft.team2_picks || [])}, team2_bans=#{length(draft.team2_bans || [])}")
-        PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** Draft current_phase: #{draft.current_phase}")
-        
-        # CRITICAL DEBUG: Log the actual hero IDs in picks to check for mismatches
-        PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** Team1 actual picks: #{inspect(draft.team1_picks)}")
-        PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** Team2 actual picks: #{inspect(draft.team2_picks)}")
-        PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** Team1 actual bans: #{inspect(draft.team1_bans)}")
-        PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** Team2 actual bans: #{inspect(draft.team2_bans)}")
+        # Load draft state - no sensitive logging in production
+        safe_log(:info, "SPECTATOR", "Loading draft state for #{draft_id}")
         
         # Load teams using registration IDs (draft.team1_id and team2_id are registration IDs)
         team1 = Teams.get_team_by_registration_id(draft.team1_id) || %{team_name: "Team 1", id: draft.team1_id}
@@ -93,8 +90,7 @@ defmodule PredecessorDraftWeb.SpectateLive do
   
   @impl true
   def handle_info({"timer_tick", draft, remaining_time}, socket) do
-    timer_config = draft.timer_config || %{}
-    PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** SPECTATOR timer_tick: #{remaining_time}s, current_turn=#{draft.current_turn}, in_bonus=#{timer_config["in_bonus_time"]}, team1_bonus=#{timer_config["team1_bonus_time"]}, team2_bonus=#{timer_config["team2_bonus_time"]}")
+    # Remove timer logging to prevent exposing team bonus times
     {:noreply, 
       socket
       |> assign(:draft, draft)
@@ -134,25 +130,13 @@ defmodule PredecessorDraftWeb.SpectateLive do
   # Critical missing handler - this is likely the main picks/bans event
   @impl true
   def handle_info({"hero_selected", draft}, socket) do
-    PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** SPECTATOR RECEIVED hero_selected event for draft #{draft.draft_id}")
-    PredecessorDraft.Logger.log_pubsub_event("draft:#{draft.draft_id}", "hero_selected_received_by_spectator", %{
-      team1_picks: length(draft.team1_picks || []),
-      team2_picks: length(draft.team2_picks || []),
-      team1_bans: length(draft.team1_bans || []),
-      team2_bans: length(draft.team2_bans || [])
-    })
+    # Hero selected event - no sensitive logging
     {:noreply, assign(socket, :draft, draft)}
   end
   
   @impl true
   def handle_info({"hero_selected", draft, remaining_time}, socket) do
-    PredecessorDraft.Logger.log_pubsub_event("draft:#{draft.draft_id}", "hero_selected_with_timer", %{
-      team1_picks: length(draft.team1_picks || []),
-      team2_picks: length(draft.team2_picks || []),
-      team1_bans: length(draft.team1_bans || []),
-      team2_bans: length(draft.team2_bans || []),
-      timer_remaining: remaining_time
-    })
+    # Hero selected with timer - no sensitive logging
     {:noreply, 
       socket
       |> assign(:draft, draft)
@@ -290,14 +274,7 @@ defmodule PredecessorDraftWeb.SpectateLive do
   # Handle 3-parameter status_updated events (the main issue)
   @impl true
   def handle_info({"status_updated", draft, remaining_time}, socket) do
-    PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** SPECTATOR HANDLING 3-param status_updated event for draft #{draft.draft_id}")
-    PredecessorDraft.Logger.log_pubsub_event("draft:#{draft.draft_id}", "status_updated_3param_handled", %{
-      team1_picks: length(draft.team1_picks || []),
-      team2_picks: length(draft.team2_picks || []),
-      team1_bans: length(draft.team1_bans || []),
-      team2_bans: length(draft.team2_bans || []),
-      timer_remaining: remaining_time
-    })
+    # Status updated - no sensitive logging
     {:noreply, 
       socket
       |> assign(:draft, draft)
@@ -309,7 +286,7 @@ defmodule PredecessorDraftWeb.SpectateLive do
   # Handle Phoenix.Socket.Broadcast format messages
   @impl true
   def handle_info(%Phoenix.Socket.Broadcast{topic: topic, event: event, payload: payload}, socket) do
-    PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** SPECTATOR received Phoenix.Socket.Broadcast: topic=#{topic}, event=#{event}")
+    # Handle broadcast events - no sensitive logging
     
     case event do
       "hero_selected" ->
@@ -329,7 +306,7 @@ defmodule PredecessorDraftWeb.SpectateLive do
           
           {:noreply, socket}
         else
-          PredecessorDraft.Logger.log(:warn, "SPECTATOR", "*** hero_selected broadcast missing draft data")
+          # Invalid payload - ignore
           {:noreply, socket}
         end
         
@@ -351,12 +328,12 @@ defmodule PredecessorDraftWeb.SpectateLive do
           
           {:noreply, socket}
         else
-          PredecessorDraft.Logger.log(:warn, "SPECTATOR", "*** status_updated broadcast missing draft data")
+          # Invalid payload - ignore
           {:noreply, socket}
         end
         
       _ ->
-        PredecessorDraft.Logger.log(:info, "SPECTATOR", "*** SPECTATOR ignoring unknown broadcast event: #{event}")
+        # Unknown event - ignore
         {:noreply, socket}
     end
   end

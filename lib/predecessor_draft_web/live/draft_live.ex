@@ -54,16 +54,25 @@ defmodule PredecessorDraftWeb.DraftLive do
         
         # Client-side timer disabled - GenServer broadcasts handle all timer updates
         
-        # Track presence for this captain
+        # Track presence for this captain with anonymized display name
+        # Use "Captain 1" or "Captain 2" instead of real Discord names for privacy
+        anonymized_name = case captain_role do
+          "team1" -> "Team 1 Captain"
+          "team2" -> "Team 2 Captain"
+          _ -> "Captain"
+        end
+        
         {:ok, _} = Presence.track(
           self(),
           "draft:#{draft_id}",
           captain_role,
           %{
             user_id: user.id,
-            user_name: Accounts.User.display_name(user),
+            user_name: anonymized_name,  # Public display name (anonymized)
+            discord_name: Accounts.User.display_name(user), # Real name for admin use only
             joined_at: DateTime.utc_now(),
-            captain_role: captain_role
+            captain_role: captain_role,
+            is_anonymized: true
           }
         )
 
@@ -102,6 +111,8 @@ defmodule PredecessorDraftWeb.DraftLive do
           |> assign(:selected_hero, nil)
           |> assign(:timer_state, timer_state)
           |> assign(:page_ready, false)
+          |> assign(:countdown_value, 0)
+          |> assign(:show_countdown, false)
           |> assign(:preparing_draft, false)
 
         {:noreply, socket}
@@ -679,8 +690,7 @@ defmodule PredecessorDraftWeb.DraftLive do
   
   @impl true
   def handle_info({"bonus_timer_tick", %{team: team, remaining: remaining}}, socket) do
-    # Debug logging to verify events are received
-    IO.puts("DEBUG: LiveView received bonus_timer_tick for #{team}: #{remaining}s")
+    # No logging in production for timer events
     
     # Store bonus timer values directly for immediate UI update
     socket = socket
@@ -738,19 +748,131 @@ defmodule PredecessorDraftWeb.DraftLive do
     end
   end
 
+  # Check if test access should be allowed based on environment and IP
+  # Sanitize draft data to prevent sensitive information exposure via browser dev tools
+  defp sanitize_draft_for_captain(draft, captain_role) do
+    # Only show opponent's bonus time to admins, hide from other captain
+    timer_config = draft.timer_config || %{}
+    
+    sanitized_timer_config = case captain_role do
+      "team1" ->
+        # Team 1 captain can see their own bonus time but not team 2's exact amount
+        %{
+          "team1_bonus_time" => timer_config["team1_bonus_time"],
+          "team2_bonus_time" => if timer_config["team2_bonus_time"] && timer_config["team2_bonus_time"] > 0, do: "active", else: "inactive",
+          "in_bonus_time" => timer_config["in_bonus_time"]
+        }
+      "team2" ->
+        # Team 2 captain can see their own bonus time but not team 1's exact amount
+        %{
+          "team1_bonus_time" => if timer_config["team1_bonus_time"] && timer_config["team1_bonus_time"] > 0, do: "active", else: "inactive",
+          "team2_bonus_time" => timer_config["team2_bonus_time"],
+          "in_bonus_time" => timer_config["in_bonus_time"]
+        }
+      _ ->
+        # Spectators get no bonus time info
+        %{}
+    end
+    
+    # Return draft with sanitized timer config
+    %{draft | timer_config: sanitized_timer_config}
+  end
+  
+  defp sanitize_user_data(user) do
+    # Remove sensitive user data, keep only what's needed for UI
+    %{
+      id: user.id,
+      display_name: user.discord_username, # Use anonymous name if privacy enabled
+      is_admin: false # Don't expose admin status to client side
+    }
+  end
+  
+  defp calculate_public_timer_state(draft, captain_role) do
+    # Only return timer state relevant to this captain
+    base_state = calculate_timer_state(draft)
+    
+    # Remove opponent's bonus time details
+    case captain_role do
+      "team1" -> Map.drop(base_state, [:team2_bonus_remaining])
+      "team2" -> Map.drop(base_state, [:team1_bonus_remaining])
+      _ -> Map.drop(base_state, [:team1_bonus_remaining, :team2_bonus_remaining])
+    end
+  end
+  
+  # Check if tournament draft token is expired (2 hour limit for security)
+  defp token_expired?(token) do
+    try do
+      # Extract timestamp from token if it contains one
+      # Tournament tokens typically include timestamp info
+      case String.split(token, "_") do
+        [_, timestamp_str | _] when byte_size(timestamp_str) >= 10 ->
+          case Integer.parse(timestamp_str) do
+            {timestamp, _} ->
+              # Check if token is older than 2 hours
+              current_time = System.system_time(:second)
+              token_age = current_time - div(timestamp, 1000) # Convert from ms to seconds
+              token_age > 7200 # 2 hours in seconds
+            _ ->
+              false # Can't parse, assume valid to prevent breaking existing tokens
+          end
+        _ ->
+          false # No timestamp found, assume valid for now
+      end
+    rescue
+      _ -> false # Any error in parsing, assume valid to be safe
+    end
+  end
+
+  defp allow_test_access?(socket \\ nil) do
+    # Always allow in dev/test environments
+    if Application.get_env(:predecessor_draft, :environment) in [:dev, :test] do
+      true
+    else
+      # In production, check IP whitelist
+      # Get the remote IP from the socket if available
+      remote_ip = get_remote_ip(socket)
+      
+      # Whitelist of allowed IPs (your local machine and localhost)
+      whitelisted_ips = [
+        "127.0.0.1",
+        "::1", # IPv6 localhost
+        "localhost",
+        # Add your actual IP here if needed for Playwright testing
+        # "YOUR_PUBLIC_IP"
+      ]
+      
+      remote_ip in whitelisted_ips
+    end
+  end
+  
+  defp get_remote_ip(nil), do: nil
+  defp get_remote_ip(socket) do
+    # Try to get IP from socket connection info
+    case socket do
+      %{private: %{connect_info: %{peer_data: %{address: address}}}} ->
+        address |> :inet.ntoa() |> to_string()
+      _ -> nil
+    end
+  end
+
   defp authenticate_user(token, captain_param, draft) do
-    # Allow test access for testing in production - TEMPORARY
-    # Check if this is a test user or no token provided (for testing)
+    # Check for test access - only allow in development or from whitelisted IPs
     if is_nil(token) or token == "" do
-      # Create a test user for development/testing
-      test_user = %Accounts.User{
-        id: 1,
-        user_id: "test_user_#{captain_param || "1"}",
-        discord_username: "Test Captain #{captain_param || "1"}",
-        is_admin: true  # Give admin rights for testing
-      }
-      captain_role = if captain_param == "2", do: "team2", else: "team1"
-      {:ok, test_user, captain_role}
+      # Check if we're in development environment or from a whitelisted IP
+      if allow_test_access?() do
+        # Create a test user for development/testing ONLY
+        test_user = %Accounts.User{
+          id: 1,
+          user_id: "test_user_#{captain_param || "1"}",
+          discord_username: "Captain #{captain_param || "1"}", # Anonymized
+          is_admin: true
+        }
+        captain_role = if captain_param == "2", do: "team2", else: "team1"
+        {:ok, test_user, captain_role}
+      else
+        # In production, require proper authentication
+        {:error, :unauthorized}
+      end
     else
       case Accounts.validate_draft_token(token) do
         {:ok, user, _draft_id} ->
