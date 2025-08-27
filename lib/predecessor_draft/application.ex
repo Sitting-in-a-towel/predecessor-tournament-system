@@ -11,6 +11,9 @@ defmodule PredecessorDraft.Application do
     PredecessorDraft.Logger.setup()
     PredecessorDraft.Logger.log(:info, "APPLICATION", "Starting PredecessorDraft application")
     
+    # Initialize ETS tables for security features - create once at application startup
+    initialize_ets_tables()
+    
     # Database connection for Render
     IO.puts("DATABASE_URL environment variable present: #{if System.get_env("DATABASE_URL"), do: "YES", else: "NO"}")
     
@@ -57,6 +60,37 @@ defmodule PredecessorDraft.Application do
   def config_change(changed, _new, removed) do
     PredecessorDraftWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  # Initialize ETS tables at application startup to avoid race conditions
+  defp initialize_ets_tables do
+    # Rate limiting table for security
+    case :ets.whereis(:rate_limit_table) do
+      :undefined ->
+        try do
+          :ets.new(:rate_limit_table, [:named_table, :public, :set])
+          PredecessorDraft.Logger.log(:info, "APPLICATION", "Created rate_limit_table ETS table")
+        rescue
+          error ->
+            PredecessorDraft.Logger.log(:warn, "APPLICATION", "Failed to create rate_limit_table: #{inspect(error)}")
+        end
+      _ ->
+        PredecessorDraft.Logger.log(:info, "APPLICATION", "rate_limit_table already exists")
+    end
+    
+    # Hero cache table 
+    case :ets.whereis(:hero_cache) do
+      :undefined ->
+        try do
+          :ets.new(:hero_cache, [:named_table, :public, :set])
+          PredecessorDraft.Logger.log(:info, "APPLICATION", "Created hero_cache ETS table")
+        rescue
+          error ->
+            PredecessorDraft.Logger.log(:warn, "APPLICATION", "Failed to create hero_cache: #{inspect(error)}")
+        end
+      _ ->
+        PredecessorDraft.Logger.log(:info, "APPLICATION", "hero_cache already exists")
+    end
   end
 
   defp migrate do

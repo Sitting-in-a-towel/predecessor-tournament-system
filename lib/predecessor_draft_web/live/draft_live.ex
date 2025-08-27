@@ -788,12 +788,7 @@ defmodule PredecessorDraftWeb.DraftLive do
           :ok
         end
       _ ->
-        # Create table if it doesn't exist (for dev environment)
-        try do
-          :ets.new(:rate_limit_table, [:named_table, :public])
-        rescue
-          _ -> :ok
-        end
+        # Table created at application startup, just insert the record
         :ets.insert(:rate_limit_table, {key, 1, current_time})
         :ok
     end

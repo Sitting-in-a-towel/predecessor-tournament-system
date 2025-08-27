@@ -86,12 +86,8 @@ defmodule PredecessorDraftWeb.Components.HeroGrid do
   end
   
   defp ensure_hero_cache_table do
-    case :ets.whereis(:hero_cache) do
-      :undefined -> 
-        :ets.new(:hero_cache, [:named_table, :public, :set])
-      _ -> 
-        :ok
-    end
+    # Table is created at application startup, no need to create here
+    :ok
   end
   
   defp safe_ets_lookup(table, key) do
