@@ -21,7 +21,8 @@ config :predecessor_draft, PredecessorDraft.Repo,
   hostname: System.get_env("DB_HOST") || "localhost",
   port: String.to_integer(System.get_env("DB_PORT") || "5432"),
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-  show_sensitive_data_on_connection_error: true
+  show_sensitive_data_on_connection_error: true,
+  log: false  # Disable SQL query logging for security
 
 # For development, we disable any cache and enable
 # debugging and code reloading.

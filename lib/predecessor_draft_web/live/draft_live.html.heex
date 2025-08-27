@@ -8,6 +8,74 @@
     border: 2px solid #fbbf24 !important;
   }
   
+  /* Team panels for captain view - 20% wider (140px -> 168px) with increased height and larger text */
+  .team-panel {
+    width: 168px;
+    min-height: 600px;
+    height: 80vh;
+    background-color: #2f3136;
+    padding: 12px;
+    overflow-y: auto;
+    font-size: 14px;
+  }
+  
+  /* Larger text in team panels */
+  .team-panel h3 {
+    font-size: 16px !important;
+  }
+  
+  .team-panel .text-xs {
+    font-size: 13px !important;
+  }
+  
+  .team-panel .text-sm {
+    font-size: 15px !important;
+  }
+  
+  /* Larger text for hero portraits */
+  .hero-name {
+    font-size: 12px !important;
+  }
+  
+  .hero-role {
+    font-size: 10px !important;
+  }
+  
+  .team-panel-left {
+    border-right: 2px solid #374151;
+  }
+  
+  .team-panel-right {
+    border-left: 2px solid #374151;
+  }
+  
+  /* Countdown overlay */
+  .countdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  
+  .countdown-number {
+    font-size: 120px;
+    font-weight: bold;
+    color: #fbbf24;
+    text-shadow: 0 0 40px rgba(251, 191, 36, 0.8);
+    animation: countdown-pulse 1s ease-out;
+  }
+  
+  @keyframes countdown-pulse {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
 </style>
 
 

@@ -68,11 +68,10 @@ defmodule PredecessorDraftWeb.DraftLive do
           captain_role,
           %{
             user_id: user.id,
-            user_name: anonymized_name,  # Public display name (anonymized)
-            discord_name: Accounts.User.display_name(user), # Real name for admin use only
+            user_name: anonymized_name,  # Only anonymized name sent to clients
             joined_at: DateTime.utc_now(),
-            captain_role: captain_role,
-            is_anonymized: true
+            captain_role: captain_role
+            # Note: Discord names completely removed from WebSocket broadcasts
           }
         )
 
@@ -749,57 +748,8 @@ defmodule PredecessorDraftWeb.DraftLive do
   end
 
   # Check if test access should be allowed based on environment and IP
-  # Sanitize draft data to prevent sensitive information exposure via browser dev tools
-  defp sanitize_draft_for_captain(draft, captain_role) do
-    # Only show opponent's bonus time to admins, hide from other captain
-    timer_config = draft.timer_config || %{}
-    
-    sanitized_timer_config = case captain_role do
-      "team1" ->
-        # Team 1 captain can see their own bonus time but not team 2's exact amount
-        %{
-          "team1_bonus_time" => timer_config["team1_bonus_time"],
-          "team2_bonus_time" => if timer_config["team2_bonus_time"] && timer_config["team2_bonus_time"] > 0, do: "active", else: "inactive",
-          "in_bonus_time" => timer_config["in_bonus_time"]
-        }
-      "team2" ->
-        # Team 2 captain can see their own bonus time but not team 1's exact amount
-        %{
-          "team1_bonus_time" => if timer_config["team1_bonus_time"] && timer_config["team1_bonus_time"] > 0, do: "active", else: "inactive",
-          "team2_bonus_time" => timer_config["team2_bonus_time"],
-          "in_bonus_time" => timer_config["in_bonus_time"]
-        }
-      _ ->
-        # Spectators get no bonus time info
-        %{}
-    end
-    
-    # Return draft with sanitized timer config
-    %{draft | timer_config: sanitized_timer_config}
-  end
   
-  defp sanitize_user_data(user) do
-    # Remove sensitive user data, keep only what's needed for UI
-    %{
-      id: user.id,
-      display_name: user.discord_username, # Use anonymous name if privacy enabled
-      is_admin: false # Don't expose admin status to client side
-    }
-  end
-  
-  defp calculate_public_timer_state(draft, captain_role) do
-    # Only return timer state relevant to this captain
-    base_state = calculate_timer_state(draft)
-    
-    # Remove opponent's bonus time details
-    case captain_role do
-      "team1" -> Map.drop(base_state, [:team2_bonus_remaining])
-      "team2" -> Map.drop(base_state, [:team1_bonus_remaining])
-      _ -> Map.drop(base_state, [:team1_bonus_remaining, :team2_bonus_remaining])
-    end
-  end
-  
-  # Check if tournament draft token is expired (2 hour limit for security)
+  # Check if tournament draft token is expired (1 hour limit for tighter security)
   defp token_expired?(token) do
     try do
       # Extract timestamp from token if it contains one
@@ -808,10 +758,10 @@ defmodule PredecessorDraftWeb.DraftLive do
         [_, timestamp_str | _] when byte_size(timestamp_str) >= 10 ->
           case Integer.parse(timestamp_str) do
             {timestamp, _} ->
-              # Check if token is older than 2 hours
+              # Check if token is older than 1 hour (tightened from 2 hours)
               current_time = System.system_time(:second)
               token_age = current_time - div(timestamp, 1000) # Convert from ms to seconds
-              token_age > 7200 # 2 hours in seconds
+              token_age > 3600 # 1 hour in seconds for better security
             _ ->
               false # Can't parse, assume valid to prevent breaking existing tokens
           end
@@ -820,6 +770,32 @@ defmodule PredecessorDraftWeb.DraftLive do
       end
     rescue
       _ -> false # Any error in parsing, assume valid to be safe
+    end
+  end
+  
+  # Add rate limiting for draft access attempts
+  defp check_rate_limit(ip) do
+    # Simple in-memory rate limiting - could be moved to Redis in future
+    key = "draft_access_#{ip}"
+    current_time = System.system_time(:second)
+    
+    case :ets.lookup(:rate_limit_table, key) do
+      [{^key, count, last_attempt}] when current_time - last_attempt < 60 ->
+        if count >= 10 do  # Max 10 attempts per minute
+          {:error, :rate_limited}
+        else
+          :ets.insert(:rate_limit_table, {key, count + 1, current_time})
+          :ok
+        end
+      _ ->
+        # Create table if it doesn't exist (for dev environment)
+        try do
+          :ets.new(:rate_limit_table, [:named_table, :public])
+        rescue
+          _ -> :ok
+        end
+        :ets.insert(:rate_limit_table, {key, 1, current_time})
+        :ok
     end
   end
 
@@ -847,10 +823,32 @@ defmodule PredecessorDraftWeb.DraftLive do
   
   defp get_remote_ip(nil), do: nil
   defp get_remote_ip(socket) do
-    # Try to get IP from socket connection info
+    # Get IP with proxy/load balancer awareness
     case socket do
       %{private: %{connect_info: %{peer_data: %{address: address}}}} ->
-        address |> :inet.ntoa() |> to_string()
+        # Convert IP to string
+        ip_string = address |> :inet.ntoa() |> to_string()
+        
+        # Check for forwarded headers that might contain real IP
+        forwarded_for = get_header(socket, "x-forwarded-for") || get_header(socket, "x-real-ip")
+        
+        case forwarded_for do
+          # If behind proxy, use the first IP in x-forwarded-for chain
+          forwarded_ip when is_binary(forwarded_ip) ->
+            forwarded_ip |> String.split(",") |> List.first() |> String.trim()
+          _ ->
+            ip_string
+        end
+      _ -> nil
+    end
+  end
+  
+  defp get_header(socket, header_name) do
+    case socket do
+      %{private: %{connect_info: %{headers: headers}}} ->
+        Enum.find_value(headers, fn {name, value} -> 
+          if String.downcase(name) == header_name, do: value 
+        end)
       _ -> nil
     end
   end
