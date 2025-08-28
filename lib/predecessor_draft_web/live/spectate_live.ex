@@ -51,6 +51,13 @@ defmodule PredecessorDraftWeb.SpectateLive do
         # Calculate timer state
         timer_state = calculate_timer_state(draft)
         
+        # Generate random banners once on mount for persistence
+        team1_ban_banner = PredecessorDraftWeb.Components.HeroGrid.get_random_misc_banner()
+        team2_ban_banner = PredecessorDraftWeb.Components.HeroGrid.get_random_misc_banner()
+        
+        # Initialize empty hero banners map - will be populated as heroes are picked
+        hero_banners = %{}
+        
         {:ok,
           socket
           |> assign(:draft_id, draft_id)
@@ -62,6 +69,9 @@ defmodule PredecessorDraftWeb.SpectateLive do
           |> assign(:timer_remaining, get_remaining_time(draft))
           |> assign(:error, nil)
           |> assign(:page_title, "Spectating Draft")
+          |> assign(:team1_ban_banner, team1_ban_banner)
+          |> assign(:team2_ban_banner, team2_ban_banner)
+          |> assign(:hero_banners, hero_banners)
         }
     end
   end
@@ -74,6 +84,7 @@ defmodule PredecessorDraftWeb.SpectateLive do
       socket
       |> assign(:draft, draft)
       |> assign(:timer_state, calculate_timer_state(draft))
+      |> update_hero_banners(draft)
     }
   end
   
@@ -85,6 +96,7 @@ defmodule PredecessorDraftWeb.SpectateLive do
       |> assign(:draft, draft)
       |> assign(:timer_remaining, remaining_time)
       |> assign(:timer_state, calculate_timer_state(draft))
+      |> update_hero_banners(draft)
     }
   end
   
@@ -96,12 +108,17 @@ defmodule PredecessorDraftWeb.SpectateLive do
       |> assign(:draft, draft)
       |> assign(:timer_remaining, remaining_time)
       |> assign(:timer_state, calculate_timer_state(draft))
+      |> update_hero_banners(draft)
     }
   end
   
   @impl true
   def handle_info({"selection_made", draft}, socket) do
-    {:noreply, assign(socket, :draft, draft)}
+    {:noreply, 
+      socket
+      |> assign(:draft, draft)
+      |> update_hero_banners(draft)
+    }
   end
   
   @impl true
@@ -110,6 +127,7 @@ defmodule PredecessorDraftWeb.SpectateLive do
       socket
       |> assign(:draft, draft)
       |> assign(:timer_remaining, remaining_time)
+      |> update_hero_banners(draft)
     }
   end
   
@@ -467,5 +485,27 @@ defmodule PredecessorDraftWeb.SpectateLive do
       5 -> 15
       _ -> 999
     end
+  end
+  
+  defp update_hero_banners(socket, draft) do
+    # Get current hero_banners map
+    current_banners = Map.get(socket.assigns, :hero_banners, %{})
+    
+    # Check all picks and add banners for new heroes only
+    all_picks = (draft.team1_picks || []) ++ (draft.team2_picks || [])
+    
+    updated_banners = 
+      Enum.reduce(all_picks, current_banners, fn hero_id, acc ->
+        # Only generate banner if we don't already have one for this hero
+        if Map.has_key?(acc, hero_id) do
+          acc
+        else
+          # Generate a random banner for this hero
+          banner = PredecessorDraftWeb.Components.HeroGrid.get_random_hero_banner(hero_id)
+          Map.put(acc, hero_id, banner)
+        end
+      end)
+    
+    assign(socket, :hero_banners, updated_banners)
   end
 end

@@ -45,10 +45,10 @@ defmodule PredecessorDraftWeb.Components.TeamPanel do
     <div class={team_panel_class(@display_mode, @team_position)}>
       <%= if @display_mode == :spectator do %>
         <%!-- Team Bans Section --%>
-        <% misc_banner = PredecessorDraftWeb.Components.HeroGrid.get_random_misc_banner() %>
+        <% misc_banner = assigns[:ban_banner] || PredecessorDraftWeb.Components.HeroGrid.get_random_misc_banner() %>
         <%!-- Use misc banner background with dedicated background layer --%>
         <div class="team-bans-section" style="position: relative;">
-          <%!-- Background layer - using dynamic misc banner --%>
+          <%!-- Background layer - using persisted banner --%>
           <div style={"position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('#{misc_banner}') center center / cover no-repeat; opacity: 1.0; z-index: 1;"}></div>
           <%!-- Content layer --%>
           <div style="position: relative; z-index: 2;">
@@ -80,7 +80,7 @@ defmodule PredecessorDraftWeb.Components.TeamPanel do
           <% team_id = if @team_position == :left, do: "team1", else: "team2" %>
           <% is_current = @current_team == team_id && @current_phase == "Pick Phase" && i == team_pick_count + 1 %>
           
-          <% banner_image = if hero, do: PredecessorDraftWeb.Components.HeroGrid.get_random_hero_banner(hero.id), else: nil %>
+          <% banner_image = if hero, do: Map.get(assigns[:hero_banners] || %{}, hero.id) || PredecessorDraftWeb.Components.HeroGrid.get_random_hero_banner(hero.id), else: nil %>
           <div class={["hero-slot", if(hero, do: "filled", else: ""), if(is_current, do: "active", else: "")]}
                style={if banner_image, do: "background-image: url('#{banner_image}'); background-size: cover; background-repeat: no-repeat; background-position: center;", else: ""}>
             <div class="slot-number">Pick <%= i %></div>
