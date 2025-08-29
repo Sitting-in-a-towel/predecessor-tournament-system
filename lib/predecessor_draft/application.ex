@@ -7,9 +7,19 @@ defmodule PredecessorDraft.Application do
 
   @impl true
   def start(_type, _args) do
-    # Initialize custom logging system
-    PredecessorDraft.Logger.setup()
-    PredecessorDraft.Logger.log(:info, "APPLICATION", "Starting PredecessorDraft application")
+    # Skip custom logging in production to avoid startup issues
+    # Note: Mix.env() is not available in releases, so we check MIX_ENV
+    if System.get_env("MIX_ENV") != "prod" do
+      try do
+        PredecessorDraft.Logger.setup()
+        PredecessorDraft.Logger.log(:info, "APPLICATION", "Starting PredecessorDraft application")
+      rescue
+        error ->
+          IO.puts("Logger setup failed: #{inspect(error)}")
+      end
+    else
+      IO.puts("Starting PredecessorDraft application (production mode)")
+    end
     
     # Initialize ETS tables for security features - create once at application startup
     initialize_ets_tables()
@@ -50,7 +60,18 @@ defmodule PredecessorDraft.Application do
     opts = [strategy: :one_for_one, name: PredecessorDraft.Supervisor]
     
     result = Supervisor.start_link(children, opts)
-    PredecessorDraft.Logger.log(:info, "APPLICATION", "PredecessorDraft application started successfully")
+    
+    # Mix.env() is not available in releases, check MIX_ENV instead
+    if System.get_env("MIX_ENV") != "prod" do
+      try do
+        PredecessorDraft.Logger.log(:info, "APPLICATION", "PredecessorDraft application started successfully")
+      rescue
+        _ -> IO.puts("PredecessorDraft application started successfully")
+      end
+    else
+      IO.puts("PredecessorDraft application started successfully (production mode)")
+    end
+    
     result
   end
 
@@ -69,13 +90,13 @@ defmodule PredecessorDraft.Application do
       :undefined ->
         try do
           :ets.new(:rate_limit_table, [:named_table, :public, :set])
-          PredecessorDraft.Logger.log(:info, "APPLICATION", "Created rate_limit_table ETS table")
+          IO.puts("Created rate_limit_table ETS table")
         rescue
           error ->
-            PredecessorDraft.Logger.log(:warn, "APPLICATION", "Failed to create rate_limit_table: #{inspect(error)}")
+            IO.puts("Failed to create rate_limit_table: #{inspect(error)}")
         end
       _ ->
-        PredecessorDraft.Logger.log(:info, "APPLICATION", "rate_limit_table already exists")
+        IO.puts("rate_limit_table already exists")
     end
     
     # Hero cache table 
@@ -83,13 +104,13 @@ defmodule PredecessorDraft.Application do
       :undefined ->
         try do
           :ets.new(:hero_cache, [:named_table, :public, :set])
-          PredecessorDraft.Logger.log(:info, "APPLICATION", "Created hero_cache ETS table")
+          IO.puts("Created hero_cache ETS table")
         rescue
           error ->
-            PredecessorDraft.Logger.log(:warn, "APPLICATION", "Failed to create hero_cache: #{inspect(error)}")
+            IO.puts("Failed to create hero_cache: #{inspect(error)}")
         end
       _ ->
-        PredecessorDraft.Logger.log(:info, "APPLICATION", "hero_cache already exists")
+        IO.puts("hero_cache already exists")
     end
   end
 
