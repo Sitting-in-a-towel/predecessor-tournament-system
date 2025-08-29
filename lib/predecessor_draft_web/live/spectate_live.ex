@@ -51,9 +51,9 @@ defmodule PredecessorDraftWeb.SpectateLive do
         # Calculate timer state
         timer_state = calculate_timer_state(draft)
         
-        # Generate random banners once on mount for persistence
-        team1_ban_banner = PredecessorDraftWeb.Components.HeroGrid.get_random_misc_banner()
-        team2_ban_banner = PredecessorDraftWeb.Components.HeroGrid.get_random_misc_banner()
+        # Generate deterministic banners based on draft_id for persistence across refreshes
+        team1_ban_banner = get_deterministic_banner(draft_id, "team1")
+        team2_ban_banner = get_deterministic_banner(draft_id, "team2")
         
         # Initialize empty hero banners map - will be populated as heroes are picked
         hero_banners = %{}
@@ -507,5 +507,56 @@ defmodule PredecessorDraftWeb.SpectateLive do
       end)
     
     assign(socket, :hero_banners, updated_banners)
+  end
+  
+  # Generate deterministic banner based on draft_id and suffix
+  defp get_deterministic_banner(draft_id, suffix) do
+    # Use exact filenames from misc_banners directory (spaces included)
+    misc_banners = [
+      "Banner Community Helper Black.png",
+      "Banner Community Helper Blue.png", 
+      "Banner Community Helper Gold.png",
+      "Banner Community Helper Green .png",
+      "Banner Community Helper Orange .png",
+      "Banner Community Helper Pink.png",
+      "Banner Community Helper Purple.png",
+      "Banner Community Helper White.png",
+      "Banner Summer Sisters.png",
+      "Battlepass Demon Image Final .png",
+      "Cb Reward .png",
+      "Community Mentee .png",
+      "Community Mentor .png",
+      "Creator Bronze .png",
+      "Creator Gold .png",
+      "Creator Silver .png",
+      "EdSplash.png",
+      "GamemodePanel_Legacy_PopupBackground.png",
+      "LoadingScreen_Arena.png",
+      "LoadingScreen_Legacy.png",
+      "LoadingScreen_Practice.png",
+      "LoadingScreen_Twilight_Dawn.png",
+      "LoadingScreen_Twilight_Dusk.png",
+      "MainBackground.png",
+      "Master Player Banner Background.png",
+      "Master_PlayerBanner_BACKGROUND.png",
+      "Ranked Season0 Bronze .png",
+      "Ranked Season0 Diamond .png",
+      "Ranked Season0 Gold .png",
+      "Ranked Season0 Paragon .png",
+      "Ranked Season0 Platinum .png",
+      "Ranked Season0 Silver .png",
+      "Tecntacles .png",
+      "Winterfest 2024.png",
+      "Winterfest Player Banner 01.png",
+      "Winterfest Player Banner 02.png"
+    ]
+    
+    # Create a hash from draft_id and suffix to use as index
+    hash_input = "#{draft_id}_#{suffix}"
+    hash = :erlang.phash2(hash_input)
+    index = rem(hash, length(misc_banners))
+    
+    banner = Enum.at(misc_banners, index)
+    "/images/misc_banners/#{banner}"
   end
 end
