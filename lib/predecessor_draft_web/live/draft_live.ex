@@ -851,20 +851,33 @@ defmodule PredecessorDraftWeb.DraftLive do
   defp authenticate_user(token, captain_param, draft) do
     # Check for test access - only allow in development or from whitelisted IPs
     if is_nil(token) or token == "" do
-      # Check if we're in development environment or from a whitelisted IP
-      if allow_test_access?() do
-        # Create a test user for development/testing ONLY
+      # Differentiate between tournament drafts and public drafts
+      if is_nil(draft.tournament_id) do
+        # This is a public/regular draft - allow without authentication
         test_user = %Accounts.User{
           id: 1,
-          user_id: "test_user_#{captain_param || "1"}",
-          discord_username: "Captain #{captain_param || "1"}", # Anonymized
-          is_admin: true
+          user_id: "public_user_#{captain_param || "1"}",
+          discord_username: "Captain #{captain_param || "1"}", # Anonymized for public drafts
+          is_admin: false  # Public users don't need admin rights
         }
         captain_role = if captain_param == "2", do: "team2", else: "team1"
         {:ok, test_user, captain_role}
       else
-        # In production, require proper authentication
-        {:error, :unauthorized}
+        # This is a tournament draft - check if we're in development or from whitelisted IP
+        if allow_test_access?() do
+          # Create a test user for development/testing ONLY
+          test_user = %Accounts.User{
+            id: 1,
+            user_id: "test_user_#{captain_param || "1"}",
+            discord_username: "Captain #{captain_param || "1"}", # Anonymized
+            is_admin: true
+          }
+          captain_role = if captain_param == "2", do: "team2", else: "team1"
+          {:ok, test_user, captain_role}
+        else
+          # In production, tournament drafts require proper authentication
+          {:error, :unauthorized}
+        end
       end
     else
       case Accounts.validate_draft_token(token) do
