@@ -741,9 +741,44 @@ defmodule PredecessorDraftWeb.DraftLive do
   end
 
   defp get_draft(draft_id) do
+    # First try to get as a regular draft session
     case Drafts.get_session_by_draft_id(draft_id) do
-      nil -> {:error, :draft_not_found}
-      draft -> {:ok, draft}
+      nil ->
+        # If not found, check if it's a public draft code
+        if String.starts_with?(draft_id, "draft_") do
+          check_public_draft(draft_id)
+        else
+          {:error, :draft_not_found}
+        end
+      draft -> 
+        {:ok, draft}
+    end
+  end
+  
+  defp check_public_draft(draft_code) do
+    case PredecessorDraft.PublicDrafts.get_by_draft_code(draft_code) do
+      nil ->
+        {:error, :draft_not_found}
+      public_draft ->
+        case public_draft.status do
+          "waiting" ->
+            {:error, :draft_not_started}
+          "active" ->
+            # Get the actual draft session
+            case public_draft.draft_session_id do
+              nil ->
+                {:error, :draft_session_missing}
+              session_id ->
+                case Drafts.get_session(session_id) do
+                  nil -> {:error, :draft_not_found}
+                  draft -> {:ok, draft}
+                end
+            end
+          "completed" ->
+            {:error, :draft_completed}
+          "expired" ->
+            {:error, :draft_expired}
+        end
     end
   end
 

@@ -40,6 +40,11 @@ defmodule PredecessorDraftWeb.Router do
     post "/drafts", DraftController, :create
     get "/drafts/:draft_id/status", DraftController, :status
     post "/drafts/:draft_id/complete", DraftController, :complete
+    
+    # Public drafts API
+    post "/public-drafts", PublicDraftController, :create
+    get "/public-drafts/:draft_code", PublicDraftController, :show
+    post "/public-drafts/:draft_code/claim", PublicDraftController, :claim_captain
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
